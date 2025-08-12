@@ -40,8 +40,7 @@ export function ShopsList({ onShopSelect }: ShopsListProps) {
 
       if (response.success) {
         setShops(response.shops)
-        setTotalShops(response.total)
-        setCurrentPage(response.page)
+        
       } else {
         setError(response.error || "Failed to load shops")
         setShops([])

@@ -11,23 +11,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { buildApiUrl, getApiBaseUrl } from "@/lib/utils"
-import { createSession, getSession } from "@/lib/auth"
+import { createSession } from "@/lib/auth"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-
-  // Check if already authenticated
-  useEffect(() => {
-    const session = getSession()
-    if (session) {
-      router.push("/dashboard")
-    }
-  }, [router])
 
   // Check if API is configured
   useEffect(() => {
@@ -37,7 +29,6 @@ export default function LoginPage() {
     }
   }, [])
 
-  // Helper function for default permissions
   const getDefaultPermissions = (role: string): string[] => {
     switch (role) {
       case "admin":
@@ -55,20 +46,22 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return // prevent multiple submits
+
     setIsLoading(true)
     setError("")
 
     try {
-      // Check if API is configured
       const baseUrl = getApiBaseUrl()
       if (!baseUrl) {
         setError("API base URL is not configured. Please check your environment variables.")
+        setIsLoading(false)
         return
       }
 
-      // Call your specific login endpoint directly
-      const apiUrl = buildApiUrl("./api/users/login")
+      const apiUrl = buildApiUrl("/api/users/login")
       console.log("Calling login endpoint:", apiUrl)
+      console.log("Sending payload:", { username, password }) // Log the payload being sent
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -76,37 +69,42 @@ export default function LoginPage() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       })
 
       const data = await response.json()
-      console.log("Login response:", data)
+      console.log("Login response status:", response.status) // Log the HTTP status code
+      console.log("Login response ok:", response.ok) // Log if response.ok is true/false
+      console.log("Login response data:", data) // Log the full response data
 
       if (response.ok && data) {
-        // Map your API response to our user format
+        console.log("Login successful, creating session and redirecting...")
         const user = {
           id: data.id || data.user_id || data.userId || data._id,
-          email: data.email,
+          email: data.email || data.username || "",
           name: data.name || data.full_name || data.username || `${data.firstName || ""} ${data.lastName || ""}`.trim(),
           role: data.role || "regional",
           permissions: data.permissions || getDefaultPermissions(data.role || "regional"),
           createdBy: data.created_by || data.createdBy,
         }
 
-        // Create session and redirect
-        createSession(user)
-        router.push("/dashboard")
+        createSession(user, data.token)
+        console.log("Session created, attempting redirect to /dashboard")
+        router.replace("/dashboard")
       } else {
+        console.log("Login failed, setting error message.")
         setError(data.message || data.error || "Invalid credentials")
       }
     } catch (err) {
-      console.error("Login error:", err)
+      console.error("Login error caught in catch block:", err) // More specific error log
       setError("Network error. Please check your connection and try again.")
     } finally {
       setIsLoading(false)
+      console.log("Login process finished, isLoading set to false.")
     }
   }
 
+  // Render login form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
@@ -120,13 +118,13 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@shopvalidation.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="admin"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -164,18 +162,18 @@ export default function LoginPage() {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-
+{/* 
           <div className="mt-6 text-center text-sm text-gray-600">
             <p>Enter your credentials to access the dashboard</p>
             <div className="mt-2 text-xs text-muted-foreground">
               <p>
-                API Endpoint: <code>./api/users/login</code>
+                API Endpoint: <code>/api/users/login</code>
               </p>
               <p>
                 Base URL: <code>{getApiBaseUrl() || "Not configured"}</code>
               </p>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,6 @@
 import { buildApiUrl } from "./utils"
+import { getSession } from "./auth" // Make sure this returns token synchronously or await it if async
 
-// Shop interface
 export interface Shop {
   id: string
   name: string
@@ -22,98 +22,148 @@ export interface Shop {
   updatedAt: string
 }
 
-// API response interface
 export interface ShopsResponse {
   success: boolean
   shops: Shop[]
   total: number
-  page: number
-  limit: number
   error?: string
 }
 
-// Fetch shops from backend
 export async function fetchShops(params?: {
-  page?: number
-  limit?: number
   status?: string
   city?: string
   search?: string
 }): Promise<ShopsResponse> {
   try {
-    // Build query parameters
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append("page", params.page.toString())
-    if (params?.limit) queryParams.append("limit", params.limit.toString())
-    if (params?.status) queryParams.append("status", params.status)
-    if (params?.city) queryParams.append("city", params.city)
-    if (params?.search) queryParams.append("search", params.search)
+    // const queryParams = new URLSearchParams()
+    // if (params?.status) queryParams.append("status", params.status)
+    // if (params?.city) queryParams.append("city", params.city)
+    // if (params?.search) queryParams.append("search", params.search)
 
-    const apiUrl = buildApiUrl("/api/shops/get-shop")
-    const urlWithParams = queryParams.toString() ? `${apiUrl}?${queryParams.toString()}` : apiUrl
+    const apiUrl = buildApiUrl("/api/shops/get-shops")
+    // const urlWithParams = queryParams.toString() ? `${apiUrl}?${queryParams.toString()}` : apiUrl
+console.log("apiURL:",apiUrl)
+    const session = getSession()
+    const token = session?.token
 
-    console.log("Fetching shops from:", urlWithParams)
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }
 
-    const response = await fetch(urlWithParams, {
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    const response = await fetch(apiUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
+        "Accept": "application/json",
+        "ngrok-skip-browser-warning": "true", // this bypasses ngrok's HTML warning
       },
     })
 
-    const data = await response.json()
-    console.log("Shops response:", data)
-
-    if (response.ok && data) {
-      return {
-        success: true,
-        shops: data.shops || data.data || data,
-        total: data.total || data.shops?.length || 0,
-        page: data.page || 1,
-        limit: data.limit || 10,
-      }
-    } else {
+    const contentType = response.headers.get("content-type")
+    if (!contentType || !contentType.includes("application/json")) {
+      const rawText = await response.text()
       return {
         success: false,
         shops: [],
         total: 0,
-        page: 1,
-        limit: 10,
-        error: data.message || data.error || "Failed to fetch shops",
+        error: `Server returned non-JSON response (Status: ${response.status}). Raw: ${rawText.substring(0, 100)}...`,
       }
     }
-  } catch (error) {
-    console.error("Error fetching shops:", error)
+
+    const data = await response.json()
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        shops: [],
+        total: 0,
+        error: "Unauthorized. Please log in again.",
+      }
+    }
+
+    if (response.ok && data) {
+      const shops: Shop[] = (data.data || []).map((shop: any) => ({
+        id: shop._id,
+        ptc_urbanity: shop.ptc_urbanity || "",
+        city_village: shop.city_village || "",
+        
+      }))
+
+      return {
+        success: true,
+        shops,
+        total: data.count || shops.length,
+      }
+    }
+
     return {
       success: false,
       shops: [],
       total: 0,
-      page: 1,
-      limit: 10,
+      error: data.message || data.error || "Failed to fetch shops",
+    }
+  } catch (error) {
+    return {
+      success: false,
+      shops: [],
+      total: 0,
       error: error instanceof Error ? error.message : "Network error",
     }
   }
 }
 
-// Fetch single shop by ID
 export async function fetchShopById(shopId: string): Promise<{
   success: boolean
   shop?: Shop
   error?: string
 }> {
   try {
-    const apiUrl = buildApiUrl(`/api/shops/get-shop/${shopId}`)
+    const apiUrl = buildApiUrl(`/api/shops/get-shops/${shopId}`)
+
+    const session = await getSession()
+    const token = session?.token
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    } else {
+      console.warn(`No authentication token found for fetching shop ID ${shopId}. Request might be unauthorized.`)
+    }
 
     const response = await fetch(apiUrl, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
     })
 
+    const contentType = response.headers.get("content-type") || ""
+
+    if (!contentType.includes("application/json")) {
+      const rawText = await response.text()
+      console.error("Non-JSON response from API for single shop:", rawText)
+      return {
+        success: false,
+        error: `Server returned non-JSON response (Status: ${response.status}). Raw: ${rawText.substring(0, 100)}...`,
+      }
+    }
+
     const data = await response.json()
+
+    if (response.status === 401) {
+      console.error("Unauthorized access when fetching single shop.")
+      return {
+        success: false,
+        error: "Unauthorized. Please log in again.",
+      }
+    }
 
     if (response.ok && data) {
       return {

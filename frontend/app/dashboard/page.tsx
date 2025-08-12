@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     setLoading(true)
     try {
-      const response = await fetchShops({ limit: 5 })
+      const response = await fetchShops({  })
 
       if (response.success) {
         setShops(response.shops)

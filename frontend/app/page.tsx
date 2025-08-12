@@ -1,22 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
-    // Simple check for existing session
     const checkAuth = () => {
       try {
         const sessionData = localStorage.getItem("session")
         if (sessionData) {
           const session = JSON.parse(sessionData)
-          // Check if session is not expired
           if (new Date() < new Date(session.expiresAt)) {
-            router.push("/dashboard")
+            // Only redirect if not already on /dashboard
+            if (pathname !== "/dashboard") {
+              router.push("/dashboard")
+            }
             return
           }
         }
@@ -24,18 +26,19 @@ export default function HomePage() {
         console.log("No valid session found")
       }
 
-      // No valid session, go to login
-      router.push("/login")
+      // Only redirect if not already on /login
+      if (pathname !== "/login") {
+        router.push("/login")
+      }
     }
 
-    // Small delay to prevent flash
     const timer = setTimeout(() => {
       checkAuth()
       setIsLoading(false)
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [router])
+  }, [router, pathname])
 
   if (isLoading) {
     return (
