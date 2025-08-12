@@ -26,7 +26,7 @@ export interface Shop {
 
 export interface ShopsResponse {
   success: boolean
-  shops: any[] // Changed from Shop[] to any[] to handle raw data
+  shops: Shop[]
   total: number
   error?: string
 }
@@ -93,11 +93,29 @@ export async function fetchShops(params?: {
     }
 
     if (response.ok && data) {
-      const shops = data.data || []
+      const shops: Shop[] = (data.data || []).map((shop: any) => ({
+        id: shop._id || shop.id,
+        name: shop.name || shop.shop_name || "Unnamed Shop",
+        address: shop.address || shop.shop_address || "",
+        city: shop.city || shop.city_village || "",
+        state: shop.state || shop.ptc_urbanity || "",
+        zipCode: shop.zipCode || shop.zip_code || "",
+        phone: shop.phone || shop.contact_number || "",
+        email: shop.email || shop.contact_email || "",
+        status: shop.status || "active",
+        coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : undefined),
+        lastVisit: shop.lastVisit || shop.last_visit,
+        visitCount: shop.visitCount || shop.visit_count || 0,
+        validationScore: shop.validationScore || shop.validation_score,
+        createdAt: shop.createdAt || shop.created_at || new Date().toISOString(),
+        updatedAt: shop.updatedAt || shop.updated_at || new Date().toISOString(),
+        ptc_urbanity: shop.ptc_urbanity || "",
+        city_village: shop.city_village || "",
+      }))
 
       return {
         success: true,
-        shops, // Return raw shop data exactly as received from API
+        shops,
         total: data.count || shops.length,
       }
     }
@@ -120,7 +138,7 @@ export async function fetchShops(params?: {
 
 export async function fetchShopById(shopId: string): Promise<{
   success: boolean
-  data?: any // Return complete raw data from API response
+  data?: any // Return raw data instead of mapped Shop interface
   error?: string
 }> {
   try {
@@ -172,7 +190,7 @@ export async function fetchShopById(shopId: string): Promise<{
 
       return {
         success: true,
-        data: shopData, // Return all raw data exactly as received from API
+        data: shopData, // Return all raw shop data as-is
       }
     } else {
       return {

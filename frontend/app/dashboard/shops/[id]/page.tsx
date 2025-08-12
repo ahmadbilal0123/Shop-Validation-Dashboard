@@ -23,26 +23,18 @@ export default function ShopDetailsPage() {
 
   useEffect(() => {
     const loadShopData = async () => {
-        
       if (!shopId) return
 
       setLoading(true)
       setError(null)
 
       try {
-        console.log("API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL)
-        console.log("Shop ID:", shopId)
-
         const response = await fetchShopById(shopId)
-
-        console.log("API Response:", response)
 
         if (response.success && response.data) {
           setShop(response.data)
         } else {
-          const errorMessage = response.error || "Failed to load shop data"
-          console.error("API Error:", errorMessage)
-          setError(errorMessage)
+          setError(response.error || "Failed to load shop data")
         }
       } catch (err) {
         console.error("Error loading shop data:", err)
@@ -124,17 +116,7 @@ export default function ShopDetailsPage() {
           <Alert variant="destructive" className="mb-8 border-red-200 bg-red-50 rounded-xl">
             <AlertCircle className="h-5 w-5" />
             <AlertTitle className="text-lg">Error Loading Shop</AlertTitle>
-            <AlertDescription className="text-base">
-              {error}
-              {!process.env.NEXT_PUBLIC_API_BASE_URL && (
-                <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Configuration Issue:</strong> NEXT_PUBLIC_API_BASE_URL environment variable is not set.
-                    Please add it to your project settings.
-                  </p>
-                </div>
-              )}
-            </AlertDescription>
+            <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
         )}
 
@@ -158,13 +140,10 @@ export default function ShopDetailsPage() {
                         <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-amber-50 px-4 py-2 rounded-xl border border-yellow-200 shadow-sm">
                           <Star className="h-5 w-5 text-yellow-500 fill-current" />
                           <span className="text-lg font-bold text-yellow-700">
-                            {(() => {
-                              const rating = shop.rating || shop.validation_score || shop.validationScore
-                              if (typeof rating === "number") {
-                                return rating.toFixed(2)
-                              }
-                              return String(rating)
-                            })()}
+                            {(shop.rating || shop.validation_score || shop.validationScore)?.toFixed?.(2) ||
+                              shop.rating ||
+                              shop.validation_score ||
+                              shop.validationScore}
                           </span>
                         </div>
                       )}
@@ -234,10 +213,7 @@ export default function ShopDetailsPage() {
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-5 w-5 text-red-500" />
                           <p className="text-2xl font-bold text-gray-900">
-                            {(() => {
-                              const visitCount = shop.visitCount || shop.visit_count || shop.total_visits
-                              return visitCount ? String(visitCount) : "0"
-                            })()}
+                            {shop.visitCount || shop.visit_count || shop.total_visits || 0}
                           </p>
                         </div>
                       </div>
