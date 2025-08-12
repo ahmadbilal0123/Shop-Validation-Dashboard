@@ -20,11 +20,13 @@ export interface Shop {
   validationScore?: number
   createdAt: string
   updatedAt: string
+  ptc_urbanity?: string
+  city_village?: string
 }
 
 export interface ShopsResponse {
   success: boolean
-  shops: Shop[]
+  shops: any[] // Changed from Shop[] to any[] to handle raw data
   total: number
   error?: string
 }
@@ -33,35 +35,39 @@ export async function fetchShops(params?: {
   status?: string
   city?: string
   search?: string
+  page?: number
+  limit?: number
 }): Promise<ShopsResponse> {
   try {
-    // const queryParams = new URLSearchParams()
-    // if (params?.status) queryParams.append("status", params.status)
-    // if (params?.city) queryParams.append("city", params.city)
-    // if (params?.search) queryParams.append("search", params.search)
+    const queryParams = new URLSearchParams()
+    if (params?.status && params.status !== "all") queryParams.append("status", params.status)
+    if (params?.city) queryParams.append("city", params.city)
+    if (params?.search) queryParams.append("search", params.search)
+    if (params?.page) queryParams.append("page", params.page.toString())
+    if (params?.limit) queryParams.append("limit", params.limit.toString())
 
     const apiUrl = buildApiUrl("/api/shops/get-shops")
-    // const urlWithParams = queryParams.toString() ? `${apiUrl}?${queryParams.toString()}` : apiUrl
-console.log("apiURL:",apiUrl)
+    const urlWithParams = queryParams.toString() ? `${apiUrl}?${queryParams.toString()}` : apiUrl
+    console.log("apiURL:", urlWithParams)
+
     const session = getSession()
     const token = session?.token
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       Accept: "application/json",
+      "ngrok-skip-browser-warning": "true", // this bypasses ngrok's HTML warning
     }
 
     if (token) {
       headers.Authorization = `Bearer ${token}`
+    } else {
+      console.warn("No authentication token found. Request might be unauthorized.")
     }
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(urlWithParams, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "ngrok-skip-browser-warning": "true", // this bypasses ngrok's HTML warning
-      },
+      headers,
     })
 
     const contentType = response.headers.get("content-type")
@@ -87,16 +93,11 @@ console.log("apiURL:",apiUrl)
     }
 
     if (response.ok && data) {
-      const shops: Shop[] = (data.data || []).map((shop: any) => ({
-        id: shop._id,
-        ptc_urbanity: shop.ptc_urbanity || "",
-        city_village: shop.city_village || "",
-        
-      }))
+      const shops = data.data || []
 
       return {
         success: true,
-        shops,
+        shops, // Return raw shop data exactly as received from API
         total: data.count || shops.length,
       }
     }
@@ -119,18 +120,19 @@ console.log("apiURL:",apiUrl)
 
 export async function fetchShopById(shopId: string): Promise<{
   success: boolean
-  shop?: Shop
+  data?: any // Return complete raw data from API response
   error?: string
 }> {
   try {
-    const apiUrl = buildApiUrl(`/api/shops/get-shops/${shopId}`)
+    const apiUrl = buildApiUrl(`/api/shops/get-shop/${shopId}`)
 
-    const session = await getSession()
+    const session = getSession()
     const token = session?.token
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       Accept: "application/json",
+      "ngrok-skip-browser-warning": "true",
     }
 
     if (token) {
@@ -166,9 +168,11 @@ export async function fetchShopById(shopId: string): Promise<{
     }
 
     if (response.ok && data) {
+      const shopData = data.data || data.shop || data
+
       return {
         success: true,
-        shop: data.shop || data,
+        data: shopData, // Return all raw data exactly as received from API
       }
     } else {
       return {
