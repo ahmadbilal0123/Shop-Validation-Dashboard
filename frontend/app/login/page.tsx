@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { buildApiUrl, getApiBaseUrl } from "@/lib/utils"
-import { createSession } from "@/lib/auth"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -39,9 +38,24 @@ export default function LoginPage() {
         return ["view_reports", "view_gps", "view_analysis"]
       case "regional":
         return ["view_reports", "view_gps"]
+      case "auditor":
+        return ["view_assigned_shops", "submit_audits"]
       default:
         return ["view_reports"]
     }
+  }
+
+  const createLocalSession = (user: any, token: string) => {
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 24) // 24 hour session
+
+    const sessionData = {
+      user,
+      token,
+      expiresAt: expiresAt.toISOString(),
+    }
+
+    localStorage.setItem("session", JSON.stringify(sessionData))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,9 +102,11 @@ export default function LoginPage() {
           createdBy: data.created_by || data.createdBy,
         }
 
-        createSession(user, data.token)
-        console.log("Session created, attempting redirect to /dashboard")
-        router.replace("/dashboard")
+        createLocalSession(user, data.token)
+
+        const redirectPath = user.role === "auditor" ? "/auditor-dashboard" : "/dashboard"
+        console.log(`Session created, attempting redirect to ${redirectPath} for role: ${user.role}`)
+        router.replace(redirectPath)
       } else {
         console.log("Login failed, setting error message.")
         setError(data.message || data.error || "Invalid credentials")
@@ -162,18 +178,6 @@ export default function LoginPage() {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-{/* 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Enter your credentials to access the dashboard</p>
-            <div className="mt-2 text-xs text-muted-foreground">
-              <p>
-                API Endpoint: <code>/api/users/login</code>
-              </p>
-              <p>
-                Base URL: <code>{getApiBaseUrl() || "Not configured"}</code>
-              </p>
-            </div>
-          </div> */}
         </CardContent>
       </Card>
     </div>

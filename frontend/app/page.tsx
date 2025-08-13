@@ -12,21 +12,35 @@ export default function HomePage() {
     const checkAuth = () => {
       try {
         const sessionData = localStorage.getItem("session")
+
         if (sessionData) {
           const session = JSON.parse(sessionData)
-          if (new Date() < new Date(session.expiresAt)) {
-            // Only redirect if not already on /dashboard
+
+          // Validate token & expiration
+          const token = session?.token
+          const expiresAt = session?.expiresAt
+
+          if (token && expiresAt && new Date() < new Date(expiresAt)) {
+            // Keep token fresh for API calls
+            localStorage.setItem("authToken", token)
+
             if (pathname !== "/dashboard") {
               router.push("/dashboard")
             }
             return
+          } else {
+            // Token invalid or expired
+            localStorage.removeItem("session")
+            localStorage.removeItem("authToken")
           }
         }
       } catch (error) {
-        console.log("No valid session found")
+        console.warn("Invalid session data, clearing storage")
+        localStorage.removeItem("session")
+        localStorage.removeItem("authToken")
       }
 
-      // Only redirect if not already on /login
+      // Redirect to login if no valid token
       if (pathname !== "/login") {
         router.push("/login")
       }
