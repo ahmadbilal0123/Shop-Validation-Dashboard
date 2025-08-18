@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSession } from "@/lib/auth"
-import { assignShopsToAuditors } from "@/lib/api"
+import { assignShopsToAuditor } from "@/lib/api"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Search, UserCheck, Package } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"   // ✅ Import shadcn toast
 
 interface User {
   id: string
@@ -22,13 +22,13 @@ interface User {
 export default function AssignShopsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { toast } = useToast()   // ✅ Init toast
   const [users, setUsers] = useState<User[]>([])
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [selectedAuditorId, setSelectedAuditorId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Get selected shop IDs from URL params
   const shopIds = searchParams.get("shopIds")?.split(",") || []
 
   useEffect(() => {
@@ -42,7 +42,11 @@ export default function AssignShopsPage() {
       const token = session?.token
 
       if (!token) {
-        alert("No authentication token found. Please log in.")
+        toast({
+          title: "Authentication Error",
+          description: "No authentication token found. Please log in.",
+          variant: "destructive",
+        })
         router.push("/login")
         return
       }
@@ -59,37 +63,57 @@ export default function AssignShopsPage() {
         const mappedUsers = (usersData.auditors || []).map((auditor: any) => ({
           id: auditor._id,
           name: auditor.username,
-          email: auditor.username, // Using username as email since email is not provided
+          email: auditor.username,
           role: auditor.role,
         }))
         setUsers(mappedUsers)
       }
     } catch (error) {
       console.error("Error loading users:", error)
-      alert("Error loading users. Please try again.")
+      toast({
+        title: "Error",
+        description: "Error loading users. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUserIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]))
-  }
-
   const handleAssignShops = async () => {
-    if (selectedUserIds.length === 0) {
-      alert("Please select at least one user.")
+    if (!selectedAuditorId) {
+      toast({
+        title: "No Auditor Selected",
+        description: "Please select an auditor before assigning shops.",
+        variant: "destructive",
+      })
       return
     }
 
     setAssigning(true)
     try {
-      await assignShopsToAuditors(selectedUserIds, shopIds)
-      alert("Shops assigned successfully!")
-      router.push("/dashboard/shops")
+      const result = await assignShopsToAuditor(selectedAuditorId, shopIds)
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message || "Shops assigned successfully!",
+        })
+        router.push("/dashboard/shops")
+      } else {
+        toast({
+          title: "Already Assigned",
+          description: result.error || "Some shops are already assigned.",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Assign error:", error)
-      alert(`Error assigning shops: ${(error as Error).message}`)
+      toast({
+        title: "Error",
+        description: (error as Error).message || "Error assigning shops.",
+        variant: "destructive",
+      })
     } finally {
       setAssigning(false)
     }
@@ -158,7 +182,7 @@ export default function AssignShopsPage() {
           <div className="flex gap-4">
             <Badge variant="outline" className="px-4 py-2 bg-green-50 border-green-200 text-green-700 font-semibold">
               <Users className="w-4 h-4 mr-2" />
-              {selectedUserIds.length} Auditors Selected
+              {selectedAuditorId ? 1 : 0} Auditor Selected
             </Badge>
             <Badge variant="outline" className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold">
               <Package className="w-4 h-4 mr-2" />
@@ -195,17 +219,18 @@ export default function AssignShopsPage() {
                 <Card
                   key={user.id}
                   className={`bg-white/90 backdrop-blur-sm border rounded-xl transition-all duration-200 hover:shadow-md ${
-                    selectedUserIds.includes(user.id)
+                    selectedAuditorId === user.id
                       ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
                       : "border-blue-100 hover:border-blue-200"
                   }`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
-                      <Checkbox
-                        id={user.id}
-                        checked={selectedUserIds.includes(user.id)}
-                        onCheckedChange={() => toggleUserSelection(user.id)}
+                      <input
+                        type="radio"
+                        name="auditor"
+                        checked={selectedAuditorId === user.id}
+                        onChange={() => setSelectedAuditorId(user.id)}
                         className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
                       />
                       <div className="flex-1">
@@ -217,7 +242,7 @@ export default function AssignShopsPage() {
                           </Badge>
                         </Label>
                       </div>
-                      {selectedUserIds.includes(user.id) && (
+                      {selectedAuditorId === user.id && (
                         <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
                           <UserCheck className="w-5 h-5 text-green-600" />
                         </div>
@@ -232,7 +257,7 @@ export default function AssignShopsPage() {
             <div className="mt-8">
               <Button
                 onClick={handleAssignShops}
-                disabled={assigning || selectedUserIds.length === 0}
+                disabled={assigning || !selectedAuditorId}
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
               >
                 {assigning ? (
@@ -243,7 +268,7 @@ export default function AssignShopsPage() {
                 ) : (
                   <>
                     <UserCheck className="w-5 h-5 mr-3" />
-                    Assign {shopIds.length} Shops to {selectedUserIds.length} Auditors
+                    Assign {shopIds.length} Shops to Auditor
                   </>
                 )}
               </Button>

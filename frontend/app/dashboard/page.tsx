@@ -16,7 +16,7 @@ export default function RecentShopsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
+  const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
   const [statusFilter, setStatusFilter] = useState<string | undefined>("all")
   const [cityFilter, setCityFilter] = useState<string | undefined>(undefined)
@@ -178,7 +178,7 @@ export default function RecentShopsPage() {
                   placeholder="Search recent shops by name, address, or city..."
                   value={searchQuery || ""}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch(e)}
                   className="pl-12 h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 bg-white/70"
                 />
               </div>

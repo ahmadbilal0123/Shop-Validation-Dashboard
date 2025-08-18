@@ -121,6 +121,9 @@ export async function fetchShops(params?: {
         updatedAt: shop.updatedAt || shop.updated_at || new Date().toISOString(),
         ptc_urbanity: shop.ptc_urbanity || "",
         city_village: shop.city_village || "",
+
+        // ✅ Add image field (visitImages)
+        visitImages: shop.visitImages || shop.images || [],
       }))
 
       return {
@@ -145,6 +148,7 @@ export async function fetchShops(params?: {
     }
   }
 }
+
 
 export async function fetchAssignedShopsForAuditor(
   auditorId: string,
@@ -358,16 +362,17 @@ export async function fetchShopById(shopId: string): Promise<{
       error: error instanceof Error ? error.message : "Network error",
     }
   }
+  
 }
 
-export async function assignShopsToAuditors(
-  auditorIds: string[],
+export async function assignShopsToAuditor(
+  auditorId: string,
   shopIds: string[],
 ): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
     const session = getSession()
     if (!session?.token) {
-      throw new Error("No authentication token found")
+      return { success: false, error: "No authentication token found" }
     }
 
     const url = buildApiUrl("/api/shops/assign-shops")
@@ -379,29 +384,23 @@ export async function assignShopsToAuditors(
         Authorization: `Bearer ${session.token}`,
         "ngrok-skip-browser-warning": "true",
       },
-      body: JSON.stringify({
-        auditorIds,
-        shopIds,
-      }),
+      body: JSON.stringify({ auditorId, shopIds }),
     })
 
-    if (!response.ok) {
-      const contentType = response.headers.get("content-type")
-      if (contentType && contentType.includes("text/html")) {
-        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`)
-      }
+    const data = await response.json().catch(() => ({}))
 
-      let errorMessage = `HTTP error! status: ${response.status}`
-      try {
-        const errorData = await response.json()
-        errorMessage = errorData.message || errorMessage
-      } catch {
-        errorMessage = `Server error: ${response.status} ${response.statusText}`
-      }
-      throw new Error(errorMessage)
+    if (!response.ok) {
+      let errorMessage =
+        data.message ||
+        data.error ||
+        (response.status === 409
+          ? "Shops already assigned to this auditor"
+          : `Server error: ${response.status} ${response.statusText}`)
+
+      return { success: false, error: errorMessage }
     }
 
-    const data = await response.json()
+    // ✅ Normalize response
     return {
       success: true,
       message: data.message || "Shops assigned successfully",

@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { fetchAssignedShopsForAuditor, type Shop, type AssignedShopsResponse } from "@/lib/api"
@@ -36,95 +35,72 @@ export default function AuditorDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
+  const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
   const [statusFilter, setStatusFilter] = useState<string | undefined>("all")
   const [cityFilter, setCityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
   const [auditorId, setAuditorId] = useState<string | null>(null)
-  const [hasSession, setHasSession] = useState(false)
   const router = useRouter()
 
-  // Get auditor ID from session/localStorage
+  // Check session and set auditorId
   useEffect(() => {
-    const sessionData = localStorage.getItem("session")
-    setHasSession(!!sessionData)
-    console.log("Raw session data:", sessionData) // Added debugging
-    if (sessionData) {
+    const checkSession = () => {
+      const sessionData = localStorage.getItem("session")
+      if (!sessionData) {
+        router.push("/login")
+        return
+      }
       try {
         const session = JSON.parse(sessionData)
-        console.log("Parsed session:", session) // Added debugging
-
-        // Check if session is expired
         if (new Date() >= new Date(session.expiresAt)) {
           localStorage.removeItem("session")
-          setHasSession(false)
           router.push("/login")
           return
         }
-
-        // Check if user is an auditor
         const userRole = session.user?.role || session.role
         if (userRole !== "auditor") {
-          router.push("/dashboard") // Redirect non-auditors to admin dashboard
+          router.push("/dashboard")
           return
         }
-
         const extractedAuditorId = session.user?.id || session.userId || session.id
-        console.log("Extracted auditor ID:", extractedAuditorId) // Added debugging
         setAuditorId(extractedAuditorId)
       } catch (error) {
-        console.error("Error parsing session data:", error)
         localStorage.removeItem("session")
-        setHasSession(false)
         router.push("/login")
       }
-    } else {
-      console.log("No session found in localStorage")
-      router.push("/login")
     }
+    checkSession()
+    // eslint-disable-next-line
   }, [router])
 
-  const loadAssignedShops = async () => {
-    if (!auditorId) {
-      console.log("No auditor ID available, skipping API call") // Added debugging
-      return
-    }
-
-    console.log("Loading assigned shops for auditor ID:", auditorId) // Added debugging
-    setLoading(true)
-    setError(null)
-    try {
-      const response: AssignedShopsResponse = await fetchAssignedShopsForAuditor(auditorId, {
-        status: statusFilter === "all" ? undefined : statusFilter,
-        city: cityFilter,
-        search: searchQuery,
-        page,
-        limit,
-      })
-
-      console.log("API response:", response) // Added debugging
-
-      if (response.success) {
-        console.log("Successfully loaded shops:", response.shops) // Added debugging
-        setShops(response.shops)
-        setTotalShops(response.total || response.shops.length)
-      } else {
-        console.error("API returned error:", response.error) // Added debugging
-        setError(response.error || "Failed to load assigned shops.")
-      }
-    } catch (err) {
-      console.error("Error loading assigned shops:", err)
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // Load assigned shops when auditorId or filters change
   useEffect(() => {
-    if (auditorId) {
-      loadAssignedShops()
+    const loadAssignedShops = async () => {
+      if (!auditorId) return
+      setLoading(true)
+      setError(null)
+      try {
+        const response: AssignedShopsResponse = await fetchAssignedShopsForAuditor(auditorId, {
+          status: statusFilter === "all" ? undefined : statusFilter,
+          city: cityFilter,
+          search: searchQuery,
+          page,
+          limit,
+        })
+        if (response.success) {
+          setShops(response.shops)
+          setTotalShops(response.total || response.shops.length)
+        } else {
+          setError(response.error || "Failed to load assigned shops.")
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unexpected error occurred.")
+      } finally {
+        setLoading(false)
+      }
     }
+    loadAssignedShops()
   }, [auditorId, page, limit, statusFilter, cityFilter, searchQuery])
 
   const handleNextPage = () => {
@@ -142,7 +118,7 @@ export default function AuditorDashboard() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setPage(1)
-    loadAssignedShops()
+    // loadAssignedShops() is not needed here, useEffect will trigger
   }
 
   const getStatusColor = (status: string) => {
@@ -166,6 +142,7 @@ export default function AuditorDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("session")
+    document.cookie = "session=; path=/; max-age=0"
     router.push("/login")
   }
 
@@ -384,7 +361,7 @@ export default function AuditorDashboard() {
                         placeholder="Search assigned shops by name, address, or city..."
                         value={searchQuery || ""}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch(e)}
                         className="pl-12 h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 bg-white/70"
                       />
                     </div>

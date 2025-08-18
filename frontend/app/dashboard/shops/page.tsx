@@ -31,17 +31,17 @@ export default function ShopsPage() {
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
+  const [page] = useState(1)
+  const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
   const [statusFilter, setStatusFilter] = useState<string | undefined>("all")
-  const [cityFilter, setCityFilter] = useState<string | undefined>(undefined)
+  const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
 
   // Selection state
   const [selectMode, setSelectMode] = useState(false)
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
-  const [assignLoading, setAssignLoading] = useState(false)
+  const [assignLoading] = useState(false)
 
   const loadShops = async () => {
     setLoading(true)
@@ -119,15 +119,21 @@ export default function ShopsPage() {
     }
   }
 
+  const areShopsAlreadyAssigned = (selectedShopIds: string[], auditorId: string) => {
+    return shops
+      .filter((shop) => selectedShopIds.includes(shop.id))
+      .some((shop) => shop.auditorId === auditorId)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
       {/* Header Section */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-40 shadow-sm">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100  top-0 z-40 shadow-sm">
         <div className="container mx-auto px-6 py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="space-y-2">
-              <h1 className="text-4xl font-bold text-blue-900 font-sans">Auditor Shop Management</h1>
-              <p className="text-blue-700 font-sans">
+              <h1 className="text-4xl font-bold text-blue-900 ">Auditor Shop Management</h1>
+              <p className="text-blue-700 ">
                 Efficiently manage and assign shops to auditors with our streamlined dashboard
               </p>
             </div>
@@ -148,9 +154,9 @@ export default function ShopsPage() {
       </div>
 
       {/* Filters and Actions Section */}
-      <div className="container mx-auto px-6 py-6">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+      <div className="container mx-auto px-6 py-6 ">
+       <div className="sticky top-0 bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-6 mb-8 z-50">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center  justify-between">
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />

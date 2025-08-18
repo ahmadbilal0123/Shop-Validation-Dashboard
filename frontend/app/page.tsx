@@ -9,49 +9,64 @@ export default function HomePage() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const sessionData = localStorage.getItem("session")
+    const isValidSession = (session: any) => {
+      const token = session?.token
+      const expiresAt = session?.expiresAt
+      return token && expiresAt && new Date() < new Date(expiresAt)
+    }
 
-        if (sessionData) {
-          const session = JSON.parse(sessionData)
+    const clearSession = () => {
+      localStorage.removeItem("session")
+      localStorage.removeItem("authToken")
+      document.cookie = "session=; path=/; max-age=0"
+    }
 
-          // Validate token & expiration
-          const token = session?.token
-          const expiresAt = session?.expiresAt
-
-          if (token && expiresAt && new Date() < new Date(expiresAt)) {
-            // Keep token fresh for API calls
-            localStorage.setItem("authToken", token)
-
-            if (pathname !== "/dashboard") {
-              router.push("/dashboard")
-            }
-            return
-          } else {
-            // Token invalid or expired
-            localStorage.removeItem("session")
-            localStorage.removeItem("authToken")
-          }
-        }
-      } catch (error) {
-        console.warn("Invalid session data, clearing storage")
-        localStorage.removeItem("session")
-        localStorage.removeItem("authToken")
-      }
-
-      // Redirect to login if no valid token
-      if (pathname !== "/login") {
-        router.push("/login")
+    const redirectToDashboard = (role: string) => {
+      if (role === "auditor" && pathname !== "/auditor-dashboard") {
+        router.replace("/auditor-dashboard")
+      } else if (role !== "auditor" && pathname !== "/dashboard") {
+        router.replace("/dashboard")
       }
     }
 
-    const timer = setTimeout(() => {
-      checkAuth()
-      setIsLoading(false)
-    }, 100)
+    const handleValidSession = (session: any) => {
+      localStorage.setItem("authToken", session.token)
 
-    return () => clearTimeout(timer)
+      // ✅ Save cookie so middleware can read it immediately
+      document.cookie = `session=${encodeURIComponent(
+        JSON.stringify(session)
+      )}; path=/; max-age=86400; SameSite=Strict`
+
+      const sessionUser = session?.user
+      redirectToDashboard(sessionUser?.role)
+      setIsLoading(false)
+    }
+
+    const handleInvalidSession = () => {
+      clearSession()
+      if (pathname !== "/login") {
+        router.replace("/login")
+      }
+      setIsLoading(false)
+    }
+
+    const checkAuth = () => {
+      try {
+        const sessionData = localStorage.getItem("session")
+        if (sessionData) {
+          const session = JSON.parse(sessionData)
+          if (isValidSession(session)) {
+            handleValidSession(session)
+            return
+          }
+        }
+      } catch (error) {
+        console.error("Invalid session data, clearing storage:", error)
+      }
+      handleInvalidSession()
+    }
+
+    checkAuth()
   }, [router, pathname])
 
   if (isLoading) {

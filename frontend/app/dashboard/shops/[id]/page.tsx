@@ -17,6 +17,8 @@ import {
   UserPlus,
 } from "lucide-react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface ShopData {
   [key: string]: any;
 }
@@ -100,7 +102,9 @@ export default function ShopDetailsPage() {
               <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 {shop?.shop_name || shop?.name || "Shop Details"}
               </h1>
-              <p className="text-gray-600 mt-1 text-sm">Detailed information & analytics</p>
+              <p className="text-gray-600 mt-1 text-sm">
+                Detailed information & analytics
+              </p>
             </div>
           </div>
           <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
@@ -114,7 +118,9 @@ export default function ShopDetailsPage() {
         {loading && (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-20 w-20 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-8 shadow-lg"></div>
-            <p className="text-gray-600 text-xl font-medium">Loading shop details...</p>
+            <p className="text-gray-600 text-xl font-medium">
+              Loading shop details...
+            </p>
           </div>
         )}
 
@@ -136,11 +142,17 @@ export default function ShopDetailsPage() {
                     <CardTitle className="text-3xl font-bold text-gray-900 mb-4">
                       {shop.shop_name || shop.name || "Shop Details"}
                     </CardTitle>
-                    {(shop.rating || shop.validation_score || shop.validationScore) && (
+                    {(shop.rating ||
+                      shop.validation_score ||
+                      shop.validationScore) && (
                       <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-amber-50 px-4 py-2 rounded-xl border border-yellow-200 shadow-sm">
                         <Star className="h-5 w-5 text-yellow-500 fill-current" />
                         <span className="text-lg font-bold text-yellow-700">
-                          {(shop.rating || shop.validation_score || shop.validationScore)?.toFixed?.(2)}
+                          {(
+                            shop.rating ||
+                            shop.validation_score ||
+                            shop.validationScore
+                          )?.toFixed?.(2)}
                         </span>
                       </div>
                     )}
@@ -157,7 +169,9 @@ export default function ShopDetailsPage() {
                   </h3>
                   <div className="space-y-4">
                     <div className="p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl">
-                      <p className="text-sm font-medium text-gray-600">Address</p>
+                      <p className="text-sm font-medium text-gray-600">
+                        Address
+                      </p>
                       <p className="text-lg font-semibold text-gray-900">
                         {shop.address || shop.shop_address || "Not provided"}
                       </p>
@@ -165,11 +179,17 @@ export default function ShopDetailsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl">
                         <p className="text-sm font-medium text-gray-600">City</p>
-                        <p className="text-lg font-semibold text-gray-900">{shop.city || "Not provided"}</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {shop.city || "Not provided"}
+                        </p>
                       </div>
                       <div className="p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl">
-                        <p className="text-sm font-medium text-gray-600">State</p>
-                        <p className="text-lg font-semibold text-gray-900">{shop.state || "Not provided"}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          State
+                        </p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {shop.state || "Not provided"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -199,28 +219,66 @@ export default function ShopDetailsPage() {
               </CardContent>
             </Card>
 
+            {/* Show Images */}
+            {shop.visitImages?.length > 0 && (
+              <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Visit Images
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {shop.visitImages.map((img: string, index: number) => (
+                    <img
+                      key={index}
+                      src={`${API_BASE_URL}${img}`} // prepend API base URL
+                      alt={`Visit Image ${index + 1}`}
+                      className="rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-transform duration-300"
+                    />
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* Full Data Table */}
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-300 border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
+                      <th className="border px-6 py-4 text-left font-bold text-gray-700">
+                        Field
+                      </th>
+                      <th className="border px-6 py-4 text-left font-bold text-gray-700">
+                        Value
+                      </th>
+                      <th className="border px-6 py-4 text-left font-bold text-gray-700">
+                        Field
+                      </th>
+                      <th className="border px-6 py-4 text-left font-bold text-gray-700">
+                        Value
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
+                    {Array.from({
+                      length: Math.ceil(Object.entries(shop).length / 2),
+                    }).map((_, i) => {
                       const first = Object.entries(shop)[i * 2];
                       const second = Object.entries(shop)[i * 2 + 1];
                       return (
-                        <tr key={i} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200">
-                          <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
+                        <tr
+                          key={i}
+                          className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
+                        >
+                          <td className="border px-6 py-4 font-semibold text-gray-600">
+                            {formatFieldName(first[0])}
+                          </td>
                           <td className="border px-6 py-4 text-gray-900">
                             {first[0].toLowerCase().includes("status") ? (
-                              <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
+                              <Badge
+                                className={`${getStatusColor(
+                                  String(first[1])
+                                )} font-bold`}
+                              >
                                 {String(first[1]).toUpperCase()}
                               </Badge>
                             ) : (
@@ -229,10 +287,18 @@ export default function ShopDetailsPage() {
                           </td>
                           {second ? (
                             <>
-                              <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(second[0])}</td>
+                              <td className="border px-6 py-4 font-semibold text-gray-600">
+                                {formatFieldName(second[0])}
+                              </td>
                               <td className="border px-6 py-4 text-gray-900">
-                                {second[0].toLowerCase().includes("status") ? (
-                                  <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
+                                {second[0]
+                                  .toLowerCase()
+                                  .includes("status") ? (
+                                  <Badge
+                                    className={`${getStatusColor(
+                                      String(second[1])
+                                    )} font-bold`}
+                                  >
                                     {String(second[1]).toUpperCase()}
                                   </Badge>
                                 ) : (

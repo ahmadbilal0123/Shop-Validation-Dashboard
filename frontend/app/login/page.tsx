@@ -56,6 +56,8 @@ export default function LoginPage() {
     }
 
     localStorage.setItem("session", JSON.stringify(sessionData))
+    // Set session cookie for middleware
+    document.cookie = `session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=86400; SameSite=Lax`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -215,8 +215,12 @@ export default function ShopDetailsPage() {
                     {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
                       const first = Object.entries(shop)[i * 2];
                       const second = Object.entries(shop)[i * 2 + 1];
+                      // Use a unique key based on the field names
+                      const rowKey = second
+                        ? `${first[0]}-${second[0]}`
+                        : `${first[0]}`;
                       return (
-                        <tr key={i} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200">
+                        <tr key={rowKey} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200">
                           <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
                           <td className="border px-6 py-4 text-gray-900">
                             {first[0].toLowerCase().includes("status") ? (
