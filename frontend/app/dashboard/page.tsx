@@ -100,6 +100,7 @@ export default function RecentShopsPage() {
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
+                <h1 className="text-3xl font-bold  text-blue-700">Admin DashBoard</h1>
               <h1 className="text-4xl font-bold text-slate-900">Recently Added Shops</h1>
               <p className="text-slate-600 text-lg font-medium">
                 Discover newly registered shops from the last 30 days

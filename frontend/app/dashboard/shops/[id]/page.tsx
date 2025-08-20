@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, ImageIcon, History } from "lucide-react"
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, ImageIcon, History } from "lucide-react"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -251,8 +251,7 @@ export default function ShopDetailsPage() {
                   {/* Latest Images Section */}
                   <div>
                     <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      Latest Upload
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span> Latest Upload
                     </h4>
                     {getActualLatestImages().map((img: any) => (
                       <div key={`latest-${img._id}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -310,47 +309,49 @@ export default function ShopDetailsPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {img.shopImage && (
-                                <div className="relative group">
-                                  <img
-                                    src={
-                                      img.shopImage.startsWith("http")
-                                        ? img.shopImage
-                                        : `${API_BASE_URL || ""}${img.shopImage}`
-                                    }
-                                    alt={`Shop Image - Visit ${getPreviousImages().length - index}`}
-                                    className="w-full h-48 object-cover rounded-lg shadow-md border-2 border-blue-200 group-hover:scale-105 group-hover:shadow-xl transition-all duration-300"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement
-                                      target.src = "/placeholder.svg?height=192&width=300&text=Shop+Image"
-                                    }}
-                                  />
-                                  <div className="absolute top-3 left-3 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
-                                    Shop View
-                                  </div>
+                            {img.shopImage && (
+                              <div key={`${img._id || Math.random()}-shop`} className="relative group">
+                                <img
+                                  src={
+                                    img.shopImage.startsWith("http")
+                                      ? img.shopImage
+                                      : `${API_BASE_URL || ""}${img.shopImage}`
+                                  }
+                                  alt="Shop"
+                                  className="w-full h-48 object-cover rounded-lg shadow-md border-2 border-blue-200 group-hover:scale-105 group-hover:shadow-xl transition-all duration-300"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement
+                                    target.src = "/placeholder.svg?height=192&width=300&text=Shop"
+                                  }}
+                                />
+                                <div className="absolute top-3 left-3 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
+                                  Shop View
                                 </div>
-                              )}
-                              {img.shelfImage && (
-                                <div className="relative group">
-                                  <img
-                                    src={
-                                      img.shelfImage.startsWith("http")
-                                        ? img.shelfImage
-                                        : `${API_BASE_URL || ""}${img.shelfImage}`
-                                    }
-                                    alt={`Shelf Image - Visit ${getPreviousImages().length - index}`}
-                                    className="w-full h-48 object-cover rounded-lg shadow-md border-2 border-green-200 group-hover:scale-105 group-hover:shadow-xl transition-all duration-300"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement
-                                      target.src = "/placeholder.svg?height=192&width=300&text=Shelf+Image"
-                                    }}
-                                  />
-                                  <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
-                                    Shelf View
-                                  </div>
+                              </div>
+                            )}
+
+                            {img.shelfImage && (
+                              <div key={`${img._id || Math.random()}-shelf`} className="relative group">
+                                <img
+                                  src={
+                                    img.shelfImage.startsWith("http")
+                                      ? img.shelfImage
+                                      : `${API_BASE_URL || ""}${img.shelfImage}`
+                                  }
+                                  alt="Shelf"
+                                  className="w-full h-48 object-cover rounded-lg shadow-md border-2 border-green-200 group-hover:scale-105 group-hover:shadow-xl transition-all duration-300"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement
+                                    target.src = "/placeholder.svg?height=192&width=300&text=Shelf"
+                                  }}
+                                />
+                                <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
+                                  Shelf View
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
+                          </div>
+
                           </div>
                         ))}
                       </div>
@@ -362,65 +363,73 @@ export default function ShopDetailsPage() {
 
             {/* Full Data Table */}
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full border border-gray-300 border-collapse">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({
-                      length: Math.ceil(Object.entries(shop).length / 2),
-                    }).map((_, i) => {
-                      const first = Object.entries(shop)[i * 2]
-                      const second = Object.entries(shop)[i * 2 + 1]
-                      return (
-                        <tr
-                          key={i}
-                          className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
-                        >
-                          <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
-                          <td className="border px-6 py-4 text-gray-900">
-                            {first[0].toLowerCase().includes("status") ? (
-                              <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
-                                {String(first[1]).toUpperCase()}
-                              </Badge>
-                            ) : (
-                              formatFieldValue(first[1])
-                            )}
-                          </td>
-                          {second ? (
-                            <>
-                              <td className="border px-6 py-4 font-semibold text-gray-600">
-                                {formatFieldName(second[0])}
-                              </td>
-                              <td className="border px-6 py-4 text-gray-900">
-                                {second[0].toLowerCase().includes("status") ? (
-                                  <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
-                                    {String(second[1]).toUpperCase()}
-                                  </Badge>
-                                ) : (
-                                  formatFieldValue(second[1])
-                                )}
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="border px-6 py-4"></td>
-                              <td className="border px-6 py-4"></td>
-                            </>
-                          )}
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
+  <div className="overflow-x-auto">
+    <table className="w-full border border-gray-300 border-collapse">
+      <thead>
+        <tr className="bg-gradient-to-r from-indigo-50 to-purple-50">
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
+          const first = Object.entries(shop)[i * 2]
+          const second = Object.entries(shop)[i * 2 + 1]
+
+          // use actual field names in key so it’s unique + stable
+          const rowKey = `${first?.[0] || "empty"}-${second?.[0] || "empty"}`
+
+          return (
+            <tr
+              key={rowKey}
+              className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
+            >
+              {/* First column */}
+              <td className="border px-6 py-4 font-semibold text-gray-600">
+                {formatFieldName(first[0])}
+              </td>
+              <td className="border px-6 py-4 text-gray-900">
+                {first[0].toLowerCase().includes("status") ? (
+                  <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
+                    {String(first[1]).toUpperCase()}
+                  </Badge>
+                ) : (
+                  formatFieldValue(first[1])
+                )}
+              </td>
+
+              {/* Second column (if exists) */}
+              {second ? (
+                <>
+                  <td className="border px-6 py-4 font-semibold text-gray-600">
+                    {formatFieldName(second[0])}
+                  </td>
+                  <td className="border px-6 py-4 text-gray-900">
+                    {second[0].toLowerCase().includes("status") ? (
+                      <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
+                        {String(second[1]).toUpperCase()}
+                      </Badge>
+                    ) : (
+                      formatFieldValue(second[1])
+                    )}
+                  </td>
+                </>
+              ) : (
+                <>
+                  <td className="border px-6 py-4"></td>
+                  <td className="border px-6 py-4"></td>
+                </>
+              )}
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  </div>
+</CardContent>
+
           </div>
         )}
       </div>

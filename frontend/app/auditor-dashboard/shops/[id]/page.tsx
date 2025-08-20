@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, Eye, EyeOff } from "lucide-react"
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, Eye, EyeOff } from "lucide-react"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -362,66 +362,69 @@ export default function ShopDetailsPage() {
             )}
 
             {/* Full Data Table */}
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full border border-gray-300 border-collapse">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
-                      <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({
-                      length: Math.ceil(Object.entries(shop).length / 2),
-                    }).map((_, i) => {
-                      const first = Object.entries(shop)[i * 2]
-                      const second = Object.entries(shop)[i * 2 + 1]
-                      return (
-                        <tr
-                          key={i}
-                          className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
-                        >
-                          <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
-                          <td className="border px-6 py-4 text-gray-900">
-                            {first[0].toLowerCase().includes("status") ? (
-                              <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
-                                {String(first[1]).toUpperCase()}
-                              </Badge>
-                            ) : (
-                              formatFieldValue(first[1])
-                            )}
-                          </td>
-                          {second ? (
-                            <>
-                              <td className="border px-6 py-4 font-semibold text-gray-600">
-                                {formatFieldName(second[0])}
-                              </td>
-                              <td className="border px-6 py-4 text-gray-900">
-                                {second[0].toLowerCase().includes("status") ? (
-                                  <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
-                                    {String(second[1]).toUpperCase()}
-                                  </Badge>
-                                ) : (
-                                  formatFieldValue(second[1])
-                                )}
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="border px-6 py-4"></td>
-                              <td className="border px-6 py-4"></td>
-                            </>
-                          )}
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
+           <CardContent className="p-0">
+  <div className="overflow-x-auto">
+    <table className="w-full border border-gray-300 border-collapse">
+      <thead>
+        <tr className="bg-gradient-to-r from-indigo-50 to-purple-50">
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Field</th>
+          <th className="border px-6 py-4 text-left font-bold text-gray-700">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
+          const first = Object.entries(shop)[i * 2]
+          const second = Object.entries(shop)[i * 2 + 1]
+
+          return (
+            <tr
+              key={`${first?.[0] || "empty"}-${second?.[0] || "empty"}`}
+              className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
+            >
+              {/* First field */}
+              <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
+              <td className="border px-6 py-4 text-gray-900">
+                {first[0].toLowerCase().includes("status") ? (
+                  <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
+                    {String(first[1]).toUpperCase()}
+                  </Badge>
+                ) : (
+                  formatFieldValue(first[1])
+                )}
+              </td>
+
+              {/* Second field if exists */}
+              {second ? (
+                <>
+                  <td className="border px-6 py-4 font-semibold text-gray-600">
+                    {formatFieldName(second[0])}
+                  </td>
+                  <td className="border px-6 py-4 text-gray-900">
+                    {second[0].toLowerCase().includes("status") ? (
+                      <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
+                        {String(second[1]).toUpperCase()}
+                      </Badge>
+                    ) : (
+                      formatFieldValue(second[1])
+                    )}
+                  </td>
+                </>
+              ) : (
+                <>
+                  <td className="border px-6 py-4"></td>
+                  <td className="border px-6 py-4"></td>
+                </>
+              )}
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  </div>
+</CardContent>
+
           </div>
         )}
       </div>
