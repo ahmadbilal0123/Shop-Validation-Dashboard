@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus } from "lucide-react"
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, ImageIcon, History } from "lucide-react"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -24,6 +24,7 @@ export default function ShopDetailsPage() {
   const [shop, setShop] = useState<ShopData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPreviousImages, setShowPreviousImages] = useState(false)
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -75,6 +76,42 @@ export default function ShopDetailsPage() {
     if (typeof value === "object") return JSON.stringify(value, null, 2)
     if (typeof value === "boolean") return value ? "Yes" : "No"
     return String(value)
+  }
+
+  const getLatestImages = () => {
+    if (!shop?.visitImages?.length) return []
+    return shop.visitImages
+  }
+
+  const getActualLatestImages = () => {
+    const images = getLatestImages()
+    return images.length > 0 ? [images[images.length - 1]] : []
+  }
+
+  const getPreviousImages = () => {
+    const images = getLatestImages()
+    return images.length > 1 ? images.slice(0, -1).reverse() : []
+  }
+
+  const renderImage = (imageSrc: string, altText: string, badgeText: string, badgeColor: string) => {
+    const fullImageSrc = imageSrc.startsWith("http") ? imageSrc : `${API_BASE_URL || ""}${imageSrc}`
+
+    return (
+      <div className="relative">
+        <img
+          src={fullImageSrc || "/placeholder.svg"}
+          alt={altText}
+          className="w-full h-64 object-cover rounded-xl shadow-lg border-2 border-gray-200 hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = "/placeholder.svg?height=256&width=400&text=Image+Not+Available"
+          }}
+        />
+        <div className={`absolute top-2 left-2 ${badgeColor} text-white px-3 py-1 rounded-lg text-sm font-semibold`}>
+          {badgeText}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -162,7 +199,7 @@ export default function ShopDetailsPage() {
                         <p className="text-sm font-medium text-gray-600">City</p>
                         <p className="text-lg font-semibold text-gray-900">{shop.city || "Not provided"}</p>
                       </div>
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl">
+                      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
                         <p className="text-sm font-medium text-gray-600">State</p>
                         <p className="text-lg font-semibold text-gray-900">{shop.state || "Not provided"}</p>
                       </div>
@@ -190,29 +227,135 @@ export default function ShopDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Show Images */}
             {shop.visitImages?.length > 0 && (
               <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Visit Images</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {shop.visitImages.map((img: any) => (
-                    <div key={img._id} className="space-y-3">
-                      {img.shopImage && (
-                        <img
-                          src={`${API_BASE_URL}${img.shopImage}`}
-                          alt="Shop"
-                          className="rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
-                      {img.shelfImage && (
-                        <img
-                          src={`${API_BASE_URL}${img.shelfImage}`}
-                          alt="Shelf"
-                          className="rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <ImageIcon className="h-6 w-6 text-indigo-500" />
+                    Visit Images
+                  </h3>
+
+                  {getLatestImages().length > 1 && (
+                    <Button
+                      onClick={() => setShowPreviousImages(!showPreviousImages)}
+                      variant={showPreviousImages ? "default" : "outline"}
+                      className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                    >
+                      <History className="w-4 h-4 mr-2" />
+                      {showPreviousImages ? "Hide Previous" : "Show Previous"}
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  {/* Latest Images Section */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Latest Upload
+                    </h4>
+                    {getActualLatestImages().map((img: any) => (
+                      <div key={`latest-${img._id}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {img.shopImage && renderImage(img.shopImage, "Latest Shop Image", "Shop - New", "bg-blue-500")}
+                        {img.shelfImage &&
+                          renderImage(img.shelfImage, "Latest Shelf Image", "Shelf - New", "bg-green-500")}
+                      </div>
+                    ))}
+                  </div>
+
+                  {showPreviousImages && getPreviousImages().length > 0 && (
+                    <div className="bg-gradient-to-br from-slate-50 via-gray-50 to-indigo-50 rounded-2xl p-8 border border-gray-200 shadow-lg">
+                      <div className="flex items-center justify-between mb-6">
+                        <h4 className="text-xl font-bold text-gray-800 flex items-center gap-3">
+                          <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full shadow-sm"></div>
+                          Previous Uploads Archive
+                        </h4>
+                        <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600">
+                            {getPreviousImages().length} visits
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        {getPreviousImages().map((img: any, index: number) => (
+                          <div
+                            key={`previous-${img._id}-${index}`}
+                            className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                  {getPreviousImages().length - index}
+                                </div>
+                                <div>
+                                  <h5 className="font-semibold text-gray-800">
+                                    Visit #{getPreviousImages().length - index}
+                                  </h5>
+                                  <p className="text-sm text-gray-500">Upload Archive</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                {img.shopImage && (
+                                  <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                                    Shop Image
+                                  </div>
+                                )}
+                                {img.shelfImage && (
+                                  <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                                    Shelf Image
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {img.shopImage && (
+                                <div className="relative group">
+                                  <img
+                                    src={
+                                      img.shopImage.startsWith("http")
+                                        ? img.shopImage
+                                        : `${API_BASE_URL || ""}${img.shopImage}`
+                                    }
+                                    alt={`Shop Image - Visit ${getPreviousImages().length - index}`}
+                                    className="w-full h-48 object-cover rounded-lg shadow-md border-2 border-blue-200 group-hover:scale-105 group-hover:shadow-xl transition-all duration-300"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.src = "/placeholder.svg?height=192&width=300&text=Shop+Image"
+                                    }}
+                                  />
+                                  <div className="absolute top-3 left-3 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
+                                    Shop View
+                                  </div>
+                                </div>
+                              )}
+                              {img.shelfImage && (
+                                <div className="relative group">
+                                  <img
+                                    src={
+                                      img.shelfImage.startsWith("http")
+                                        ? img.shelfImage
+                                        : `${API_BASE_URL || ""}${img.shelfImage}`
+                                    }
+                                    alt={`Shelf Image - Visit ${getPreviousImages().length - index}`}
+                                    className="w-full h-48 object-cover rounded-lg shadow-md border-2 border-green-200 group-hover:scale-105 group-hover:shadow-xl transition-all duration-300"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.src = "/placeholder.svg?height=192&width=300&text=Shelf+Image"
+                                    }}
+                                  />
+                                  <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
+                                    Shelf View
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </Card>
             )}

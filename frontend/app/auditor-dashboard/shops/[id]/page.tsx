@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, Camera } from "lucide-react"
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, Eye, EyeOff } from "lucide-react"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 interface ShopData {
   [key: string]: any
@@ -22,8 +24,7 @@ export default function ShopDetailsPage() {
   const [shop, setShop] = useState<ShopData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://055dc4dcca67.ngrok-free.app"
+  const [showPreviousImages, setShowPreviousImages] = useState(false)
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -77,6 +78,16 @@ export default function ShopDetailsPage() {
     return String(value)
   }
 
+  const getLatestImages = () => {
+    if (!shop?.visitImages?.length) return []
+    return shop.visitImages.slice(-1) // Get the last uploaded images
+  }
+
+  const getPreviousImages = () => {
+    if (!shop?.visitImages?.length) return []
+    return shop.visitImages.slice(0, -1).reverse() // Get all except last, reverse for latest first
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
@@ -123,55 +134,6 @@ export default function ShopDetailsPage() {
 
         {shop && !loading && (
           <div className="space-y-8">
-            {shop.visitImages && shop.visitImages.length > 0 && (
-              <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-2xl rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-6">
-                  <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Camera className="h-6 w-6 text-indigo-500" />
-                    Shop Images
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {shop.visitImages.map((img: any, index: number) => (
-                      <div key={index} className="space-y-4">
-                        {img.shopImage && (
-                          <div className="relative group">
-                            <img
-                              src={`${API_BASE_URL}${img.shopImage}`}
-                              alt={`Shop image ${index + 1}`}
-                              className="w-full h-48 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
-                              onError={(e) => {
-                                console.error(`[v0] Failed to load shop image: ${API_BASE_URL}${img.shopImage}`)
-                                e.currentTarget.src = "/generic-shopfront.png"
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
-                            <p className="text-sm font-medium text-gray-700 mt-2">Shop Image</p>
-                          </div>
-                        )}
-                        {img.shelfImage && (
-                          <div className="relative group">
-                            <img
-                              src={`${API_BASE_URL}${img.shelfImage}`}
-                              alt={`Shelf image ${index + 1}`}
-                              className="w-full h-48 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
-                              onError={(e) => {
-                                console.error(`[v0] Failed to load shelf image: ${API_BASE_URL}${img.shelfImage}`)
-                                e.currentTarget.src = "/empty-wooden-shelf.png"
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
-                            <p className="text-sm font-medium text-gray-700 mt-2">Shelf Image</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Shop Overview */}
             <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-2xl rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-6">
@@ -239,6 +201,166 @@ export default function ShopDetailsPage() {
               </CardContent>
             </Card>
 
+            {shop.visitImages?.length > 0 && (
+              <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-bold text-gray-900">Visit Images</CardTitle>
+                    {getPreviousImages().length > 0 && (
+                      <Button
+                        onClick={() => setShowPreviousImages(!showPreviousImages)}
+                        variant="outline"
+                        className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                      >
+                        {showPreviousImages ? (
+                          <>
+                            <EyeOff className="w-4 h-4 mr-2" />
+                            Hide Previous
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Show Previous ({getPreviousImages().length})
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-6 space-y-8">
+                  {/* Latest Upload Section */}
+                  {getLatestImages().length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
+                        <h3 className="text-xl font-bold text-gray-900">Latest Upload</h3>
+                        <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 font-semibold">
+                          New
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {getLatestImages().map((img: any) => (
+                          <div key={img._id} className="space-y-4">
+                            {img.shopImage && (
+                              <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                                <div className="relative">
+                                  <img
+                                    src={`${API_BASE_URL}${img.shopImage}`}
+                                    alt="Shop"
+                                    className="w-full h-64 object-cover rounded-xl shadow-lg border-2 border-blue-200 hover:scale-105 transition-all duration-300"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "/placeholder.svg?height=256&width=400&text=Shop+Image"
+                                    }}
+                                  />
+                                  <div className="absolute top-3 left-3">
+                                    <Badge className="bg-blue-500 text-white font-semibold shadow-lg">Shop</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {img.shelfImage && (
+                              <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-teal-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                                <div className="relative">
+                                  <img
+                                    src={`${API_BASE_URL}${img.shelfImage}`}
+                                    alt="Shelf"
+                                    className="w-full h-64 object-cover rounded-xl shadow-lg border-2 border-green-200 hover:scale-105 transition-all duration-300"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "/placeholder.svg?height=256&width=400&text=Shelf+Image"
+                                    }}
+                                  />
+                                  <div className="absolute top-3 left-3">
+                                    <Badge className="bg-green-500 text-white font-semibold shadow-lg">Shelf</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Previous Images Section */}
+                  {showPreviousImages && getPreviousImages().length > 0 && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 pt-6 border-t border-gray-200">
+                        <div className="w-3 h-3 bg-gradient-to-r from-gray-400 to-slate-500 rounded-full"></div>
+                        <h3 className="text-xl font-bold text-gray-900">Previous Uploads</h3>
+                        <Badge className="bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 border-gray-200 font-semibold">
+                          Archive ({getPreviousImages().length})
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-6">
+                        {getPreviousImages().map((img: any, index: number) => (
+                          <div
+                            key={img._id}
+                            className="bg-gradient-to-r from-gray-50/80 to-slate-50/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300"
+                          >
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                {getPreviousImages().length - index}
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-800">
+                                Visit #{getPreviousImages().length - index}
+                              </h4>
+                              <div className="text-sm text-gray-500 bg-white/60 px-3 py-1 rounded-full">
+                                {img.createdAt ? new Date(img.createdAt).toLocaleDateString() : "Previous Upload"}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {img.shopImage && (
+                                <div className="relative group">
+                                  <img
+                                    src={`${API_BASE_URL}${img.shopImage}`}
+                                    alt="Shop"
+                                    className="w-full h-48 object-cover rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-all duration-300"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "/placeholder.svg?height=192&width=300&text=Shop+Image"
+                                    }}
+                                  />
+                                  <div className="absolute top-2 left-2">
+                                    <Badge className="bg-blue-500/90 text-white font-medium text-xs shadow-md">
+                                      Shop
+                                    </Badge>
+                                  </div>
+                                </div>
+                              )}
+
+                              {img.shelfImage && (
+                                <div className="relative group">
+                                  <img
+                                    src={`${API_BASE_URL}${img.shelfImage}`}
+                                    alt="Shelf"
+                                    className="w-full h-48 object-cover rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-all duration-300"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "/placeholder.svg?height=192&width=300&text=Shelf+Image"
+                                    }}
+                                  />
+                                  <div className="absolute top-2 left-2">
+                                    <Badge className="bg-green-500/90 text-white font-medium text-xs shadow-md">
+                                      Shelf
+                                    </Badge>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Full Data Table */}
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -252,14 +374,14 @@ export default function ShopDetailsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
+                    {Array.from({
+                      length: Math.ceil(Object.entries(shop).length / 2),
+                    }).map((_, i) => {
                       const first = Object.entries(shop)[i * 2]
                       const second = Object.entries(shop)[i * 2 + 1]
-                      // Use a unique key based on the field names
-                      const rowKey = second ? `${first[0]}-${second[0]}` : `${first[0]}`
                       return (
                         <tr
-                          key={rowKey}
+                          key={i}
                           className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
                         >
                           <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
