@@ -1,6 +1,12 @@
 import { buildApiUrl } from "./utils"
 import { getSession } from "./auth"
 
+export interface VisitImage {
+  _id?: string
+  shopImage?: string
+  shelfImage?: string
+}
+
 export interface Shop {
   id: string
   name: string
@@ -24,6 +30,10 @@ export interface Shop {
   city_village?: string
   assignedAt?: string
   auditorId?: string
+
+  // ✅ New fields
+  visit?: boolean
+  visitImages?: VisitImage[]
 }
 
 export interface ShopsResponse {
@@ -123,7 +133,14 @@ export async function fetchShops(params?: {
         city_village: shop.city_village || "",
 
         // ✅ Add image field (visitImages)
-        visitImages: shop.visitImages || shop.images || [],
+        visit: shop.visit ?? false,
+        visitImages: Array.isArray(shop.visitImages)
+          ? shop.visitImages.map((img: any) => ({
+              _id: img._id,
+              shopImage: img.shopImage || img.shop_image || "",
+              shelfImage: img.shelfImage || img.shelf_image || "",
+            }))
+          : [],
       }))
 
       return {
@@ -149,7 +166,6 @@ export async function fetchShops(params?: {
   }
 }
 
-
 export async function fetchAssignedShopsForAuditor(
   auditorId: string,
   params?: {
@@ -165,8 +181,6 @@ export async function fetchAssignedShopsForAuditor(
     if (params?.status && params.status !== "all") queryParams.append("status", params.status)
     if (params?.city) queryParams.append("city", params.city)
     if (params?.search) queryParams.append("search", params.search)
-    // if (params?.page) queryParams.append("page", params.page.toString())
-    // if (params?.limit) queryParams.append("limit", params.limit.toString())
 
     const apiUrl = buildApiUrl(`/api/users/get-assigned-shops-for-auditor/${auditorId}`)
     const urlWithParams = queryParams.toString() ? `${apiUrl}?${queryParams.toString()}` : apiUrl
@@ -343,11 +357,23 @@ export async function fetchShopById(shopId: string): Promise<{
     }
 
     if (response.ok && data) {
-      const shopData = data.data || data.shop || data
+      const rawShopData = data.data || data.shop || data
+
+      const processedShopData = {
+        ...rawShopData,
+        visit: rawShopData.visit ?? false,
+        visitImages: Array.isArray(rawShopData.visitImages)
+          ? rawShopData.visitImages.map((img: any) => ({
+              _id: img._id,
+              shopImage: img.shopImage || img.shop_image || "",
+              shelfImage: img.shelfImage || img.shelf_image || "",
+            }))
+          : [],
+      }
 
       return {
         success: true,
-        data: shopData,
+        data: processedShopData,
       }
     } else {
       return {
@@ -362,7 +388,6 @@ export async function fetchShopById(shopId: string): Promise<{
       error: error instanceof Error ? error.message : "Network error",
     }
   }
-  
 }
 
 export async function assignShopsToAuditor(
@@ -390,7 +415,7 @@ export async function assignShopsToAuditor(
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok) {
-      let errorMessage =
+      const errorMessage =
         data.message ||
         data.error ||
         (response.status === 409

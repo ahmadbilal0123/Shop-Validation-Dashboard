@@ -1,86 +1,81 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { fetchShopById } from "@/lib/api";
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { fetchShopById } from "@/lib/api"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  ArrowLeft,
-  MapPin,
-  Phone,
-  Star,
-  UserPlus,
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, Camera } from "lucide-react"
 
 interface ShopData {
-  [key: string]: any;
+  [key: string]: any
 }
 
 export default function ShopDetailsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const shopId = params.id as string;
+  const params = useParams()
+  const router = useRouter()
+  const shopId = params.id as string
 
-  const [shop, setShop] = useState<ShopData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [shop, setShop] = useState<ShopData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://055dc4dcca67.ngrok-free.app"
 
   useEffect(() => {
     const loadShopData = async () => {
-      if (!shopId) return;
+      if (!shopId) return
 
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       try {
-        const response = await fetchShopById(shopId);
+        const response = await fetchShopById(shopId)
 
         if (response.success && response.data) {
-          setShop(response.data);
+          setShop(response.data)
         } else {
-          setError(response.error || "Failed to load shop data");
+          setError(response.error || "Failed to load shop data")
         }
       } catch (err) {
-        console.error("Error loading shop data:", err);
-        setError(err instanceof Error ? err.message : "Failed to load shop data");
+        console.error("Error loading shop data:", err)
+        setError(err instanceof Error ? err.message : "Failed to load shop data")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadShopData();
-  }, [shopId]);
+    loadShopData()
+  }, [shopId])
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "active":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+        return "bg-emerald-100 text-emerald-700 border-emerald-200"
       case "inactive":
-        return "bg-red-100 text-red-700 border-red-200";
+        return "bg-red-100 text-red-700 border-red-200"
       case "pending":
-        return "bg-amber-100 text-amber-700 border-amber-200";
+        return "bg-amber-100 text-amber-700 border-amber-200"
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return "bg-gray-100 text-gray-700 border-gray-200"
     }
-  };
+  }
 
   const formatFieldName = (key: string) =>
     key
       .split("_")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
+      .join(" ")
 
   const formatFieldValue = (value: any) => {
-    if (value === null || value === undefined) return "Not provided";
-    if (typeof value === "object") return JSON.stringify(value, null, 2);
-    if (typeof value === "boolean") return value ? "Yes" : "No";
-    return String(value);
-  };
+    if (value === null || value === undefined) return "Not provided"
+    if (typeof value === "object") return JSON.stringify(value, null, 2)
+    if (typeof value === "boolean") return value ? "Yes" : "No"
+    return String(value)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -128,6 +123,55 @@ export default function ShopDetailsPage() {
 
         {shop && !loading && (
           <div className="space-y-8">
+            {shop.visitImages && shop.visitImages.length > 0 && (
+              <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-2xl rounded-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-6">
+                  <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <Camera className="h-6 w-6 text-indigo-500" />
+                    Shop Images
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {shop.visitImages.map((img: any, index: number) => (
+                      <div key={index} className="space-y-4">
+                        {img.shopImage && (
+                          <div className="relative group">
+                            <img
+                              src={`${API_BASE_URL}${img.shopImage}`}
+                              alt={`Shop image ${index + 1}`}
+                              className="w-full h-48 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
+                              onError={(e) => {
+                                console.error(`[v0] Failed to load shop image: ${API_BASE_URL}${img.shopImage}`)
+                                e.currentTarget.src = "/generic-shopfront.png"
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
+                            <p className="text-sm font-medium text-gray-700 mt-2">Shop Image</p>
+                          </div>
+                        )}
+                        {img.shelfImage && (
+                          <div className="relative group">
+                            <img
+                              src={`${API_BASE_URL}${img.shelfImage}`}
+                              alt={`Shelf image ${index + 1}`}
+                              className="w-full h-48 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
+                              onError={(e) => {
+                                console.error(`[v0] Failed to load shelf image: ${API_BASE_URL}${img.shelfImage}`)
+                                e.currentTarget.src = "/empty-wooden-shelf.png"
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
+                            <p className="text-sm font-medium text-gray-700 mt-2">Shelf Image</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Shop Overview */}
             <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-2xl rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-6">
@@ -184,15 +228,11 @@ export default function ShopDetailsPage() {
                   <div className="space-y-4">
                     <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
                       <p className="text-sm font-medium text-gray-600">Phone</p>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {shop.phone || "Not provided"}
-                      </p>
+                      <p className="text-lg font-semibold text-gray-900">{shop.phone || "Not provided"}</p>
                     </div>
                     <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
                       <p className="text-sm font-medium text-gray-600">Email</p>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {shop.email || "Not provided"}
-                      </p>
+                      <p className="text-lg font-semibold text-gray-900">{shop.email || "Not provided"}</p>
                     </div>
                   </div>
                 </div>
@@ -213,14 +253,15 @@ export default function ShopDetailsPage() {
                   </thead>
                   <tbody>
                     {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
-                      const first = Object.entries(shop)[i * 2];
-                      const second = Object.entries(shop)[i * 2 + 1];
+                      const first = Object.entries(shop)[i * 2]
+                      const second = Object.entries(shop)[i * 2 + 1]
                       // Use a unique key based on the field names
-                      const rowKey = second
-                        ? `${first[0]}-${second[0]}`
-                        : `${first[0]}`;
+                      const rowKey = second ? `${first[0]}-${second[0]}` : `${first[0]}`
                       return (
-                        <tr key={rowKey} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200">
+                        <tr
+                          key={rowKey}
+                          className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
+                        >
                           <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
                           <td className="border px-6 py-4 text-gray-900">
                             {first[0].toLowerCase().includes("status") ? (
@@ -233,7 +274,9 @@ export default function ShopDetailsPage() {
                           </td>
                           {second ? (
                             <>
-                              <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(second[0])}</td>
+                              <td className="border px-6 py-4 font-semibold text-gray-600">
+                                {formatFieldName(second[0])}
+                              </td>
                               <td className="border px-6 py-4 text-gray-900">
                                 {second[0].toLowerCase().includes("status") ? (
                                   <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
@@ -251,7 +294,7 @@ export default function ShopDetailsPage() {
                             </>
                           )}
                         </tr>
-                      );
+                      )
                     })}
                   </tbody>
                 </table>
@@ -261,5 +304,5 @@ export default function ShopDetailsPage() {
         )}
       </div>
     </div>
-  );
+  )
 }
