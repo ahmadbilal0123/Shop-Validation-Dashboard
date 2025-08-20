@@ -59,112 +59,120 @@ export async function fetchShops(params?: {
   limit?: number
 }): Promise<ShopsResponse> {
   try {
-    const queryParams = new URLSearchParams()
-    if (params?.status && params.status !== "all") queryParams.append("status", params.status)
-    if (params?.city) queryParams.append("city", params.city)
-    if (params?.search) queryParams.append("search", params.search)
-    if (params?.page) queryParams.append("page", params.page.toString())
-    if (params?.limit) queryParams.append("limit", params.limit.toString())
-
+    // ✅ Build query string in a cleaner way
+    const queryParams = buildQueryParams(params)
     const apiUrl = buildApiUrl("/api/shops/get-shops")
-    const urlWithParams = queryParams.toString() ? `${apiUrl}?${queryParams.toString()}` : apiUrl
+    const urlWithParams = queryParams ? `${apiUrl}?${queryParams}` : apiUrl
     console.log("apiURL:", urlWithParams)
 
-    const session = getSession()
-    const token = session?.token
+    // ✅ Setup headers
+    const headers = buildAuthHeaders()
 
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "ngrok-skip-browser-warning": "true",
-    }
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    } else {
-      console.warn("No authentication token found. Request might be unauthorized.")
-    }
-
-    const response = await fetch(urlWithParams, {
-      method: "GET",
-      headers,
-    })
-
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      const rawText = await response.text()
-      return {
-        success: false,
-        shops: [],
-        total: 0,
-        error: `Server returned non-JSON response (Status: ${response.status}). Raw: ${rawText.substring(0, 100)}...`,
-      }
-    }
+    const response = await fetch(urlWithParams, { method: "GET", headers })
+    const errorCheck = await validateResponse(response)
+    if (errorCheck) return errorCheck
 
     const data = await response.json()
 
     if (response.status === 401) {
-      return {
-        success: false,
-        shops: [],
-        total: 0,
-        error: "Unauthorized. Please log in again.",
-      }
+      return buildError("Unauthorized. Please log in again.")
     }
 
     if (response.ok && data) {
-      const shops: Shop[] = (data.data || []).map((shop: any) => ({
-        id: shop._id || shop.id,
-        name: shop.name || shop.shop_name || "Unnamed Shop",
-        address: shop.address || shop.shop_address || "",
-        city: shop.city || shop.city_village || "",
-        state: shop.state || shop.ptc_urbanity || "",
-        zipCode: shop.zipCode || shop.zip_code || "",
-        phone: shop.phone || shop.contact_number || "",
-        email: shop.email || shop.contact_email || "",
-        status: shop.status || "active",
-        coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : undefined),
-        lastVisit: shop.lastVisit || shop.last_visit,
-        visitCount: shop.visitCount || shop.visit_count || 0,
-        validationScore: shop.validationScore || shop.validation_score,
-        createdAt: shop.createdAt || shop.created_at || new Date().toISOString(),
-        updatedAt: shop.updatedAt || shop.updated_at || new Date().toISOString(),
-        ptc_urbanity: shop.ptc_urbanity || "",
-        city_village: shop.city_village || "",
-
-        // ✅ Add image field (visitImages)
-        visit: shop.visit ?? false,
-        visitImages: Array.isArray(shop.visitImages)
-          ? shop.visitImages.map((img: any) => ({
-              _id: img._id,
-              shopImage: img.shopImage || img.shop_image || "",
-              shelfImage: img.shelfImage || img.shelf_image || "",
-            }))
-          : [],
-      }))
-
-      return {
-        success: true,
-        shops,
-        total: data.count || shops.length,
-      }
+      const shops = mapShops(data.data || [])
+      return { success: true, shops, total: data.count || shops.length }
     }
 
-    return {
-      success: false,
-      shops: [],
-      total: 0,
-      error: data.message || data.error || "Failed to fetch shops",
-    }
+    return buildError(data.message || data.error || "Failed to fetch shops")
   } catch (error) {
-    return {
-      success: false,
-      shops: [],
-      total: 0,
-      error: error instanceof Error ? error.message : "Network error",
-    }
+    return buildError(error instanceof Error ? error.message : "Network error")
   }
 }
+
+/* ------------------------- ✅ Helpers ------------------------- */
+
+function buildQueryParams(params?: {
+  status?: string
+  city?: string
+  search?: string
+  page?: number
+  limit?: number
+}): string {
+  if (!params) return ""
+  const queryParams = new URLSearchParams()
+
+  if (params.status && params.status !== "all") queryParams.append("status", params.status)
+  if (params.city) queryParams.append("city", params.city)
+  if (params.search) queryParams.append("search", params.search)
+  if (params.page) queryParams.append("page", params.page.toString())
+  if (params.limit) queryParams.append("limit", params.limit.toString())
+
+  return queryParams.toString()
+}
+
+function buildAuthHeaders(): HeadersInit {
+  const session = getSession()
+  const token = session?.token
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  } else {
+    console.warn("No authentication token found. Request might be unauthorized.")
+  }
+  return headers
+}
+
+async function validateResponse(response: Response): Promise<ShopsResponse | null> {
+  const contentType = response.headers.get("content-type")
+  if (!contentType?.includes("application/json")) {
+    const rawText = await response.text()
+    return buildError(
+      `Server returned non-JSON response (Status: ${response.status}). Raw: ${rawText.substring(0, 100)}...`
+    )
+  }
+  return null
+}
+
+function mapShops(shopsArray: any[]): Shop[] {
+  return shopsArray.map((shop: any) => ({
+    id: shop._id || shop.id,
+    name: shop.name || shop.shop_name || "Unnamed Shop",
+    address: shop.address || shop.shop_address || "",
+    city: shop.city || shop.city_village || "",
+    state: shop.state || shop.ptc_urbanity || "",
+    zipCode: shop.zipCode || shop.zip_code || "",
+    phone: shop.phone || shop.contact_number || "",
+    email: shop.email || shop.contact_email || "",
+    status: shop.status || "active",
+    coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : undefined),
+    lastVisit: shop.lastVisit || shop.last_visit,
+    visitCount: shop.visitCount || shop.visit_count || 0,
+    validationScore: shop.validationScore || shop.validation_score,
+    createdAt: shop.createdAt || shop.created_at || new Date().toISOString(),
+    updatedAt: shop.updatedAt || shop.updated_at || new Date().toISOString(),
+    ptc_urbanity: shop.ptc_urbanity || "",
+    city_village: shop.city_village || "",
+    visit: shop.visit ?? false,
+    visitImages: Array.isArray(shop.visitImages)
+      ? shop.visitImages.map((img: any) => ({
+          _id: img._id,
+          shopImage: img.shopImage || img.shop_image || "",
+          shelfImage: img.shelfImage || img.shelf_image || "",
+        }))
+      : [],
+  }))
+}
+
+function buildError(message: string): ShopsResponse {
+  return { success: false, shops: [], total: 0, error: message }
+}
+
 
 export async function fetchAssignedShopsForAuditor(
   auditorId: string,
@@ -206,17 +214,18 @@ export async function fetchAssignedShopsForAuditor(
       headers,
     })
 
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      const rawText = await response.text()
-      return {
-        success: false,
-        shops: [],
-        total: 0,
-        auditorId,
-        error: `Server returned non-JSON response (Status: ${response.status}). Raw: ${rawText.substring(0, 100)}...`,
+   const contentType = response.headers.get("content-type") ?? ""
+      if (!contentType?.includes("application/json")) {
+        const rawText = await response.text()
+        return {
+          success: false,
+          shops: [],
+          total: 0,
+          auditorId,
+          error: `Server returned non-JSON response (Status: ${response.status}). Raw: ${rawText.substring(0, 100)}...`,
+        }
       }
-    }
+
 
     const data = await response.json()
     console.log("Raw API response:", data) // Added detailed logging
