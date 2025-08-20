@@ -9,35 +9,64 @@ export default function HomePage() {
   const pathname = usePathname()
 
   useEffect(() => {
+    const isValidSession = (session: any) => {
+      const token = session?.token
+      const expiresAt = session?.expiresAt
+      return token && expiresAt && new Date() < new Date(expiresAt)
+    }
+
+    const clearSession = () => {
+      localStorage.removeItem("session")
+      localStorage.removeItem("authToken")
+      document.cookie = "session=; path=/; max-age=0"
+    }
+
+    const redirectToDashboard = (role: string) => {
+      if (role === "auditor" && pathname !== "/auditor-dashboard") {
+        router.replace("/auditor-dashboard")
+      } else if (role !== "auditor" && pathname !== "/dashboard") {
+        router.replace("/dashboard")
+      }
+    }
+
+    const handleValidSession = (session: any) => {
+      localStorage.setItem("authToken", session.token)
+
+      // ✅ Save cookie so middleware can read it immediately
+      document.cookie = `session=${encodeURIComponent(
+        JSON.stringify(session)
+      )}; path=/; max-age=86400; SameSite=Strict`
+
+      const sessionUser = session?.user
+      redirectToDashboard(sessionUser?.role)
+      setIsLoading(false)
+    }
+
+    const handleInvalidSession = () => {
+      clearSession()
+      if (pathname !== "/login") {
+        router.replace("/login")
+      }
+      setIsLoading(false)
+    }
+
     const checkAuth = () => {
       try {
         const sessionData = localStorage.getItem("session")
         if (sessionData) {
           const session = JSON.parse(sessionData)
-          if (new Date() < new Date(session.expiresAt)) {
-            // Only redirect if not already on /dashboard
-            if (pathname !== "/dashboard") {
-              router.push("/dashboard")
-            }
+          if (isValidSession(session)) {
+            handleValidSession(session)
             return
           }
         }
       } catch (error) {
-        console.log("No valid session found")
+        console.error("Invalid session data, clearing storage:", error)
       }
-
-      // Only redirect if not already on /login
-      if (pathname !== "/login") {
-        router.push("/login")
-      }
+      handleInvalidSession()
     }
 
-    const timer = setTimeout(() => {
-      checkAuth()
-      setIsLoading(false)
-    }, 100)
-
-    return () => clearTimeout(timer)
+    checkAuth()
   }, [router, pathname])
 
   if (isLoading) {

@@ -8,9 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus } from "lucide-react"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, UserPlus, Camera } from "lucide-react"
 
 interface ShopData {
   [key: string]: any
@@ -24,6 +22,8 @@ export default function ShopDetailsPage() {
   const [shop, setShop] = useState<ShopData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://055dc4dcca67.ngrok-free.app"
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -123,6 +123,55 @@ export default function ShopDetailsPage() {
 
         {shop && !loading && (
           <div className="space-y-8">
+            {shop.visitImages && shop.visitImages.length > 0 && (
+              <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-2xl rounded-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-6">
+                  <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <Camera className="h-6 w-6 text-indigo-500" />
+                    Shop Images
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {shop.visitImages.map((img: any, index: number) => (
+                      <div key={index} className="space-y-4">
+                        {img.shopImage && (
+                          <div className="relative group">
+                            <img
+                              src={`${API_BASE_URL}${img.shopImage}`}
+                              alt={`Shop image ${index + 1}`}
+                              className="w-full h-48 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
+                              onError={(e) => {
+                                console.error(`[v0] Failed to load shop image: ${API_BASE_URL}${img.shopImage}`)
+                                e.currentTarget.src = "/generic-shopfront.png"
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
+                            <p className="text-sm font-medium text-gray-700 mt-2">Shop Image</p>
+                          </div>
+                        )}
+                        {img.shelfImage && (
+                          <div className="relative group">
+                            <img
+                              src={`${API_BASE_URL}${img.shelfImage}`}
+                              alt={`Shelf image ${index + 1}`}
+                              className="w-full h-48 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
+                              onError={(e) => {
+                                console.error(`[v0] Failed to load shelf image: ${API_BASE_URL}${img.shelfImage}`)
+                                e.currentTarget.src = "/empty-wooden-shelf.png"
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
+                            <p className="text-sm font-medium text-gray-700 mt-2">Shelf Image</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Shop Overview */}
             <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-2xl rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 pb-6">
@@ -190,33 +239,6 @@ export default function ShopDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Show Images */}
-            {shop.visitImages?.length > 0 && (
-              <Card className="bg-white/80 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Visit Images</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {shop.visitImages.map((img: any) => (
-                    <div key={img._id} className="space-y-3">
-                      {img.shopImage && (
-                        <img
-                          src={`${API_BASE_URL}${img.shopImage}`}
-                          alt="Shop"
-                          className="rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
-                      {img.shelfImage && (
-                        <img
-                          src={`${API_BASE_URL}${img.shelfImage}`}
-                          alt="Shelf"
-                          className="rounded-xl shadow-md border border-gray-200 hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
             {/* Full Data Table */}
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -230,14 +252,14 @@ export default function ShopDetailsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({
-                      length: Math.ceil(Object.entries(shop).length / 2),
-                    }).map((_, i) => {
+                    {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
                       const first = Object.entries(shop)[i * 2]
                       const second = Object.entries(shop)[i * 2 + 1]
+                      // Use a unique key based on the field names
+                      const rowKey = second ? `${first[0]}-${second[0]}` : `${first[0]}`
                       return (
                         <tr
-                          key={i}
+                          key={rowKey}
                           className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
                         >
                           <td className="border px-6 py-4 font-semibold text-gray-600">{formatFieldName(first[0])}</td>
