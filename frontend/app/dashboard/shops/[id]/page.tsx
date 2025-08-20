@@ -135,10 +135,10 @@ export default function ShopDetailsPage() {
               <p className="text-gray-600 mt-1 text-sm">Detailed information & analytics</p>
             </div>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+          {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
             <UserPlus className="w-4 h-4 mr-2" />
             Add Auditors
-          </Button>
+          </Button> */}
         </div>
       </div>
 
