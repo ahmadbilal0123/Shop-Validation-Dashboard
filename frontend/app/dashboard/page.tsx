@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, MapPin, Phone, Mail, Calendar, Star, Filter, Building2, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 
 export default function RecentShopsPage() {
@@ -18,8 +18,8 @@ export default function RecentShopsPage() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<string | undefined>("all")
-  const [cityFilter, setCityFilter] = useState<string | undefined>(undefined)
+  const [statusFilter] = useState<string | undefined>("all")
+  const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
 
   const filterRecentShops = (shops: Shop[]) => {
@@ -100,7 +100,7 @@ export default function RecentShopsPage() {
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold  text-blue-700">Admin DashBoard</h1>
+              <h1 className="text-3xl font-bold  text-blue-700">Admin DashBoard</h1>
               <h1 className="text-4xl font-bold text-slate-900">Recently Added Shops</h1>
               <p className="text-slate-600 text-lg font-medium">
                 Discover newly registered shops from the last 30 days
@@ -157,7 +157,8 @@ export default function RecentShopsPage() {
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Avg. Visits</p>
                   <p className="text-3xl font-bold text-indigo-600">
-                    {Math.round(shops.reduce((acc, shop) => acc + (shop.visitCount || 0), 0) / shops.length) || 0}
+                    {Math.round(shops.reduce((acc, shop) => acc + (shop.visitImages?.length || 0), 0) / shops.length) ||
+                      0}
                   </p>
                   <p className="text-xs text-slate-500">Per shop</p>
                 </div>
@@ -185,33 +186,7 @@ export default function RecentShopsPage() {
               </div>
 
               <div className="flex gap-3">
-                <Select
-                  value={statusFilter || "all"}
-                  onValueChange={(value) => {
-                    setStatusFilter(value === "all" ? "all" : value)
-                    setPage(1)
-                  }}
-                >
-                  <SelectTrigger className="w-40 h-12 bg-white/70">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Input
-                  placeholder="Filter by City"
-                  value={cityFilter || ""}
-                  onChange={(e) => {
-                    setCityFilter(e.target.value)
-                    setPage(1)
-                  }}
-                  className="w-40 h-12 bg-white/70"
-                />
+               
 
                 <Button
                   onClick={handleSearch}
@@ -267,9 +242,7 @@ export default function RecentShopsPage() {
                     <CardTitle className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                       {shop.name}
                     </CardTitle>
-                    <Badge className={`${getStatusColor(shop.status)} text-xs font-semibold px-3 py-1`}>
-                      {shop.status?.toUpperCase()}
-                    </Badge>
+                    
                   </div>
                   {shop.validationScore && (
                     <div className="flex items-center gap-1 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
@@ -315,7 +288,7 @@ export default function RecentShopsPage() {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-200">
                   <div className="text-sm text-slate-600">
                     <span className="font-semibold">Visits:</span>{" "}
-                    <span className="text-blue-600 font-bold">{shop.visitCount || 0}</span>
+                    <span className="text-blue-600 font-bold">{shop.visitImages?.length || 0}</span>
                   </div>
                   {shop.lastVisit && (
                     <div className="text-sm text-slate-500">Last: {new Date(shop.lastVisit).toLocaleDateString()}</div>
