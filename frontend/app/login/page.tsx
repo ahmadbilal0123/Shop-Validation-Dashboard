@@ -58,6 +58,14 @@ export default function LoginPage() {
     localStorage.setItem("session", JSON.stringify(sessionData))
     // Set session cookie for middleware
     document.cookie = `session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=86400; SameSite=Lax`
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const storedSession = localStorage.getItem("session")
+        console.log("[v0] Session verification:", storedSession ? "Success" : "Failed")
+        resolve(true)
+      }, 100)
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +85,6 @@ export default function LoginPage() {
 
       const apiUrl = buildApiUrl("/api/users/login")
       console.log("Calling login endpoint:", apiUrl)
-      console.log("Sending payload:", { username, password }) // Log the payload being sent
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -89,12 +96,11 @@ export default function LoginPage() {
       })
 
       const data = await response.json()
-      console.log("Login response status:", response.status) // Log the HTTP status code
-      console.log("Login response ok:", response.ok) // Log if response.ok is true/false
-      console.log("Login response data:", data) // Log the full response data
+      console.log("Login response status:", response.status)
+      console.log("Login response data:", data)
 
       if (response.ok && data) {
-        console.log("Login successful, creating session and redirecting...")
+        console.log("Login successful, creating session...")
         const user = {
           id: data.id || data.user_id || data.userId || data._id,
           email: data.email || data.username || "",
@@ -104,21 +110,21 @@ export default function LoginPage() {
           createdBy: data.created_by || data.createdBy,
         }
 
-        createLocalSession(user, data.token)
+        await createLocalSession(user, data.token)
 
         const redirectPath = user.role === "auditor" ? "/auditor-dashboard" : "/dashboard"
-        console.log(`Session created, attempting redirect to ${redirectPath} for role: ${user.role}`)
-        router.replace(redirectPath)
+        console.log(`[v0] Session created successfully, redirecting to ${redirectPath}`)
+
+        window.location.href = redirectPath
       } else {
         console.log("Login failed, setting error message.")
         setError(data.message || data.error || "Invalid credentials")
       }
     } catch (err) {
-      console.error("Login error caught in catch block:", err) // More specific error log
+      console.error("Login error:", err)
       setError("Network error. Please check your connection and try again.")
     } finally {
       setIsLoading(false)
-      console.log("Login process finished, isLoading set to false.")
     }
   }
 
