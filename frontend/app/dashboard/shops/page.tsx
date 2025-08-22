@@ -5,10 +5,8 @@ import { fetchShops, type Shop, type ShopsResponse } from "@/lib/api"
 import { useRouter } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import {
   MapPin,
@@ -19,7 +17,6 @@ import {
   Package,
   Star,
   Search,
-  Filter,
   Users,
   CheckCircle2,
   Clock,
@@ -34,7 +31,7 @@ export default function ShopsPage() {
   const [page] = useState(1)
   const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<string | undefined>("all")
+  const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
 
@@ -168,7 +165,7 @@ export default function ShopsPage() {
                 />
               </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-48 border-blue-200 focus:border-blue-400">
                   <Filter className="w-4 h-4 mr-2 text-blue-500" />
                   <SelectValue placeholder="Filter by status" />
@@ -179,7 +176,7 @@ export default function ShopsPage() {
                   <SelectItem value="in-progress">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
 
             <div className="flex gap-3">
@@ -264,12 +261,6 @@ export default function ShopsPage() {
                       <CardTitle className="text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-800 transition-colors">
                         {shop.name}
                       </CardTitle>
-                      {shop.status && (
-                        <Badge className={`${getStatusBadgeColor(shop.status)} border font-medium`}>
-                          {getStatusIcon(shop.status)}
-                          <span className="ml-1 capitalize">{shop.status}</span>
-                        </Badge>
-                      )}
                     </div>
                     {shop.validationScore !== undefined && (
                       <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-50 to-amber-50 px-3 py-2 rounded-xl border border-yellow-200 shadow-sm">

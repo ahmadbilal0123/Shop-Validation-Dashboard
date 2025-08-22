@@ -466,3 +466,158 @@ export async function fetchVisitedShops(params?: {
     return buildError(error instanceof Error ? error.message : "Network error")
   }
 }
+
+// ========================= USERS API ========================= //
+
+export interface User {
+  id: string
+  name: string
+  username: string
+  email: string
+  role: string
+  createdAt: string
+}
+
+export interface UsersResponse {
+  success: boolean
+  users: User[]
+  total: number
+  error?: string
+}
+export interface ApiResponse {
+  success: boolean
+  user?: User
+  message?: string   // ✅ added
+  error?: string
+}
+function transformUserData(user: any): User {
+  return {
+    id: user._id || user.id,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt || new Date().toISOString(),
+  }
+}
+
+export async function fetchUsers(): Promise<UsersResponse> {
+  try {
+    const apiUrl = buildApiUrl("/api/users/get-users") // 🔑 make sure backend has this
+    const headers = buildAuthHeaders()
+    const response = await fetch(apiUrl, { method: "POST", headers })
+
+    const contentType = response.headers.get("content-type") || ""
+    if (!contentType.includes("application/json")) {
+      const rawText = await response.text()
+      return { success: false, users: [], total: 0, error: rawText }
+    }
+
+    const data = await response.json()
+    if (!response.ok) {
+      return { success: false, users: [], total: 0, error: data.message || "Failed to fetch users" }
+    }
+
+    const usersArray = Array.isArray(data.data) ? data.data : data.users || []
+    const users = usersArray.map((u: any) => transformUserData(u))
+
+    return { success: true, users, total: data.count || users.length }
+  } catch (err) {
+    return { success: false, users: [], total: 0, error: err instanceof Error ? err.message : "Network error" }
+  }
+}
+
+export async function registerUser(userData: {
+  name: string
+  username: string
+  email: string
+  password: string
+  role: string
+}): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
+  try {
+    const apiUrl = buildApiUrl("/api/users/register")
+    const headers = buildAuthHeaders()
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(userData),
+    })
+
+    let data: any = {}
+    try {
+      data = await response.json()
+    } catch {
+      // backend may not send JSON body
+    }
+
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || "Failed to register user" }
+    }
+
+    // ✅ safely check if backend returned a user
+    const userDataResp = data.user || data.data
+    return {
+      success: true,
+      user: userDataResp ? transformUserData(userDataResp) : undefined,
+      message: data.message || "User created successfully",
+    }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Network error" }
+  }
+}
+
+export async function fetchAllUsers(): Promise<UsersResponse> {
+  try {
+    const apiUrl = buildApiUrl("/api/users/get-all-users")
+    const headers = buildAuthHeaders()
+
+    const response = await fetch(apiUrl, { method: "GET", headers })
+
+    const data = await response.json()
+    if (!response.ok) {
+      return { success: false, users: [], total: 0, error: data.message || data.error || "Failed to fetch users" }
+    }
+
+    const usersArray = Array.isArray(data.data) ? data.data : data.users || []
+    const users = usersArray.map((u: any) => transformUserData(u))
+
+    return { success: true, users, total: data.count || users.length }
+  } catch (err) {
+    return { success: false, users: [], total: 0, error: err instanceof Error ? err.message : "Network error" }
+  }
+}
+
+export async function updateUser(
+  id: string,
+  userData: { name: string; username: string; email: string; role: string }
+): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
+  try {
+    const apiUrl = buildApiUrl(`/api/users/update-user/${id}`)
+    const headers = buildAuthHeaders()
+
+    const response = await fetch(apiUrl, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(userData),
+    })
+
+    let data: any = {}
+    try {
+      data = await response.json()
+    } catch {}
+
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || "Failed to update user" }
+    }
+
+    const updatedUser = data.user || data.data
+    return {
+      success: true,
+      user: updatedUser ? transformUserData(updatedUser) : undefined,
+      message: data.message || "User updated successfully",
+    }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Network error" }
+  }
+}

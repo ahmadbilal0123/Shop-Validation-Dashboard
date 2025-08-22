@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Store, Users, MapPin, BarChart3, Settings, LogOut } from "lucide-react"
+import { LayoutDashboard, Store, Users, MapPin, LogOut } from "lucide-react"
 import { useAuthContext } from "@/components/auth-provider"
 
 const navigation = [
