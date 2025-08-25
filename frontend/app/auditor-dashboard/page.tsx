@@ -103,17 +103,8 @@ export default function AuditorDashboard() {
     loadAssignedShops()
   }, [auditorId, page, limit, statusFilter, cityFilter, searchQuery])
 
-  const handleNextPage = () => {
-    if (page * limit < totalShops) {
-      setPage((prev) => prev + 1)
-    }
-  }
 
-  const handlePrevPage = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1)
-    }
-  }
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -181,49 +172,49 @@ export default function AuditorDashboard() {
               className="w-full justify-start h-12 text-white bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-slate-600/50 shadow-lg shadow-blue-500/10 transition-all duration-200"
             >
               <Home className="mr-3 h-5 w-5" />
-              <span className="font-medium">Dashboard</span>
+              <span className="font-medium">Assigned Shops</span>
               <div className="ml-auto w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
             </Button>
 
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full justify-start h-12 text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 transition-all duration-200 border border-transparent hover:border-slate-600/50 backdrop-blur-sm"
             >
               <Building2 className="mr-3 h-5 w-5" />
               <span className="font-medium">Assigned Shops</span>
-            </Button>
-
+            </Button> */}
+{/* 
             <Button
               variant="ghost"
               className="w-full justify-start h-12 text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 transition-all duration-200 border border-transparent hover:border-slate-600/50 backdrop-blur-sm"
             >
               <BarChart3 className="mr-3 h-5 w-5" />
               <span className="font-medium">Reports</span>
-            </Button>
+            </Button> */}
 
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full justify-start h-12 text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 transition-all duration-200 border border-transparent hover:border-slate-600/50 backdrop-blur-sm"
             >
               <FileText className="mr-3 h-5 w-5" />
               <span className="font-medium">Audit History</span>
-            </Button>
+            </Button> */}
 
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full justify-start h-12 text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 transition-all duration-200 border border-transparent hover:border-slate-600/50 backdrop-blur-sm"
             >
               <User className="mr-3 h-5 w-5" />
               <span className="font-medium">Profile</span>
-            </Button>
+            </Button> */}
 
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full justify-start h-12 text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 transition-all duration-200 border border-transparent hover:border-slate-600/50 backdrop-blur-sm"
             >
               <Settings className="mr-3 h-5 w-5" />
               <span className="font-medium">Settings</span>
-            </Button>
+            </Button> */}
           </nav>
 
           {/* User Info & Logout */}
@@ -539,41 +530,7 @@ export default function AuditorDashboard() {
                 ))}
               </div>
 
-              {/* Pagination */}
-              {!loading && shops.length > 0 && (
-                <Card className="border-blue-100 shadow-lg bg-white/80 backdrop-blur-sm">
-                  <CardContent className="py-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                      <Button
-                        onClick={handlePrevPage}
-                        disabled={page === 1 || loading}
-                        variant="outline"
-                        className="bg-white/90 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
-                      >
-                        Previous
-                      </Button>
-
-                      <div className="text-center space-y-1">
-                        <span className="text-slate-700 font-bold text-lg">
-                          Page {page} of {Math.ceil(totalShops / limit)}
-                        </span>
-                        <p className="text-sm text-slate-500">
-                          Showing {shops.length} of {totalShops} assigned shops
-                        </p>
-                      </div>
-
-                      <Button
-                        onClick={handleNextPage}
-                        disabled={page * limit >= totalShops || loading}
-                        variant="outline"
-                        className="bg-white/90 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+          
 
             </div>
           </div>

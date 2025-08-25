@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, Calendar,  Search, Eye } from "lucide-react"
+import { MapPin, Calendar, Search, Eye } from "lucide-react"
 import { fetchVisitedShops, type Shop } from "@/lib/api"
 
 export default function VisitsPage() {
@@ -14,10 +14,12 @@ export default function VisitsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter] = useState("all")
-  const [cityFilter, setCityFilter] = useState("")
+  const [cityFilter, setCityFilter] = useState("all")
 
   // Get unique cities for filter
-  const uniqueCities = Array.from(new Set(shops.map((shop) => shop.city).filter(Boolean)))
+  const uniqueCities = Array.from(
+    new Set(shops.map((shop) => shop.city).filter(Boolean))
+  )
 
   // Filter shops based on search and filters
   const filteredShops = shops.filter((shop) => {
@@ -25,13 +27,12 @@ export default function VisitsPage() {
       shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shop.address.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || shop.status === statusFilter
-    const matchesCity = !cityFilter || shop.city === cityFilter
+    const matchesCity = cityFilter === "all" || shop.city === cityFilter
     return matchesSearch && matchesStatus && matchesCity
   })
 
   // Calculate stats
   const totalVisits = shops.reduce((sum, shop) => sum + (shop.visitImages?.length || 0), 0)
-
 
   useEffect(() => {
     loadVisitedShops()
@@ -55,8 +56,6 @@ export default function VisitsPage() {
       setLoading(false)
     }
   }
-
-  
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -132,7 +131,6 @@ export default function VisitsPage() {
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Filters */}
@@ -148,21 +146,20 @@ export default function VisitsPage() {
                   className="pl-10"
                 />
               </div>
-              
-             <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by city" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="all">All Cities</SelectItem>
-                {uniqueCities.map((city) => (
-                <SelectItem key={city} value={city}>
-                    {city}
-                </SelectItem>
-                ))}
-            </SelectContent>
-            </Select>
 
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Filter by city" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Cities</SelectItem>
+                  {uniqueCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -174,7 +171,7 @@ export default function VisitsPage() {
               <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">No visited shops found</h3>
               <p className="text-gray-500">
-                {searchTerm || statusFilter !== "all" || cityFilter
+                {searchTerm || statusFilter !== "all" || cityFilter !== "all"
                   ? "Try adjusting your filters to see more results."
                   : "No shops have been visited yet."}
               </p>
@@ -192,17 +189,17 @@ export default function VisitsPage() {
                     <div className="flex-1">
                       <CardTitle className="text-lg font-semibold text-gray-800 mb-1">{shop.name}</CardTitle>
                       <div className="flex items-center text-sm text-gray-600 mb-2">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        <span className="truncate">{shop.address}</span>
-                      </div>
+                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span className="truncate max-w-[150px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-full">
+                        {shop.address}
+                      </span>
                     </div>
-                   
+
+                    </div>
                   </div>
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  
-
                   {/* Shop Details */}
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -220,13 +217,6 @@ export default function VisitsPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* <Button
-                    className="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                    onClick={() => (window.location.href = `/shop/${shop.id}`)}
-                  >
-                    View Details
-                  </Button> */}
                 </CardContent>
               </Card>
             ))}

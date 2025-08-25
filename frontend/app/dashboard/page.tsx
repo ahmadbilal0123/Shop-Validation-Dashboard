@@ -80,34 +80,24 @@ export default function RecentShopsPage() {
     loadShops()
   }
 
-  // const getStatusColor = (status: string) => {
-  //   switch (status) {
-  //     case "active":
-  //       return "bg-emerald-50 text-emerald-700 border-emerald-200"
-  //     case "inactive":
-  //       return "bg-red-50 text-red-700 border-red-200"
-  //     case "pending":
-  //       return "bg-amber-50 text-amber-700 border-amber-200"
-  //     default:
-  //       return "bg-gray-50 text-gray-700 border-gray-200"
-  //   }
-  // }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-blue-100/50  top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold  text-blue-700">Admin DashBoard</h1>
-              <h1 className="text-4xl font-bold text-slate-900">Recently Added Shops</h1>
-              <p className="text-slate-600 text-lg font-medium">
+      <div className="bg-white/90 backdrop-blur-md border-b border-blue-100/50 top-0 z-40 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2 text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">Admin DashBoard</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Recently Added Shops</h1>
+              <p className="text-slate-600 text-base sm:text-lg font-medium">
                 Discover newly registered shops from the last 30 days
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Badge variant="outline" className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold">
+            <div className="flex justify-center sm:justify-end">
+              <Badge
+                variant="outline"
+                className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold"
+              >
                 <Building2 className="w-4 h-4 mr-2" />
                 {totalShops} Recent Shops
               </Badge>
@@ -116,54 +106,56 @@ export default function RecentShopsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all duration-300">
+          {/* Card 1 */}
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Recent Shops</p>
-                  <p className="text-3xl font-bold text-slate-900">{totalShops}</p>
+                  <p className="text-sm font-semibold text-slate-600 uppercase">Recent Shops</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-slate-900">{totalShops}</p>
                   <p className="text-xs text-slate-500">Last 30 days</p>
                 </div>
-                <div className="h-14 w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-7 w-7 text-blue-600" />
+                <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all duration-300">
+          {/* Card 2 */}
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Cities Covered</p>
-                  <p className="text-3xl font-bold text-blue-600">
+                  <p className="text-sm font-semibold text-slate-600 uppercase">Cities Covered</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">
                     {new Set(shops.map((shop) => shop.city).filter(Boolean)).size}
                   </p>
                   <p className="text-xs text-slate-500">Unique locations</p>
                 </div>
-                <div className="h-14 w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <MapPin className="h-7 w-7 text-blue-600" />
+                <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all duration-300">
+          {/* Card 3 */}
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Avg. Visits</p>
-                  <p className="text-3xl font-bold text-indigo-600">
-                    {Math.round(shops.reduce((acc, shop) => acc + (shop.visitImages?.length || 0), 0) / shops.length) ||
-                      0}
+                  <p className="text-sm font-semibold text-slate-600 uppercase">Avg. Visits</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-indigo-600">
+                    {Math.round(shops.reduce((acc, shop) => acc + (shop.visitImages?.length || 0), 0) / shops.length) || 0}
                   </p>
                   <p className="text-xs text-slate-500">Per shop</p>
                 </div>
-                <div className="h-14 w-14 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="h-7 w-7 text-indigo-600" />
+                <div className="h-12 w-12 sm:h-14 sm:w-14 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600" />
                 </div>
               </div>
             </CardContent>
@@ -173,81 +165,43 @@ export default function RecentShopsPage() {
         {/* Search and Filter Section */}
         <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg mb-8">
           <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center">
+            <div className="flex flex-col lg:flex-row gap-4 w-full">
               <div className="flex-1 relative">
-                <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                 <Input
                   placeholder="Search recent shops by name, address, or city..."
                   value={searchQuery || ""}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch(e)}
-                  className="pl-12 h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 bg-white/70"
+                  className="pl-12 h-12 w-full border-slate-200 focus:border-blue-500 focus:ring-blue-500 bg-white/70"
                 />
               </div>
-
-              <div className="flex gap-3">
-               
-
-                <Button
-                  onClick={handleSearch}
-                  className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg"
-                >
-                  Search
-                </Button>
-              </div>
+              <Button
+                onClick={handleSearch}
+                className="h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg w-full lg:w-auto"
+              >
+                Search
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
-            <p className="text-slate-600 text-lg font-medium">Loading recent shops...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <Alert variant="destructive" className="mb-8 border-red-200 bg-red-50/80 backdrop-blur-sm">
-            <AlertCircle className="h-5 w-5" />
-            <AlertTitle className="text-lg font-semibold">Error Loading Shops</AlertTitle>
-            <AlertDescription className="text-base">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* No Results State */}
-        {!loading && shops.length === 0 && !error && (
-          <Card className="text-center py-20 border-blue-100 shadow-lg bg-white/80 backdrop-blur-sm">
-            <CardContent>
-              <Building2 className="w-20 h-20 mx-auto mb-6 text-slate-400" />
-              <AlertTitle className="text-2xl font-bold text-slate-700 mb-3">No Recent Shops Found</AlertTitle>
-              <AlertDescription className="text-lg text-slate-600 max-w-md mx-auto">
-                No shops have been added in the last 30 days, or none match your current search criteria.
-              </AlertDescription>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Shop Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {shops.map((shop) => (
             <Card
               key={shop.id}
-              className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+              className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all group"
             >
               <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-2">
-                    <CardTitle className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                      {shop.name}
-                    </CardTitle>
-                    
-                  </div>
+                <div className="flex items-start justify-between flex-wrap gap-2">
+                  <CardTitle className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {shop.name}
+                  </CardTitle>
                   {shop.validationScore && (
-                    <div className="flex items-center gap-1 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+                    <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-amber-200">
                       <Star className="h-4 w-4 text-amber-500 fill-current" />
-                      <span className="text-sm font-bold text-amber-700">{shop.validationScore}</span>
+                      <span className="text-xs sm:text-sm font-bold text-amber-700">{shop.validationScore}</span>
                     </div>
                   )}
                 </div>
@@ -279,25 +233,27 @@ export default function RecentShopsPage() {
                   {shop.email && (
                     <div className="flex items-center gap-3">
                       <Mail className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm text-slate-700 font-medium">{shop.email}</span>
+                      <span className="text-sm text-slate-700 font-medium break-words">{shop.email}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-slate-200">
                   <div className="text-sm text-slate-600">
                     <span className="font-semibold">Visits:</span>{" "}
                     <span className="text-blue-600 font-bold">{shop.visitImages?.length || 0}</span>
                   </div>
                   {shop.lastVisit && (
-                    <div className="text-sm text-slate-500">Last: {new Date(shop.lastVisit).toLocaleDateString()}</div>
+                    <div className="text-sm text-slate-500">
+                      Last: {new Date(shop.lastVisit).toLocaleDateString()}
+                    </div>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
                   <Calendar className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-blue-600 font-semibold">
+                  <span className="text-xs sm:text-sm text-blue-600 font-semibold">
                     Added: {shop.createdAt ? new Date(shop.createdAt).toLocaleDateString() : "Unknown"}
                   </span>
                 </div>
@@ -315,7 +271,7 @@ export default function RecentShopsPage() {
                   onClick={handlePrevPage}
                   disabled={page === 1 || loading}
                   variant="outline"
-                  className="bg-white/90 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
+                  className="bg-white/90 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto"
                 >
                   Previous
                 </Button>
@@ -333,7 +289,7 @@ export default function RecentShopsPage() {
                   onClick={handleNextPage}
                   disabled={page * limit >= totalShops || loading}
                   variant="outline"
-                  className="bg-white/90 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
+                  className="bg-white/90 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto"
                 >
                   Next
                 </Button>

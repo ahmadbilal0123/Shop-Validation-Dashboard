@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Search, UserCheck, Package } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"   // ✅ Import shadcn toast
+import { useToast } from "@/components/ui/use-toast"
 
 interface User {
   id: string
@@ -22,7 +22,7 @@ interface User {
 export default function AssignShopsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { toast } = useToast()   // ✅ Init toast
+  const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [selectedAuditorId, setSelectedAuditorId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -140,22 +140,24 @@ export default function AssignShopsPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center gap-4 mb-6">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <Button
               variant="outline"
               onClick={() => router.push("/dashboard/shops")}
-              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 w-full sm:w-auto justify-center"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Shops
             </Button>
-            <h1 className="text-4xl font-bold text-blue-900 font-sans">Assign Shops to Auditors</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold text-blue-900 text-center sm:text-left">
+              Assign Shops to Auditors
+            </h1>
           </div>
 
           {/* Selected Shops Display Section */}
-          <div className="bg-blue-50/80 backdrop-blur-sm rounded-2xl border border-blue-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
+          <div className="bg-blue-50/80 backdrop-blur-sm rounded-2xl border border-blue-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
               <Package className="w-5 h-5" />
               Selected Shops ({shopIds.length})
             </h2>
@@ -163,14 +165,14 @@ export default function AssignShopsPage() {
               {shopIds.map((shopId, index) => (
                 <div
                   key={shopId}
-                  className="bg-white/80 backdrop-blur-sm rounded-xl border border-blue-200 p-4 shadow-sm"
+                  className="bg-white/80 backdrop-blur-sm rounded-xl border border-blue-200 p-3 sm:p-4 shadow-sm"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm">Shop #{shopId.slice(-6)}</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">Shop #{shopId.slice(-6)}</p>
                       <p className="text-xs text-gray-600 truncate">ID: {shopId}</p>
                     </div>
                   </div>
@@ -179,12 +181,12 @@ export default function AssignShopsPage() {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Badge variant="outline" className="px-4 py-2 bg-green-50 border-green-200 text-green-700 font-semibold">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Badge variant="outline" className="px-3 sm:px-4 py-2 bg-green-50 border-green-200 text-green-700 font-semibold w-full sm:w-auto justify-center">
               <Users className="w-4 h-4 mr-2" />
               {selectedAuditorId ? 1 : 0} Auditor Selected
             </Badge>
-            <Badge variant="outline" className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold">
+            <Badge variant="outline" className="px-3 sm:px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto justify-center">
               <Package className="w-4 h-4 mr-2" />
               {shopIds.length} Shops to Assign
             </Badge>
@@ -192,12 +194,12 @@ export default function AssignShopsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Users className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Users className="w-5 sm:w-6 h-5 sm:h-6 text-blue-600" />
                 Select Auditors
               </h2>
             </div>
@@ -214,7 +216,7 @@ export default function AssignShopsPage() {
             </div>
 
             {/* Users List */}
-            <div className="space-y-4 max-h-96 overflow-y-auto mb-8">
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto mb-8">
               {filteredUsers.map((user) => (
                 <Card
                   key={user.id}
@@ -224,8 +226,8 @@ export default function AssignShopsPage() {
                       : "border-blue-100 hover:border-blue-200"
                   }`}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-3 sm:gap-0">
                       <input
                         type="radio"
                         name="auditor"
@@ -233,18 +235,18 @@ export default function AssignShopsPage() {
                         onChange={() => setSelectedAuditorId(user.id)}
                         className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
                       />
-                      <div className="flex-1">
-                        <Label htmlFor={user.id} className="cursor-pointer">
-                          <div className="font-semibold text-gray-900 text-lg">{user.name}</div>
-                          <div className="text-sm text-gray-600 mt-1">{user.email}</div>
+                      <div className="flex-1 min-w-0">
+                        <Label htmlFor={user.id} className="cursor-pointer block">
+                          <div className="font-semibold text-gray-900 text-base sm:text-lg truncate">{user.name}</div>
+                          <div className="text-sm text-gray-600 mt-1 truncate">{user.email}</div>
                           <Badge variant="secondary" className="text-xs mt-2 bg-blue-100 text-blue-800 border-blue-200">
                             {user.role}
                           </Badge>
                         </Label>
                       </div>
                       {selectedAuditorId === user.id && (
-                        <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
-                          <UserCheck className="w-5 h-5 text-green-600" />
+                        <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full">
+                          <UserCheck className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
                         </div>
                       )}
                     </div>
@@ -258,16 +260,16 @@ export default function AssignShopsPage() {
               <Button
                 onClick={handleAssignShops}
                 disabled={assigning || !selectedAuditorId}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
               >
                 {assigning ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                    <div className="animate-spin rounded-full h-4 sm:h-5 w-4 sm:w-5 border-b-2 border-white mr-2 sm:mr-3"></div>
                     Assigning Shops...
                   </>
                 ) : (
                   <>
-                    <UserCheck className="w-5 h-5 mr-3" />
+                    <UserCheck className="w-4 sm:w-5 h-4 sm:h-5 mr-2 sm:mr-3" />
                     Assign {shopIds.length} Shops to Auditor
                   </>
                 )}
