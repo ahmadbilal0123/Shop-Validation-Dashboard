@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { registerUser, fetchAllUsers, updateUser, type User } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,9 @@ export default function UsersPage() {
   const [submitting, setSubmitting] = useState(false)
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+
+  // 👇 Ref for edit form
+  const editFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadUsers()
@@ -68,6 +71,13 @@ export default function UsersPage() {
     setSubmitting(false)
   }
 
+  // 👇 When editForm is set, scroll to form
+  useEffect(() => {
+    if (editForm && editFormRef.current) {
+      editFormRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [editForm])
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold">Users</h1>
@@ -100,10 +110,6 @@ export default function UsersPage() {
               <Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required />
             </div>
             <div>
-              <Label>Email</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-            </div>
-            <div>
               <Label>Password</Label>
               <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
             </div>
@@ -133,7 +139,7 @@ export default function UsersPage() {
 
       {/* Edit User Form */}
       {editForm && (
-        <Card>
+        <Card ref={editFormRef}>
           <CardHeader>
             <CardTitle>Edit User</CardTitle>
           </CardHeader>
@@ -148,8 +154,8 @@ export default function UsersPage() {
                 <Input value={editForm.username || ""} onChange={(e) => setEditForm({ ...editForm, username: e.target.value })} />
               </div>
               <div>
-                <Label>Email</Label>
-                <Input type="email" value={editForm.email || ""} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                <Label>Password</Label>
+                <Input value={editForm.password || ""} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} />
               </div>
               <div>
                 <Label>Role</Label>
@@ -181,44 +187,37 @@ export default function UsersPage() {
 
       {/* Users List */}
       <div>
-       <h2 className="text-xl font-semibold mt-6 mb-4">Users List</h2>
+        <h2 className="text-xl font-semibold mt-6 mb-4">Users List</h2>
 
-{(() => {
-  if (loading) {
-    return <p>Loading users...</p>
-  }
-
-  if (users.length === 0) {
-    return <p>No users found.</p>
-  }
-
-  return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {users.map((user) => (
-        <Card key={user.id}>
-          <CardHeader>
-            <CardTitle>{user.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p><strong>Username:</strong> {user.username}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Role:</strong> {user.role}</p>
-            <p className="text-sm text-gray-500">
-              Joined: {new Date(user.createdAt).toLocaleDateString()}
-            </p>
-            <Button
-              className="mt-3"
-              size="sm"
-              onClick={() => setEditForm(user)}
-            >
-              Edit
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-})()}
+        {loading ? (
+          <p>Loading users...</p>
+        ) : users.length === 0 ? (
+          <p>No users found.</p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {users.map((user) => (
+              <Card key={user.id}>
+                <CardHeader>
+                  <CardTitle>{user.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p><strong>Username:</strong> {user.username}</p>
+                  <p><strong>Role:</strong> {user.role}</p>
+                  <p className="text-sm text-gray-500">
+                    Joined: {new Date(user.createdAt).toLocaleDateString()}
+                  </p>
+                  <Button
+                    className="mt-3"
+                    size="sm"
+                    onClick={() => setEditForm(user)}
+                  >
+                    Edit
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

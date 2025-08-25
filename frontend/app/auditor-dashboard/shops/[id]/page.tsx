@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, ArrowLeft, MapPin, Phone, Star, Eye, EyeOff } from "lucide-react"
-
+import Image from "next/image"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 interface ShopData {
@@ -247,13 +247,13 @@ export default function ShopDetailsPage() {
                               <div className="relative group">
                                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
                                 <div className="relative">
-                                  <img
+                                 <Image
                                     src={`${API_BASE_URL}${img.shopImage}`}
                                     alt="Shop"
-                                    className="w-full h-64 object-cover rounded-xl shadow-lg border-2 border-blue-200 hover:scale-105 transition-all duration-300"
-                                    onError={(e) => {
-                                      e.currentTarget.src = "/placeholder.svg?height=256&width=400&text=Shop+Image"
-                                    }}
+                                    width={600}
+                                    height={400}
+                                    className="w-full h-64 object-cover rounded-xl shadow-lg"
+                                    priority={true} // for latest images
                                   />
                                   <div className="absolute top-3 left-3">
                                     <Badge className="bg-blue-500 text-white font-semibold shadow-lg">Shop</Badge>

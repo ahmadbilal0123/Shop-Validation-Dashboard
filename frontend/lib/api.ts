@@ -473,6 +473,7 @@ export interface User {
   id: string
   name: string
   username: string
+  password:string
   email: string
   role: string
   createdAt: string
@@ -496,6 +497,7 @@ function transformUserData(user: any): User {
     name: user.name,
     username: user.username,
     email: user.email,
+    password:user.password,
     role: user.role,
     createdAt: user.createdAt || new Date().toISOString(),
   }
@@ -590,7 +592,13 @@ export async function fetchAllUsers(): Promise<UsersResponse> {
 
 export async function updateUser(
   id: string,
-  userData: { name: string; username: string; email: string; role: string }
+  userData: {
+    name?: string
+    username?: string
+    email?: string
+    role?: string
+    password?: string
+  }
 ): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
   try {
     const apiUrl = buildApiUrl(`/api/users/update-user/${id}`)

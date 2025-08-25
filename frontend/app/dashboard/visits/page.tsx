@@ -104,7 +104,7 @@ export default function VisitsPage() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Shop Visits
           </h1>
-          <p className="text-gray-600 text-lg">Track and manage all visited shops with their images</p>
+          <p className="text-gray-600 text-lg">Track and manage all visited shops</p>
         </div>
 
         {/* Stats Cards */}
