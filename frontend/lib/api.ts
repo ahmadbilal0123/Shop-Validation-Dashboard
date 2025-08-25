@@ -87,8 +87,7 @@ function buildQueryParams(params?: {
   status?: string
   city?: string
   search?: string
-  page?: number
-  limit?: number
+  unassigned?: string   // ✅ allow unassigned
 }): string {
   if (!params) return ""
   const queryParams = new URLSearchParams()
@@ -96,8 +95,7 @@ function buildQueryParams(params?: {
   if (params.status && params.status !== "all") queryParams.append("status", params.status)
   if (params.city) queryParams.append("city", params.city)
   if (params.search) queryParams.append("search", params.search)
-  if (params.page) queryParams.append("page", params.page.toString())
-  if (params.limit) queryParams.append("limit", params.limit.toString())
+  if (params.unassigned) queryParams.append("unassigned", params.unassigned) // ✅ added
 
   return queryParams.toString()
 }
@@ -174,6 +172,55 @@ export async function fetchShops(params?: {
     return buildError(error instanceof Error ? error.message : "Network error")
   }
 }
+
+// ✅ Fetch Unassigned Shops (always sends unassigned=true as string)
+export async function fetchUnassignedShops(params?: {
+  status?: string
+  city?: string
+  search?: string
+  page?: number
+  limit?: number
+}): Promise<ShopsResponse> {
+  try {
+    // 👇 Force the params into a flexible object before adding `unassigned`
+    const queryParams = buildQueryParams({
+      ...(params as Record<string, any>),
+      unassigned: "true", // always send as string
+    })
+
+    const apiUrl = buildApiUrl("/api/shops/get-shops")
+    const urlWithParams = queryParams ? `${apiUrl}?${queryParams}` : apiUrl
+    console.log("UnassignedShops API URL:", urlWithParams)
+
+    const headers = buildAuthHeaders()
+    const response = await fetch(urlWithParams, { method: "GET", headers })
+
+    const errorCheck = await validateResponse(response)
+    if (errorCheck) return errorCheck
+
+    const data = await response.json()
+
+    if (response.status === 401) {
+      return buildError("Unauthorized. Please log in again.")
+    }
+
+    if (response.ok && data) {
+      const shops = mapShops(data.data || [])
+      return { success: true, shops, total: data.count || shops.length }
+    }
+
+    return buildError(data.message || data.error || "Failed to fetch unassigned shops")
+  } catch (error) {
+    return buildError(error instanceof Error ? error.message : "Network error")
+  }
+}
+
+
+
+
+
+
+
 
 export async function fetchAssignedShopsForAuditor(
   auditorId: string,
@@ -627,5 +674,33 @@ export async function updateUser(
     }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Network error" }
+  }
+}
+export async function fetchVisitStats(): Promise<{
+  success: boolean
+  visited?: number
+  notVisited?: number
+  total?: number
+  error?: string
+}> {
+  try {
+    const apiUrl = buildApiUrl("/api/shops/get-visit-stats")
+    const headers = buildAuthHeaders()
+
+    const response = await fetch(apiUrl, { method: "GET", headers })
+    const data = await response.json()
+
+    if (!response.ok) {
+      return { success: false, error: data.message || "Failed to fetch visit stats" }
+    }
+
+    return {
+      success: true,
+      visited: data.visited,
+      notVisited: data.notVisited,
+      total: data.total,
+    }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Network error" }
   }
 }

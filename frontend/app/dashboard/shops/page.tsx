@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { fetchShops, type Shop, type ShopsResponse } from "@/lib/api"
+import { fetchUnassignedShops } from "@/lib/api"
 import { useRouter } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,7 +30,6 @@ export default function ShopsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page] = useState(1)
-  const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
   const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
@@ -40,15 +40,28 @@ export default function ShopsPage() {
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
 
-  const loadShops = async () => {
+  const loadShops = async (selecting: boolean = false) => {
     setLoading(true)
     setError(null)
     try {
-      const response: ShopsResponse = await fetchShops({
-        status: statusFilter,
-        city: cityFilter,
-        search: searchQuery,
-      })
+      let response: ShopsResponse
+
+      if (selecting) {
+        // ✅ when selecting mode is enabled → fetch only unassigned shops
+        response = await fetchUnassignedShops({
+          city: cityFilter,
+          search: searchQuery,
+          page,
+        })
+      } else {
+        // ✅ normal mode → fetch all shops
+        response = await fetchShops({
+          status: statusFilter,
+          city: cityFilter,
+          search: searchQuery,
+          page,
+        })
+      }
 
       if (response.success) {
         setShops(response.shops)
@@ -64,9 +77,10 @@ export default function ShopsPage() {
     }
   }
 
+  // Initial load
   useEffect(() => {
-    loadShops()
-  }, [page, limit, statusFilter, cityFilter, searchQuery])
+    loadShops(selectMode)
+  }, [page, statusFilter, cityFilter, searchQuery, selectMode]) // ✅ removed "limit"
 
   const toggleShopSelection = (shopId: string) => {
     setSelectedShopIds((prev) => (prev.includes(shopId) ? prev.filter((id) => id !== shopId) : [...prev, shopId]))
@@ -118,13 +132,13 @@ export default function ShopsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
-      {/* Header Section */}
+      {/* ✅ Header Section */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
             <div className="space-y-2 text-center lg:text-left">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-900">
-                Auditor Shop Management
+                Admin Shop Management
               </h1>
               <p className="text-blue-700 text-sm sm:text-base">
                 Efficiently manage and assign shops to auditors with our streamlined dashboard
@@ -146,7 +160,7 @@ export default function ShopsPage() {
         </div>
       </div>
 
-      {/* Filters and Actions Section */}
+      {/* ✅ Filters + Actions Section */}
       <div className="container mx-auto px-4 sm:px-6 py-6">
         <div className="sticky top-0 bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 mb-8 z-50">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
@@ -166,7 +180,10 @@ export default function ShopsPage() {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 sm:gap-3 justify-end w-full lg:w-auto">
               <Button
-                onClick={() => setSelectMode((prev) => !prev)}
+                onClick={() => {
+                  setSelectMode((prev) => !prev)
+                  setSelectedShopIds([]) // reset selection
+                }}
                 variant={selectMode ? "outline" : "default"}
                 className={
                   selectMode
@@ -202,7 +219,7 @@ export default function ShopsPage() {
           </div>
         </div>
 
-        {/* Shops Grid */}
+        {/* ✅ Shops Grid */}
         {!loading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {shops.map((shop) => (

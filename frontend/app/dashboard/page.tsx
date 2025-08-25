@@ -4,12 +4,12 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { fetchShops, type Shop, type ShopsResponse } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, MapPin, Phone, Mail, Calendar, Star, Filter, Building2, TrendingUp } from "lucide-react"
+import { MapPin, Phone, Mail, Calendar, Star, Filter, Building2, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { fetchVisitStats } from "@/lib/api"  // 👈 import it
 
 export default function RecentShopsPage() {
   const [shops, setShops] = useState<Shop[]>([])
@@ -21,7 +21,21 @@ export default function RecentShopsPage() {
   const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
+const [visitStats, setVisitStats] = useState<{ visited: number; notVisited: number; total: number } | null>(null)
 
+useEffect(() => {
+  const loadStats = async () => {
+    const response = await fetchVisitStats()
+    if (response.success) {
+      setVisitStats({
+        visited: response.visited || 0,
+        notVisited: response.notVisited || 0,
+        total: response.total || 0,
+      })
+    }
+  }
+  loadStats()
+}, [])
   const filterRecentShops = (shops: Shop[]) => {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -62,6 +76,7 @@ export default function RecentShopsPage() {
     loadShops()
   }, [page, limit, statusFilter, cityFilter, searchQuery])
 
+
   const handleNextPage = () => {
     if (page * limit < totalShops) {
       setPage((prev) => prev + 1)
@@ -99,7 +114,7 @@ export default function RecentShopsPage() {
                 className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold"
               >
                 <Building2 className="w-4 h-4 mr-2" />
-                {totalShops} Recent Shops
+                {totalShops} Total Shops
               </Badge>
             </div>
           </div>
@@ -108,59 +123,54 @@ export default function RecentShopsPage() {
 
       <div className="container mx-auto px-4 sm:px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Card 1 */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-600 uppercase">Recent Shops</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-slate-900">{totalShops}</p>
-                  <p className="text-xs text-slate-500">Last 30 days</p>
-                </div>
-                <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card 2 */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-600 uppercase">Cities Covered</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">
-                    {new Set(shops.map((shop) => shop.city).filter(Boolean)).size}
-                  </p>
-                  <p className="text-xs text-slate-500">Unique locations</p>
-                </div>
-                <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card 3 */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-600 uppercase">Avg. Visits</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-indigo-600">
-                    {Math.round(shops.reduce((acc, shop) => acc + (shop.visitImages?.length || 0), 0) / shops.length) || 0}
-                  </p>
-                  <p className="text-xs text-slate-500">Per shop</p>
-                </div>
-                <div className="h-12 w-12 sm:h-14 sm:w-14 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  {/* Card 1 - Total Shops */}
+  <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-600 uppercase">Total Shops</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900">{visitStats?.total ?? "..."}</p>
+          <p className="text-xs text-slate-500">Last 30 days</p>
         </div>
+        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+          <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Card 2 - Visited Shops */}
+  <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-600 uppercase">Visited Shops</p>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{visitStats?.visited ?? "..."}</p>
+        </div>
+        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+          <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Card 3 - Not Visited */}
+  <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-600 uppercase">Not Visited</p>
+          <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{visitStats?.notVisited ?? "..."}</p>
+        </div>
+        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-indigo-100 rounded-xl flex items-center justify-center">
+          <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</div>
+
 
         {/* Search and Filter Section */}
         <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg mb-8">
