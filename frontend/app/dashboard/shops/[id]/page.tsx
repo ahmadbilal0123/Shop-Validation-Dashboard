@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, ArrowLeft, MapPin, Phone, Star, ImageIcon, History } from "lucide-react"
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 interface ShopData {
@@ -433,6 +432,10 @@ export default function ShopDetailsPage() {
           </div>
         )}
       </div>
+
+
+      
     </div>
+    
   )
 }

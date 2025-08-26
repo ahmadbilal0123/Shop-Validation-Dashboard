@@ -270,12 +270,7 @@ export default function ShopsPage() {
                       </div>
                     )}
 
-                    {shop.email && (
-                      <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">
-                        <Mail className="w-4 h-4 mr-3 text-slate-500 flex-shrink-0" />
-                        <span className="text-sm truncate">{shop.email}</span>
-                      </div>
-                    )}
+                  
 
                     {shop.createdAt && (
                       <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">

@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 export default function UsersPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: "", username: "", email: "", password: "", role: "user" })
+  const [form, setForm] = useState({ name: "", username: "", password: "", role: "user" })
   const [editForm, setEditForm] = useState<Partial<User> | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [users, setUsers] = useState<User[]>([])
@@ -43,7 +43,7 @@ export default function UsersPage() {
 
     const res = await registerUser(form)
     if (res.success) {
-      setForm({ name: "", username: "", email: "", password: "", role: "user" })
+      setForm({ name: "", username: "",  password: "", role: "user" })
       setSuccess("🎉 User registered successfully!")
       await loadUsers()
     } else {
@@ -153,10 +153,16 @@ export default function UsersPage() {
                 <Label>Username</Label>
                 <Input value={editForm.username || ""} onChange={(e) => setEditForm({ ...editForm, username: e.target.value })} />
               </div>
-              <div>
-                <Label>Password</Label>
-                <Input value={editForm.password || ""} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} />
-              </div>
+             <div>
+  <Label>Password</Label>
+  <Input
+    type="password"
+    placeholder="Enter new password"
+    value={editForm.password || ""}
+    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+  />
+  <small className="text-gray-500">Leave blank to keep the current password</small>
+</div>
               <div>
                 <Label>Role</Label>
                 <select

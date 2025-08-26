@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import "leaflet/dist/leaflet.css"
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)

@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { fetchShops, type Shop, type ShopsResponse } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MapPin, Phone, Mail, Calendar, Star, Filter, Building2, TrendingUp } from "lucide-react"
+import { MapPin, Phone, Mail, Calendar, Star, Filter, Building2,Clock,CheckCircle2, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -148,9 +148,10 @@ useEffect(() => {
           <p className="text-sm font-semibold text-slate-600 uppercase">Visited Shops</p>
           <p className="text-2xl sm:text-3xl font-bold text-blue-600">{visitStats?.visited ?? "..."}</p>
         </div>
-        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-          <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-        </div>
+     <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+  <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+</div>
+
       </div>
     </CardContent>
   </Card>
@@ -160,12 +161,13 @@ useEffect(() => {
     <CardContent className="p-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-600 uppercase">Not Visited</p>
-          <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{visitStats?.notVisited ?? "..."}</p>
+          <p className="text-sm font-semibold text-slate-600 uppercase">Pending Shops</p>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{visitStats?.notVisited ?? "..."}</p>
         </div>
-        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-indigo-100 rounded-xl flex items-center justify-center">
-          <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600" />
-        </div>
+        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+  <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+</div>
+
       </div>
     </CardContent>
   </Card>
@@ -240,12 +242,7 @@ useEffect(() => {
                       <span className="text-sm text-slate-700 font-medium">{shop.phone}</span>
                     </div>
                   )}
-                  {shop.email && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm text-slate-700 font-medium break-words">{shop.email}</span>
-                    </div>
-                  )}
+                
                 </div>
 
                 {/* Stats */}
@@ -273,7 +270,7 @@ useEffect(() => {
         </div>
 
         {/* Pagination */}
-        {!loading && shops.length > 0 && (
+        {/* {!loading && shops.length > 0 && (
           <Card className="border-blue-100 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardContent className="py-6">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -306,7 +303,7 @@ useEffect(() => {
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
       </div>
     </div>
   )

@@ -15,7 +15,6 @@ export interface Shop {
   state: string
   zipCode: string
   phone?: string
-  email?: string
   status: "active" | "inactive" | "pending"
   coordinates?: {
     lat: number
@@ -60,7 +59,6 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     state: shop.state || shop.ptc_urbanity || "",
     zipCode: shop.zipCode || shop.zip_code || "",
     phone: shop.phone || shop.contact_number || "",
-    email: shop.email || shop.contact_email || "",
     status: shop.status || "active",
     coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : undefined),
     lastVisit: shop.lastVisit || shop.last_visit,
@@ -214,13 +212,6 @@ export async function fetchUnassignedShops(params?: {
     return buildError(error instanceof Error ? error.message : "Network error")
   }
 }
-
-
-
-
-
-
-
 
 export async function fetchAssignedShopsForAuditor(
   auditorId: string,
@@ -521,7 +512,6 @@ export interface User {
   name: string
   username: string
   password:string
-  email: string
   role: string
   createdAt: string
 }
@@ -543,7 +533,6 @@ function transformUserData(user: any): User {
     id: user._id || user.id,
     name: user.name,
     username: user.username,
-    email: user.email,
     password:user.password,
     role: user.role,
     createdAt: user.createdAt || new Date().toISOString(),
@@ -579,18 +568,23 @@ export async function fetchUsers(): Promise<UsersResponse> {
 export async function registerUser(userData: {
   name: string
   username: string
-  email: string
   password: string
-  role: string
+  role?: string   // optional now
 }): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
   try {
     const apiUrl = buildApiUrl("/api/users/register")
     const headers = buildAuthHeaders()
 
+    // Always force role to "auditor"
+    const payload = {
+      ...userData,
+      role: "auditor",
+    }
+
     const response = await fetch(apiUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(userData),
+      body: JSON.stringify(payload),
     })
 
     let data: any = {}
@@ -604,7 +598,6 @@ export async function registerUser(userData: {
       return { success: false, error: data.message || data.error || "Failed to register user" }
     }
 
-    // ✅ safely check if backend returned a user
     const userDataResp = data.user || data.data
     return {
       success: true,
@@ -642,7 +635,6 @@ export async function updateUser(
   userData: {
     name?: string
     username?: string
-    email?: string
     role?: string
     password?: string
   }
