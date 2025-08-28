@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input"
 import {
   MapPin,
   Phone,
-  Mail,
   Calendar,
   Eye,
   Package,
@@ -22,23 +21,48 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Filter,
 } from "lucide-react"
 
 export default function ShopsPage() {
   const router = useRouter()
   const [shops, setShops] = useState<Shop[]>([])
+  const [allShops, setAllShops] = useState<Shop[]>([]) // Store all shops for client-side filtering
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page] = useState(1)
   const [totalShops, setTotalShops] = useState(0)
   const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
-  const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
+  const [searchQuery, setSearchQuery] = useState<string>("")
 
   // Selection state
   const [selectMode, setSelectMode] = useState(false)
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
+
+  // Filter shops based on search query
+  const filterShopsBySearch = (shops: Shop[], query: string) => {
+    if (!query || query.trim() === '') return shops
+    
+    const searchTerm = query.toLowerCase().trim()
+    
+    return shops.filter((shop) => {
+      const name = shop.name?.toLowerCase() || ''
+      const address = shop.address?.toLowerCase() || ''
+      const city = shop.city?.toLowerCase() || ''
+      const state = shop.state?.toLowerCase() || ''
+      const phone = shop.phone?.toLowerCase() || ''
+      
+      return (
+        name.includes(searchTerm) ||
+        address.includes(searchTerm) ||
+        city.includes(searchTerm) ||
+        state.includes(searchTerm) ||
+        phone.includes(searchTerm) 
+            )
+    })
+  }
 
   const loadShops = async (selecting: boolean = false) => {
     setLoading(true)
@@ -47,25 +71,27 @@ export default function ShopsPage() {
       let response: ShopsResponse
 
       if (selecting) {
-        // ✅ when selecting mode is enabled → fetch only unassigned shops
+        // when selecting mode is enabled → fetch only unassigned shops
         response = await fetchUnassignedShops({
           city: cityFilter,
-          search: searchQuery,
           page,
         })
       } else {
-        // ✅ normal mode → fetch all shops
+        // normal mode → fetch all shops
         response = await fetchShops({
           status: statusFilter,
           city: cityFilter,
-          search: searchQuery,
           page,
         })
       }
 
       if (response.success) {
-        setShops(response.shops)
-        setTotalShops(response.total)
+        setAllShops(response.shops) // Store all shops
+        
+        // Apply search filter
+        const filteredShops = filterShopsBySearch(response.shops, searchQuery)
+        setShops(filteredShops)
+        setTotalShops(filteredShops.length)
       } else {
         setError(response.error || "Failed to load shops.")
       }
@@ -77,10 +103,19 @@ export default function ShopsPage() {
     }
   }
 
+  // Apply search filter when search query changes
+  useEffect(() => {
+    if (allShops.length > 0) {
+      const filteredShops = filterShopsBySearch(allShops, searchQuery)
+      setShops(filteredShops)
+      setTotalShops(filteredShops.length)
+    }
+  }, [searchQuery, allShops])
+
   // Initial load
   useEffect(() => {
     loadShops(selectMode)
-  }, [page, statusFilter, cityFilter, searchQuery, selectMode]) // ✅ removed "limit"
+  }, [page, statusFilter, cityFilter, selectMode])
 
   const toggleShopSelection = (shopId: string) => {
     setSelectedShopIds((prev) => (prev.includes(shopId) ? prev.filter((id) => id !== shopId) : [...prev, shopId]))
@@ -102,6 +137,15 @@ export default function ShopsPage() {
 
     const shopIdsParam = selectedShopIds.join(",")
     router.push(`/dashboard/shops/assign?shopIds=${shopIdsParam}`)
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Search happens automatically via useEffect, this is just for form submission
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery("")
   }
 
   const getStatusIcon = (status: string) => {
@@ -132,7 +176,7 @@ export default function ShopsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
-      {/* ✅ Header Section */}
+      {/* Header Section */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
@@ -160,21 +204,53 @@ export default function ShopsPage() {
         </div>
       </div>
 
-      {/* ✅ Filters + Actions Section */}
+      {/* Filters + Actions Section */}
       <div className="container mx-auto px-4 sm:px-6 py-6">
         <div className="sticky top-0 bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 mb-8 z-50">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
             {/* Search Input */}
             <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
-              <div className="relative flex-1 max-w-md">
+              <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
                 <Input
-                  placeholder="Search shops by name, city, or email..."
-                  value={searchQuery || ""}
-                  onChange={(e) => setSearchQuery(e.target.value || undefined)}
-                  className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 w-full"
+                  placeholder="Search shops by name, city, phone, or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 w-full"
                 />
-              </div>
+                {searchQuery && (
+                  <Button
+                    type="button"
+                    onClick={handleClearSearch}
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-slate-100 text-slate-500"
+                  >
+                    ×
+                  </Button>
+                )}
+              </form>
+              
+              {/* Search Results Info */}
+              {searchQuery && !loading && (
+                <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                  <Filter className="h-4 w-4" />
+                  <span>
+                    {shops.length > 0 
+                      ? `Found ${shops.length} shop${shops.length === 1 ? '' : 's'} matching "${searchQuery}"`
+                      : `No shops found matching "${searchQuery}"`
+                    }
+                  </span>
+                  <Button
+                    onClick={handleClearSearch}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 ml-2 hover:bg-blue-100"
+                  >
+                    ×
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -219,8 +295,60 @@ export default function ShopsPage() {
           </div>
         </div>
 
-        {/* ✅ Shops Grid */}
-        {!loading && !error && (
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading shops...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <Card className="bg-red-50 border-red-200 shadow-lg">
+            <CardContent className="py-8 text-center">
+              <p className="text-red-600 font-semibold">{error}</p>
+              <Button 
+                onClick={() => loadShops(selectMode)} 
+                className="mt-4 bg-red-600 hover:bg-red-700"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No Results Message */}
+        {!loading && !error && shops.length === 0 && (
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg">
+            <CardContent className="py-12 text-center">
+              <Package className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                {searchQuery ? "No Shops Found" : "No Shops Available"}
+              </h3>
+              <p className="text-slate-500">
+                {searchQuery 
+                  ? `No shops match your search for "${searchQuery}". Try adjusting your search terms.`
+                  : selectMode 
+                    ? "No unassigned shops available for selection."
+                    : "No shops have been added yet."
+                }
+              </p>
+              {searchQuery && (
+                <Button 
+                  onClick={handleClearSearch}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Clear Search
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Shops Grid */}
+        {!loading && !error && shops.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {shops.map((shop) => (
               <Card
@@ -258,10 +386,27 @@ export default function ShopsPage() {
 
                 <CardContent className="pt-0 p-4 sm:p-6 space-y-4">
                   <div className="space-y-3">
-                    <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">
-                      <MapPin className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
-                      <span className="text-sm font-medium">{shop.city || "Location not specified"}</span>
-                    </div>
+                    {shop.address && (
+                      <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-slate-700 space-y-1">
+                          <p className="font-semibold">{shop.address}</p>
+                          <p className="text-slate-600">
+                            {shop.city && shop.state
+                              ? `${shop.city}, ${shop.state}`
+                              : shop.city || shop.state || "Location not specified"}
+                          </p>
+                          {shop.zipCode && <p className="text-slate-500">{shop.zipCode}</p>}
+                        </div>
+                      </div>
+                    )}
+
+                    {!shop.address && shop.city && (
+                      <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">
+                        <MapPin className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
+                        <span className="text-sm font-medium">{shop.city}</span>
+                      </div>
+                    )}
 
                     {shop.phone && (
                       <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">
@@ -270,7 +415,7 @@ export default function ShopsPage() {
                       </div>
                     )}
 
-                  
+                   
 
                     {shop.createdAt && (
                       <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">
@@ -278,6 +423,19 @@ export default function ShopsPage() {
                         <span className="text-sm">Added {new Date(shop.createdAt).toLocaleDateString()}</span>
                       </div>
                     )}
+
+                    {/* Visit Stats */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                      <div className="text-sm text-slate-600">
+                        <span className="font-semibold">Visits:</span>{" "}
+                        <span className="text-blue-600 font-bold">{shop.visitImages?.length || 0}</span>
+                      </div>
+                      {shop.lastVisit && (
+                        <div className="text-sm text-blue-600 font-semibold">
+                          Last: {new Date(shop.lastVisit).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <Button

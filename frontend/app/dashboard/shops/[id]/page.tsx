@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, ArrowLeft, MapPin, Phone, Star, ImageIcon, History } from "lucide-react"
+import MapDynamic from "@/components/MapDynamic"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 interface ShopData {
@@ -432,10 +433,16 @@ export default function ShopDetailsPage() {
           </div>
         )}
       </div>
-
-
-      
-    </div>
+{/* Map Section */}
+          <div className="mt-10">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-indigo-600" /> Shop Location
+            </h2>
+            {/* Use shop location if available, else default to Pakistan coordinates */}
+            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-indigo-200 shadow-lg">
+              <MapDynamic lat={shop?.lat || shop?.latitude || 30.67} lng={shop?.lng || shop?.longitude || 69.36} />
+            </div>
+          </div>
+          </div>
+        )}
     
-  )
-}

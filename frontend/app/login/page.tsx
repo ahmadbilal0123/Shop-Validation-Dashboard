@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  // Check if API is configured
   useEffect(() => {
     const apiUrl = getApiBaseUrl()
     if (!apiUrl) {
@@ -47,7 +45,7 @@ export default function LoginPage() {
 
   const createLocalSession = (user: any, token: string) => {
     const expiresAt = new Date()
-    expiresAt.setHours(expiresAt.getHours() + 24) // 24 hour session
+    expiresAt.setHours(expiresAt.getHours() + 24)
 
     const sessionData = {
       user,
@@ -56,8 +54,7 @@ export default function LoginPage() {
     }
 
     localStorage.setItem("session", JSON.stringify(sessionData))
-    // Set session cookie for middleware
-    document.cookie = `session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=86400; SameSite=Lax`
+    document.cookie = 'session=' + encodeURIComponent(JSON.stringify(sessionData)) + '; path=/; max-age=86400; SameSite=Lax'
 
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -70,7 +67,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isLoading) return // prevent multiple submits
+    if (isLoading) return
 
     setIsLoading(true)
     setError("")
@@ -104,7 +101,7 @@ export default function LoginPage() {
         const user = {
           id: data.id || data.user_id || data.userId || data._id,
           email: data.email || data.username || "",
-          name: data.name || data.full_name || data.username || `${data.firstName || ""} ${data.lastName || ""}`.trim(),
+          name: data.name || data.full_name || data.username || ((data.firstName || '') + ' ' + (data.lastName || '')).trim(),
           role: data.role || "regional",
           permissions: data.permissions || getDefaultPermissions(data.role || "regional"),
           createdBy: data.created_by || data.createdBy,
@@ -113,7 +110,7 @@ export default function LoginPage() {
         await createLocalSession(user, data.token)
 
         const redirectPath = user.role === "auditor" ? "/auditor-dashboard" : "/dashboard"
-        console.log(`[v0] Session created successfully, redirecting to ${redirectPath}`)
+        console.log('[v0] Session created successfully, redirecting to ' + redirectPath)
 
         window.location.href = redirectPath
       } else {
@@ -128,66 +125,101 @@ export default function LoginPage() {
     }
   }
 
-  // Render login form
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-            <Shield className="h-6 w-6 text-blue-600" />
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
+      {/* Left Half with Shop Image Background */}
+      <div className="hidden md:flex flex-col justify-center px-16 py-24 w-full h-screen gap-6 text-white relative overflow-hidden">
+        {/* Shop image covering full half */}
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(135deg, rgba(20, 71, 230, 0.7), rgba(108, 62, 244, 0.7), rgba(162, 89, 236, 0.7)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
+          }}
+        />
+
+        {/* Content above image */}
+        <div className="relative z-10">
+          <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">Welcome to Shop Validation</h1>
+          <p className="text-lg text-white/95 max-w-lg drop-shadow-md">
+            Connecting auditors and teams with verified shops — manage validations, assignments and reports from a single place.
+          </p>
+          <div className="mt-6 space-y-3">
+            <p className="font-medium drop-shadow-md">✓ Reliable reporting</p>
+            <p className="font-medium drop-shadow-md">✓ Fast shop assignment</p>
+            <p className="font-medium drop-shadow-md">✓ Role based access control</p>
           </div>
-          <CardTitle className="text-2xl font-bold">Shop Validation</CardTitle>
-          <CardDescription>Sign in to access your dashboard</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="admin"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
+        </div>
+      </div>
+
+      {/* White Form Section - Right Half */}
+      <div className="flex items-center justify-center bg-white w-full h-screen p-12">
+        <Card className="w-full max-w-md shadow-xl rounded-2xl">
+          <CardHeader className="text-center pt-8">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+              <Shield className="h-8 w-8 text-[#1447E6]" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
+            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+            <CardDescription className="text-slate-600">Sign in to your account to continue</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="username" className="text-sm font-medium text-slate-700">Email</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="username"
+                  type="text"
+                  placeholder="Enter your email"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
               </div>
-            </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
+                  <a className="text-[#1447E6] text-sm hover:underline" href="#">Forgot password?</a>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4 text-[#1447E6]" /> : <Eye className="h-4 w-4 text-[#1447E6]" />}
+                  </Button>
+                </div>
+              </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4 text-[#1447E6]" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-[#1447E6] hover:bg-[#0f36b2] text-white px-4 py-2 rounded-lg font-medium"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

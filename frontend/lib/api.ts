@@ -507,41 +507,49 @@ export async function fetchVisitedShops(params?: {
 
 // ========================= USERS API ========================= //
 
+
 export interface User {
   id: string
   name: string
   username: string
-  password:string
+  password: string
   role: string
+  address: string       // user’s personal address
+  location?: string
   createdAt: string
+  shops?: Shop[]        // ✅ linked shops
 }
-
 export interface UsersResponse {
   success: boolean
   users: User[]
   total: number
   error?: string
 }
+
 export interface ApiResponse {
   success: boolean
   user?: User
-  message?: string   // ✅ added
+  message?: string
   error?: string
 }
+
+// ✅ make sure address is mapped from backend response
 function transformUserData(user: any): User {
   return {
     id: user._id || user.id,
     name: user.name,
     username: user.username,
-    password:user.password,
+    password: user.password,
     role: user.role,
+    address: user.address || "",   // ✅ added
+    location: user.location,       // still optional
     createdAt: user.createdAt || new Date().toISOString(),
   }
 }
 
 export async function fetchUsers(): Promise<UsersResponse> {
   try {
-    const apiUrl = buildApiUrl("/api/users/get-users") // 🔑 make sure backend has this
+    const apiUrl = buildApiUrl("/api/users/get-users")
     const headers = buildAuthHeaders()
     const response = await fetch(apiUrl, { method: "POST", headers })
 
@@ -564,6 +572,7 @@ export async function fetchUsers(): Promise<UsersResponse> {
     return { success: false, users: [], total: 0, error: err instanceof Error ? err.message : "Network error" }
   }
 }
+
 
 export async function registerUser(userData: {
   name: string
