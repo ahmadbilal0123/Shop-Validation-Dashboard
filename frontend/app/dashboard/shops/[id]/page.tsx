@@ -440,9 +440,13 @@ export default function ShopDetailsPage() {
             </h2>
             {/* Use shop location if available, else default to Pakistan coordinates */}
             <div className="w-full h-[400px] rounded-xl overflow-hidden border border-indigo-200 shadow-lg">
-              <MapDynamic lat={shop?.lat || shop?.latitude || 30.67} lng={shop?.lng || shop?.longitude || 69.36} />
+              <MapDynamic
+  lat={shop?.coordinates?.lat || shop?.gps_n || shop?.lat || 30.67}
+  lng={shop?.coordinates?.lng || shop?.gps_e || shop?.lng || 69.36}
+/>
             </div>
           </div>
           </div>
         )}
     
+  

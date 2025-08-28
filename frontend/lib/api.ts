@@ -60,7 +60,7 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     zipCode: shop.zipCode || shop.zip_code || "",
     phone: shop.phone || shop.contact_number || "",
     status: shop.status || "active",
-    coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : undefined),
+    coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : (shop.gps_n && shop.gps_e ? { lat: shop.gps_n, lng: shop.gps_e } : undefined)),
     lastVisit: shop.lastVisit || shop.last_visit,
     visitCount: shop.visitCount || shop.visit_count || 0,
     validationScore: shop.validationScore || shop.validation_score,
