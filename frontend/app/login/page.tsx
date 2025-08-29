@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -19,6 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  // Check if API is configured
   useEffect(() => {
     const apiUrl = getApiBaseUrl()
     if (!apiUrl) {
@@ -44,21 +44,21 @@ export default function LoginPage() {
   }
 
   const createLocalSession = (user: any, token: string) => {
-    const expiresAt = new Date()
-    expiresAt.setHours(expiresAt.getHours() + 24)
+  const expiresAt = new Date()
+  expiresAt.setHours(expiresAt.getHours() + 24) // 24 hour session
 
-    const sessionData = {
-      user,
-      token,
-      expiresAt: expiresAt.toISOString(),
-    }
+  const sessionData = {
+    user,
+    token,
+    expiresAt: expiresAt.toISOString(),
+  }
+  localStorage.setItem("session", JSON.stringify(sessionData))
+  // Set session cookie for middleware
+  document.cookie = `session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=86400; SameSite=Lax`
 
-    localStorage.setItem("session", JSON.stringify(sessionData))
-    document.cookie = 'session=' + encodeURIComponent(JSON.stringify(sessionData)) + '; path=/; max-age=86400; SameSite=Lax'
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const storedSession = localStorage.getItem("session")
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const storedSession = localStorage.getItem("session")
         console.log("[v0] Session verification:", storedSession ? "Success" : "Failed")
         resolve(true)
       }, 100)
@@ -126,18 +126,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
-      {/* Left Half with Shop Image Background */}
+    <div className="min-h-screen w-full flex items-center justify-center md:grid md:grid-cols-2">
+      {/* Left Half with Shop Image Background (Desktop/Tablet only) */}
       <div className="hidden md:flex flex-col justify-center px-16 py-24 w-full h-screen gap-6 text-white relative overflow-hidden">
-        {/* Shop image covering full half */}
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(135deg, rgba(20, 71, 230, 0.7), rgba(108, 62, 244, 0.7), rgba(162, 89, 236, 0.7)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
+            backgroundImage: `linear-gradient(135deg, rgba(108, 62, 244, 0.85), rgba(162, 89, 236, 0.85)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
           }}
         />
-
-        {/* Content above image */}
         <div className="relative z-10">
           <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">Welcome to Shop Validation</h1>
           <p className="text-lg text-white/95 max-w-lg drop-shadow-md">
@@ -149,11 +146,13 @@ export default function LoginPage() {
             <p className="font-medium drop-shadow-md">✓ Role based access control</p>
           </div>
         </div>
-      </div>
+  </div>
 
-      {/* White Form Section - Right Half */}
-      <div className="flex items-center justify-center bg-white w-full h-screen p-12">
-        <Card className="w-full max-w-md shadow-xl rounded-2xl">
+  {/* Login Card Section - Responsive for all devices */}
+  <div className="flex items-center justify-center w-full h-screen p-4 md:p-12 relative">
+  {/* Mobile-only purple gradient background */}
+  <div className="absolute md:hidden inset-0 w-full h-full bg-gradient-to-br from-[#6c3ef4] via-[#a259ec] to-[#1447e6] z-0" />
+  <Card className="w-full max-w-md shadow-xl rounded-2xl relative z-10">
           <CardHeader className="text-center pt-8">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
               <Shield className="h-8 w-8 text-[#1447E6]" />
@@ -173,9 +172,9 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  className="text-base px-3 py-2"
                 />
               </div>
-
               <div>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
@@ -189,6 +188,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="text-base px-3 py-2"
                   />
                   <Button
                     type="button"
@@ -211,7 +211,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#1447E6] hover:bg-[#0f36b2] text-white px-4 py-2 rounded-lg font-medium"
+                className="w-full bg-[#1447E6] hover:bg-[#0f36b2] text-white px-4 py-2 rounded-lg font-medium text-base"
                 disabled={isLoading}
               >
                 {isLoading ? "Signing in..." : "Sign In"}

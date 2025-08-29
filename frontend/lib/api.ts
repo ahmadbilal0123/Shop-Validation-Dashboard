@@ -60,7 +60,9 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     zipCode: shop.zipCode || shop.zip_code || "",
     phone: shop.phone || shop.contact_number || "",
     status: shop.status || "active",
-    coordinates: shop.coordinates || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } : (shop.gps_n && shop.gps_e ? { lat: shop.gps_n, lng: shop.gps_e } : undefined)),
+    coordinates: shop.coordinates 
+      || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } 
+      : (shop.gps_n && shop.gps_e ? { lat: shop.gps_n, lng: shop.gps_e } : undefined)),
     lastVisit: shop.lastVisit || shop.last_visit,
     visitCount: shop.visitCount || shop.visit_count || 0,
     validationScore: shop.validationScore || shop.validation_score,
@@ -72,11 +74,45 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     auditorId: shop.auditorId || shop.auditor_id || auditorId,
     visit: shop.visit ?? false,
     visitImages: Array.isArray(shop.visitImages)
-      ? shop.visitImages.map((img: any) => ({
-          _id: img._id,
-          shopImage: img.shopImage || img.shop_image || "",
-          shelfImage: img.shelfImage || img.shelf_image || "",
-        }))
+      ? shop.visitImages.map((img: any) => {
+          const visitLocation = img.visitLocation || {};
+          return {
+            _id: img._id,
+            shopImage: img.shopImage || img.shop_image || "",
+            shelfImage: img.shelfImage || img.shelf_image || "",
+            visitLocation,
+            startAuditLat:
+              img.startAuditLat ??
+              img.start_audit_lat ??
+              img.startAuditLocation?.lat ??
+              visitLocation.startAudit?.latitude,
+            startAuditLng:
+              img.startAuditLng ??
+              img.start_audit_lng ??
+              img.startAuditLocation?.lng ??
+              visitLocation.startAudit?.longitude,
+            photoClickLat:
+              img.photoClickLat ??
+              img.photo_click_lat ??
+              img.photoClickLocation?.lat ??
+              visitLocation.photoClick?.latitude,
+            photoClickLng:
+              img.photoClickLng ??
+              img.photo_click_lng ??
+              img.photoClickLocation?.lng ??
+              visitLocation.photoClick?.longitude,
+            proceedClickLat:
+              img.proceedClickLat ??
+              img.proceed_click_lat ??
+              img.proceedClickLocation?.lat ??
+              visitLocation.proceedClick?.latitude,
+            proceedClickLng:
+              img.proceedClickLng ??
+              img.proceed_click_lng ??
+              img.proceedClickLocation?.lng ??
+              visitLocation.proceedClick?.longitude,
+          }
+        })
       : [],
   }
 }
@@ -403,9 +439,10 @@ export async function fetchShopById(shopId: string): Promise<{
   }
 }
 
-export async function assignShopsToAuditor(
-  auditorId: string,
+export async function assignShopsToUser(
+  userId: string,
   shopIds: string[],
+  role: string
 ): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
     const session = getSession()
@@ -422,7 +459,7 @@ export async function assignShopsToAuditor(
         Authorization: `Bearer ${session.token}`,
         "ngrok-skip-browser-warning": "true",
       },
-      body: JSON.stringify({ auditorId, shopIds }),
+      body: JSON.stringify({ userId, shopIds, role }),
     })
 
     const data = await response.json().catch(() => ({}))
@@ -432,7 +469,7 @@ export async function assignShopsToAuditor(
         data.message ||
         data.error ||
         (response.status === 409
-          ? "Shops already assigned to this auditor"
+          ? "Shops already assigned to this user"
           : `Server error: ${response.status} ${response.statusText}`)
 
       return { success: false, error: errorMessage }
@@ -584,10 +621,10 @@ export async function registerUser(userData: {
     const apiUrl = buildApiUrl("/api/users/register")
     const headers = buildAuthHeaders()
 
-    // Always force role to "auditor"
+    // Use the role from the form, default to 'auditor' if not provided
     const payload = {
       ...userData,
-      role: "auditor",
+      role: userData.role || "auditor",
     }
 
     const response = await fetch(apiUrl, {

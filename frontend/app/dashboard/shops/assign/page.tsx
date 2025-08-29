@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { fetchShopById } from "@/lib/api"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSession } from "@/lib/auth"
-import { assignShopsToAuditor } from "@/lib/api"
+import { assignShopsToUser} from "@/lib/api"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,29 @@ export default function AssignShopsPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const shopIds = searchParams.get("shopIds")?.split(",") || []
+  const [shopNames, setShopNames] = useState<{ [id: string]: string }>({})
+
+  useEffect(() => {
+    async function loadShopNames() {
+      // Only fetch if shopIds are non-empty and not already loaded
+      const idsToFetch = shopIds.filter(id => !shopNames[id])
+      if (idsToFetch.length === 0) return
+      const names: { [id: string]: string } = { ...shopNames }
+      await Promise.all(
+        idsToFetch.map(async (id) => {
+          const res = await fetchShopById(id)
+          if (res.success && res.data?.name) {
+            names[id] = res.data.name
+          } else {
+            names[id] = `Shop #${id.slice(-6)}`
+          }
+        })
+      )
+      setShopNames(names)
+    }
+    if (shopIds.length > 0) loadShopNames()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shopIds])
 
   useEffect(() => {
     loadUsers()
@@ -60,7 +84,9 @@ export default function AssignShopsPage() {
 
       if (usersRes.ok) {
         const usersData = await usersRes.json()
-        const mappedUsers = (usersData.auditors || []).map((auditor: any) => ({
+        // Use .users if present, else .auditors
+        const rawList = usersData.users || usersData.auditors || []
+        const mappedUsers = rawList.map((auditor: any) => ({
           id: auditor._id,
           name: auditor.username,
           email: auditor.username,
@@ -92,7 +118,8 @@ export default function AssignShopsPage() {
 
     setAssigning(true)
     try {
-      const result = await assignShopsToAuditor(selectedAuditorId, shopIds)
+      const selectedAuditor = users.find(u => u.id === selectedAuditorId)
+      const result = await assignShopsToUser(selectedAuditorId, shopIds, selectedAuditor?.role || "auditor")
 
       if (result.success) {
         toast({
@@ -172,7 +199,7 @@ export default function AssignShopsPage() {
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">Shop #{shopId.slice(-6)}</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{shopNames[shopId] || `Shop #${shopId.slice(-6)}`}</p>
                       <p className="text-xs text-gray-600 truncate">ID: {shopId}</p>
                     </div>
                   </div>
@@ -215,7 +242,7 @@ export default function AssignShopsPage() {
               />
             </div>
 
-            {/* Users List */}
+            {/* Users List as cards */}
             <div className="space-y-4 max-h-[60vh] overflow-y-auto mb-8">
               {filteredUsers.map((user) => (
                 <Card
@@ -225,6 +252,8 @@ export default function AssignShopsPage() {
                       ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
                       : "border-blue-100 hover:border-blue-200"
                   }`}
+                  onDoubleClick={() => setSelectedAuditorId(user.id)}
+                  style={{ cursor: "pointer" }}
                 >
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-3 sm:gap-0">
@@ -254,7 +283,6 @@ export default function AssignShopsPage() {
                 </Card>
               ))}
             </div>
-
             {/* Assign Button */}
             <div className="mt-8">
               <Button

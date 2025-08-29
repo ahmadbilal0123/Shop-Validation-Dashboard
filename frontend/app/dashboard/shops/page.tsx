@@ -27,7 +27,7 @@ import {
 export default function ShopsPage() {
   const router = useRouter()
   const [shops, setShops] = useState<Shop[]>([])
-  const [allShops, setAllShops] = useState<Shop[]>([]) // Store all shops for client-side filtering
+  const [allShops, setAllShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page] = useState(1)
@@ -35,6 +35,12 @@ export default function ShopsPage() {
   const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string>("")
+  // Visited filter state: true = show only visited shops, false = show all
+  const [showVisitedOnly, setShowVisitedOnly] = useState(false)
+  // Always reset to all shops on mount
+  useEffect(() => {
+    setShowVisitedOnly(false)
+  }, [])
 
   // Selection state
   const [selectMode, setSelectMode] = useState(false)
@@ -71,13 +77,11 @@ export default function ShopsPage() {
       let response: ShopsResponse
 
       if (selecting) {
-        // when selecting mode is enabled → fetch only unassigned shops
         response = await fetchUnassignedShops({
           city: cityFilter,
           page,
         })
       } else {
-        // normal mode → fetch all shops
         response = await fetchShops({
           status: statusFilter,
           city: cityFilter,
@@ -86,10 +90,10 @@ export default function ShopsPage() {
       }
 
       if (response.success) {
-        setAllShops(response.shops) // Store all shops
-        
-        // Apply search filter
-        const filteredShops = filterShopsBySearch(response.shops, searchQuery)
+        setAllShops(response.shops)
+        // By default, show only visited shops (visitImages.length > 0)
+        const visitedShops = response.shops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
+        const filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : response.shops, searchQuery)
         setShops(filteredShops)
         setTotalShops(filteredShops.length)
       } else {
@@ -103,19 +107,20 @@ export default function ShopsPage() {
     }
   }
 
-  // Apply search filter when search query changes
+  // Apply search filter and visited filter when search query or visited toggle changes
   useEffect(() => {
     if (allShops.length > 0) {
-      const filteredShops = filterShopsBySearch(allShops, searchQuery)
+      const visitedShops = allShops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
+      const filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : allShops, searchQuery)
       setShops(filteredShops)
       setTotalShops(filteredShops.length)
     }
-  }, [searchQuery, allShops])
+  }, [searchQuery, allShops, showVisitedOnly])
 
   // Initial load
   useEffect(() => {
     loadShops(selectMode)
-  }, [page, statusFilter, cityFilter, selectMode])
+  }, [page, statusFilter, cityFilter, selectMode, showVisitedOnly])
 
   const toggleShopSelection = (shopId: string) => {
     setSelectedShopIds((prev) => (prev.includes(shopId) ? prev.filter((id) => id !== shopId) : [...prev, shopId]))
@@ -208,8 +213,25 @@ export default function ShopsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-6">
         <div className="sticky top-0 bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 mb-8 z-50">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-            {/* Search Input */}
+            {/* Search Input & Visited Toggle */}
             <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+              {/* Visited/All toggle */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={showVisitedOnly ? "default" : "outline"}
+                  className={showVisitedOnly ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-300 text-green-700 hover:bg-green-50"}
+                  onClick={() => setShowVisitedOnly(true)}
+                >
+                  Visited Shops
+                </Button>
+                <Button
+                  variant={!showVisitedOnly ? "default" : "outline"}
+                  className={!showVisitedOnly ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-300 text-blue-700 hover:bg-blue-50"}
+                  onClick={() => setShowVisitedOnly(false)}
+                >
+                  All Shops
+                </Button>
+              </div>
               <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
                 <Input

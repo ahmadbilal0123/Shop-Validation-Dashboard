@@ -433,20 +433,143 @@ export default function ShopDetailsPage() {
           </div>
         )}
       </div>
-{/* Map Section */}
-          <div className="mt-10">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-indigo-600" /> Shop Location
-            </h2>
-            {/* Use shop location if available, else default to Pakistan coordinates */}
-            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-indigo-200 shadow-lg">
-              <MapDynamic
-  lat={shop?.coordinates?.lat || shop?.gps_n || shop?.lat || 30.67}
-  lng={shop?.coordinates?.lng || shop?.gps_e || shop?.lng || 69.36}
-/>
+            {/* Map Section */}
+            <div className="mt-10">
+              {/* Prepare markers for shop and visitImages locations */}
+              {(() => {
+                // Shop main location
+                const shopLat = shop?.coordinates?.lat || shop?.gps_n || shop?.lat || 30.67
+                const shopLng = shop?.coordinates?.lng || shop?.gps_e || shop?.lng || 69.36
+
+                // VisitImages locations (startAudit, photoClick, proceedClick)
+                type Marker = {
+                  lat: number
+                  lng: number
+                  label?: string
+                  color?: string
+                }
+                let visitMarkers: Marker[] = []
+                if (Array.isArray(shop?.visitImages)) {
+                  shop.visitImages.forEach((img, idx) => {
+                    // Use visitLocation if present
+                    if (img?.visitLocation?.startAudit?.latitude && img?.visitLocation?.startAudit?.longitude) {
+                      visitMarkers.push({
+                        lat: img.visitLocation.startAudit.latitude,
+                        lng: img.visitLocation.startAudit.longitude,
+                        label: `Visit Start #${idx + 1}`,
+                        color: '#22c55e' // green
+                      })
+                    }
+                    if (img?.visitLocation?.photoClick?.latitude && img?.visitLocation?.photoClick?.longitude) {
+                      visitMarkers.push({
+                        lat: img.visitLocation.photoClick.latitude,
+                        lng: img.visitLocation.photoClick.longitude,
+                        label: `Photo Click #${idx + 1}`,
+                        color: '#3b82f6' // blue
+                      })
+                    }
+                    if (img?.visitLocation?.proceedClick?.latitude && img?.visitLocation?.proceedClick?.longitude) {
+                      visitMarkers.push({
+                        lat: img.visitLocation.proceedClick.latitude,
+                        lng: img.visitLocation.proceedClick.longitude,
+                        label: `Proceed Click #${idx + 1}`,
+                        color: '#f59e42' // orange
+                      })
+                    }
+                  })
+                }
+
+                // Always show shop location as main marker
+                const allMarkers: Marker[] = [
+                  {
+                    lat: shopLat,
+                    lng: shopLng,
+                    label: 'Shop Location',
+                    color: '#6366f1' // indigo
+                  },
+                  ...visitMarkers
+                ]
+
+                // Legend click handler
+                const [selectedPinIdx, setSelectedPinIdx] = useState<number | null>(null)
+
+                // MapDynamic will accept selectedPinIdx and a callback to update it
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-bold flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-indigo-600" /> Shop Location
+                      </h2>
+                      {/* Pin color legend slightly left of previous position, clickable */}
+                      <div className="flex flex-wrap gap-4 items-center mr-6">
+                        <span
+                          className="flex items-center gap-2 cursor-pointer select-none group"
+                          onClick={() => setSelectedPinIdx(0)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Shop Location"
+                        >
+                          <span
+                            className="transition-all duration-200"
+                            style={{
+                              background: '#6366f1',
+                              width: 20,
+                              height: 20,
+                              borderRadius: '50%',
+                              display: 'inline-block',
+                              border: '2px solid #fff',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                            }}
+                          ></span>
+                          <span className="text-sm text-gray-700">Shop Location</span>
+                          <style jsx>{`
+                            .group:hover span:first-child {
+                              transform: scale(1.15);
+                              border: 3px solid #22c55e;
+                              box-shadow: 0 4px 12px rgba(34,197,94,0.15);
+                            }
+                          `}</style>
+                        </span>
+                        {visitMarkers.map((m, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-2 cursor-pointer select-none group"
+                            onClick={() => setSelectedPinIdx(idx + 1)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={m.label}
+                          >
+                            <span
+                              className="transition-all duration-200"
+                              style={{
+                                background: m.color,
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                display: 'inline-block',
+                                border: '2px solid #fff',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                              }}
+                            ></span>
+                            <span className="text-sm text-gray-700">{m.label}</span>
+                            <style jsx>{`
+                              .group:hover span:first-child {
+                                transform: scale(1.15);
+                                border: 3px solid #22c55e;
+                                box-shadow: 0 4px 12px rgba(34,197,94,0.15);
+                              }
+                            `}</style>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="w-full h-[400px] rounded-xl overflow-hidden border border-indigo-200 shadow-lg">
+                      {/* @ts-ignore: MapDynamic forwards props to Map, which accepts markers and selectedPinIdx */}
+                      <MapDynamic markers={allMarkers} selectedPinIdx={selectedPinIdx} />
+                    </div>
+                  </>
+                )
+              })()}
             </div>
           </div>
-          </div>
         )}
-    
-  

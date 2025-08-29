@@ -18,7 +18,8 @@ export default function RecentShopsPage() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
   const [totalShops, setTotalShops] = useState(0)
-  const [statusFilter] = useState<string | undefined>("all")
+  // Set initial filter to 'visited' so only visited shops show by default
+  const [statusFilter, setStatusFilter] = useState<string | undefined>("visited")
   const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
 const [visitStats, setVisitStats] = useState<{ visited: number; notVisited: number; total: number } | null>(null)
@@ -91,18 +92,13 @@ useEffect(() => {
 
       if (response.success) {
         let filteredShops = response.shops
-        
-        // Apply recent filter (last 30 days)
         filteredShops = filterRecentShops(filteredShops)
-        
-        // Apply visited filter (only visited shops)
-        filteredShops = filterVisitedShops(filteredShops)
-        
-        // Apply search filter if search query exists
+        if (statusFilter === "visited") {
+          filteredShops = filterVisitedShops(filteredShops)
+        }
         if (searchQuery && searchQuery.trim() !== '') {
           filteredShops = filterShopsBySearch(filteredShops, searchQuery)
         }
-        
         setShops(filteredShops)
         setTotalShops(filteredShops.length)
       } else {
@@ -246,7 +242,7 @@ useEffect(() => {
                   </Button>
                 )}
               </div>
-              <div className="flex gap-2 w-full lg:w-auto">
+              <div className="flex gap-2 w-full lg:w-auto items-center">
                 <Button
                   type="submit"
                   className="flex-1 lg:flex-none h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg"
@@ -265,6 +261,24 @@ useEffect(() => {
                     Clear
                   </Button>
                 )}
+                {/* Filter Dropdown for Visited/Unvisited */}
+                <select
+                  value={statusFilter}
+                  onChange={e => {
+                    setPage(1);
+                    setStatusFilter(e.target.value);
+                  }}
+                  className="h-12 px-4 border border-slate-200 rounded-lg bg-white text-slate-700 font-semibold transition-colors duration-200 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-700 focus:outline-none custom-select-focus"
+                >
+                <style jsx>{`
+                  .custom-select-focus:focus {
+                    border-color: #94a3b8 !important; /* slate-400 */
+                    box-shadow: none !important;
+                  }
+                `}</style>
+                  <option value="all">All</option>
+                  <option value="visited">Visited</option>
+                </select>
               </div>
             </form>
             
@@ -295,10 +309,17 @@ useEffect(() => {
                     {shop.name}
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-blue-100 text-blue-700 border-blue-200">
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Visited
-                    </Badge>
+                    {(Array.isArray(shop.visitImages) && shop.visitImages.length > 0) || shop.lastVisit ? (
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        Visited
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-red-100 text-red-700 border-red-200">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Unvisited
+                      </Badge>
+                    )}
                     {shop.validationScore && (
                       <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-amber-200">
                         <Star className="h-4 w-4 text-amber-500 fill-current" />
@@ -309,7 +330,7 @@ useEffect(() => {
                 </div>
               </CardHeader>
 
-              <CardContent className="pt-0 space-y-4">
+              <CardContent className="pt-0 space-y-4 flex flex-col h-full justify-between">
                 {/* Address */}
                 <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                   <MapPin className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -346,6 +367,16 @@ useEffect(() => {
                     Added: {shop.createdAt ? new Date(shop.createdAt).toLocaleDateString() : "Unknown"}
                   </span>
                 </div>
+
+                <div className="mt-4 flex-1" />
+                <Button
+                  size="sm"
+                  onClick={() => window.location.href = `/dashboard/shops/${shop.id}`}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  View Shop Details
+                </Button>
               </CardContent>
             </Card>
           ))}

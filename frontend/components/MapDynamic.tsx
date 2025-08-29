@@ -7,4 +7,8 @@ const Map = dynamic(() => import("@/components/Map"), {
 })
 
 // Memoize the component to prevent unnecessary re-renders
-export default memo(Map)
+const MapDynamic = memo(function MapDynamic(props) {
+  return <Map {...props} />
+})
+
+export default MapDynamic

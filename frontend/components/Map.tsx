@@ -2,129 +2,174 @@
 import { useEffect, useRef, useState } from "react"
 import "leaflet/dist/leaflet.css"
 
-type LeafletMapProps = {
+
+type Marker = {
 	lat: number
 	lng: number
+	label?: string
+	color?: string // CSS color string
 }
 
-export default function LeafletMap({ lat, lng }: LeafletMapProps) {
+type LeafletMapProps = {
+	lat?: number
+	lng?: number
+	markers?: Marker[]
+	selectedPinIdx?: number | null
+}
+
+export default function LeafletMap({ lat, lng, markers, selectedPinIdx }: LeafletMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
 	const mapInstanceRef = useRef<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
-	useEffect(() => {
-		if (typeof window === "undefined" || !mapRef.current) return
-		if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
-			setError("Invalid coordinates")
-			setIsLoading(false)
-			return
-		}
+			// Store marker refs for popup control
+			const markerRefs = useRef<any[]>([])
 
-		setIsLoading(true)
-		setError(null)
+			useEffect(() => {
+				if (typeof window === "undefined" || !mapRef.current) return
 
-		// Import Leaflet dynamically to avoid SSR issues
-		import("leaflet").then((L) => {
-			try {
-				// Fix for default markers in Leaflet with Next.js
-				delete (L.Icon.Default.prototype as any)._getIconUrl;
-				L.Icon.Default.mergeOptions({
-					iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-					iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-					shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-				});
-
-				// Clean up existing map if it exists
-				if (mapInstanceRef.current) {
-					try {
-						mapInstanceRef.current.remove()
-					} catch (e) {
-						console.log("Error removing existing map:", e)
-					}
-					mapInstanceRef.current = null
+				let centerLat = lat, centerLng = lng
+				if (markers && markers.length > 0) {
+					centerLat = markers[0].lat
+					centerLng = markers[0].lng
 				}
-
-				// Ensure map container exists
-				if (!mapRef.current) {
-					setError("Map container not found")
+				if (typeof centerLat !== "number" || typeof centerLng !== "number" || isNaN(centerLat) || isNaN(centerLng)) {
+					setError("Invalid coordinates")
 					setIsLoading(false)
 					return
 				}
 
-				// Clear the container
-				mapRef.current.innerHTML = ''
-				
-				// Create new map
-				const map = L.map(mapRef.current, {
-					center: [lat, lng],
-					zoom: 13,
-					zoomControl: true,
-					attributionControl: false
-				})
+				setIsLoading(true)
+				setError(null)
 
-				// Add tile layer with error handling
-				const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-					attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-					maxZoom: 19,
-					minZoom: 1
-				})
+				import("leaflet").then((L) => {
+					try {
+						delete (L.Icon.Default.prototype as any)._getIconUrl;
+						L.Icon.Default.mergeOptions({
+							iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+							iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+							shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+						});
 
-				tileLayer.on('load', () => {
-					setIsLoading(false)
-				})
+						if (mapInstanceRef.current) {
+							try {
+								mapInstanceRef.current.remove()
+							} catch (e) {
+								console.log("Error removing existing map:", e)
+							}
+							mapInstanceRef.current = null
+						}
 
-				tileLayer.on('tileerror', (e) => {
-					console.log("Tile loading error:", e)
-					setIsLoading(false)
-				})
+						if (!mapRef.current) {
+							setError("Map container not found")
+							setIsLoading(false)
+							return
+						}
 
-				tileLayer.addTo(map)
+						mapRef.current.innerHTML = ''
 
-				// Add marker
-				const marker = L.marker([lat, lng])
-					.addTo(map)
-					.bindPopup(`
-						<div style="text-align: center;">
-							<strong>Shop Location</strong><br/>
-							Lat: ${lat.toFixed(4)}<br/>
-							Lng: ${lng.toFixed(4)}
-						</div>
-					`)
+						const map = L.map(mapRef.current, {
+							center: [centerLat, centerLng],
+							zoom: 13,
+							zoomControl: true,
+							attributionControl: false
+						})
 
-				mapInstanceRef.current = map
+						const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+							attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+							maxZoom: 19,
+							minZoom: 1
+						})
 
-				// Force map to resize after a short delay
-				setTimeout(() => {
-					if (mapInstanceRef.current) {
-						mapInstanceRef.current.invalidateSize()
+						tileLayer.on('load', () => {
+							setIsLoading(false)
+						})
+
+						tileLayer.on('tileerror', (e) => {
+							console.log("Tile loading error:", e)
+							setIsLoading(false)
+						})
+
+						tileLayer.addTo(map)
+
+						// Add markers and store refs
+						markerRefs.current = []
+						if (markers && markers.length > 0) {
+							markers.forEach((m) => {
+								let icon = undefined
+								if (m.color) {
+									icon = L.divIcon({
+										className: '',
+										html: `<div style="background:${m.color};border-radius:50%;width:28px;height:28px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>`,
+										iconSize: [28, 28],
+										iconAnchor: [14, 28],
+									})
+								}
+								const marker = L.marker([m.lat, m.lng], icon ? { icon } : undefined)
+									.addTo(map)
+									.bindPopup(`
+										<div style="text-align: center;">
+											<strong>${m.label || "Location"}</strong><br/>
+											Lat: ${m.lat.toFixed(4)}<br/>
+											Lng: ${m.lng.toFixed(4)}
+										</div>
+									`)
+								markerRefs.current.push(marker)
+							})
+						} else if (typeof lat === "number" && typeof lng === "number") {
+							const marker = L.marker([lat, lng])
+								.addTo(map)
+								.bindPopup(`
+									<div style="text-align: center;">
+										<strong>Shop Location</strong><br/>
+										Lat: ${lat.toFixed(4)}<br/>
+										Lng: ${lng.toFixed(4)}
+									</div>
+								`)
+							markerRefs.current.push(marker)
+						}
+
+						mapInstanceRef.current = map
+
+						setTimeout(() => {
+							if (mapInstanceRef.current) {
+								mapInstanceRef.current.invalidateSize()
+							}
+							setIsLoading(false)
+						}, 100)
+
+					} catch (err) {
+						console.error("Error initializing map:", err)
+						setError("Failed to initialize map")
+						setIsLoading(false)
 					}
+				}).catch((err) => {
+					console.error("Error loading Leaflet:", err)
+					setError("Failed to load map library")
 					setIsLoading(false)
-				}, 100)
+				})
 
-			} catch (err) {
-				console.error("Error initializing map:", err)
-				setError("Failed to initialize map")
-				setIsLoading(false)
-			}
-		}).catch((err) => {
-			console.error("Error loading Leaflet:", err)
-			setError("Failed to load map library")
-			setIsLoading(false)
-		})
-
-		// Cleanup function
-		return () => {
-			if (mapInstanceRef.current) {
-				try {
-					mapInstanceRef.current.remove()
-				} catch (e) {
-					console.log("Error during cleanup:", e)
+				return () => {
+					if (mapInstanceRef.current) {
+						try {
+							mapInstanceRef.current.remove()
+						} catch (e) {
+							console.log("Error during cleanup:", e)
+						}
+						mapInstanceRef.current = null
+					}
 				}
-				mapInstanceRef.current = null
-			}
-		}
-	}, [lat, lng])
+			}, [lat, lng, JSON.stringify(markers)])
+
+			// Pan/open popup for selected pin
+			useEffect(() => {
+				if (selectedPinIdx != null && markerRefs.current[selectedPinIdx] && mapInstanceRef.current) {
+					const marker = markerRefs.current[selectedPinIdx]
+					mapInstanceRef.current.setView(marker.getLatLng(), 16, { animate: true })
+					marker.openPopup()
+				}
+			}, [selectedPinIdx])
 
 	if (error) {
 		return (

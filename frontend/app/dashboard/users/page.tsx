@@ -89,6 +89,7 @@ export default function UsersPage() {
       supervisor: "bg-blue-100 text-blue-800 border-blue-200",
       executive: "bg-green-100 text-green-800 border-green-200",
       auditor: "bg-orange-100 text-orange-800 border-orange-200",
+      qc: "bg-yellow-100 text-yellow-800 border-yellow-200", // QC role color
       user: "bg-gray-100 text-gray-800 border-gray-200",
     }
     return colors[role as keyof typeof colors] || colors.user
@@ -101,6 +102,7 @@ export default function UsersPage() {
       supervisor: Shield,
       executive: UserIcon,
       auditor: Eye,
+      qc: Eye, // You can change qc icon if needed
       user: UserIcon,
     }
     const Icon = icons[role as keyof typeof icons] || UserIcon
@@ -188,7 +190,7 @@ export default function UsersPage() {
                     <SelectItem value="supervisor">Supervisor</SelectItem>
                     <SelectItem value="executive">Executive</SelectItem>
                     <SelectItem value="auditor">Auditor</SelectItem>
-                    {/* <SelectItem value="user">User</SelectItem> */}
+                    <SelectItem value="qc">qc</SelectItem> {/* qc role */}
                   </SelectContent>
                 </Select>
               </div>
@@ -205,6 +207,7 @@ export default function UsersPage() {
           </CardContent>
         </Card>
 
+        {/* Edit form */}
         {editForm && (
           <Card ref={editFormRef} className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-white rounded-t-lg border-b">
@@ -257,6 +260,7 @@ export default function UsersPage() {
                       <SelectItem value="supervisor">Supervisor</SelectItem>
                       <SelectItem value="executive">Executive</SelectItem>
                       <SelectItem value="auditor">Auditor</SelectItem>
+                      <SelectItem value="qc">QC</SelectItem> {/* qc role */}
                       <SelectItem value="user">User</SelectItem>
                     </SelectContent>
                   </Select>
@@ -283,6 +287,7 @@ export default function UsersPage() {
           </Card>
         )}
 
+        {/* Users Directory */}
         <div>
           <div className="flex items-center gap-3 mb-6">
             <Search className="h-6 w-6 text-slate-600" />
@@ -302,7 +307,7 @@ export default function UsersPage() {
                   <SelectItem value="supervisor">Supervisor</SelectItem>
                   <SelectItem value="executive">Executive</SelectItem>
                   <SelectItem value="auditor">Auditor</SelectItem>
-                  {/* <SelectItem value="user">User</SelectItem> */}
+                  <SelectItem value="qc">qc</SelectItem>
                 </SelectContent>
               </Select>
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -311,69 +316,68 @@ export default function UsersPage() {
             </div>
           </div>
 
-         {loading ? (
-  <div className="flex items-center justify-center py-12">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    <span className="ml-3 text-slate-600">Loading users...</span>
-  </div>
-) : filteredUsers.length === 0 ? (
-  <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-    <CardContent className="flex flex-col items-center justify-center py-12">
-      <Users className="h-12 w-12 text-slate-400 mb-4" />
-      <p className="text-slate-600 text-lg">
-        {roleFilter === "all"
-          ? "No users found."
-          : `No ${roleFilter}s found.`} {/* ✅ use backticks */}
-      </p>
-      <p className="text-slate-500 text-sm">
-        {roleFilter === "all"
-          ? "Start by registering your first user above."
-          : "Try selecting a different role filter."}
-      </p>
-    </CardContent>
-  </Card>
-) : (
-  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {filteredUsers.map((user) => (
-      <Card
-        key={user.id}
-        className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-      >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-100 rounded-lg">{getRoleIcon(user.role)}</div>
-              <div>
-                <CardTitle className="text-lg text-slate-900">{user.name}</CardTitle>
-                <p className="text-sm text-slate-600">@{user.username}</p>
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-slate-600">Loading users...</span>
             </div>
-            {/* ✅ fixed className */}
-            <Badge
-              className={`${getRoleColor(user.role)} border text-xs font-medium`}
-            >
-              {user.role}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-            <Calendar className="h-4 w-4" />
-            Joined {new Date(user.createdAt).toLocaleDateString()}
-          </div>
-          <Button
-            size="sm"
-            onClick={() => setEditForm(user)}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
-          >
-            <Edit3 className="h-4 w-4 mr-2" />
-            Edit User
-          </Button>
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-)}
+          ) : filteredUsers.length === 0 ? (
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Users className="h-12 w-12 text-slate-400 mb-4" />
+                <p className="text-slate-600 text-lg">
+                  {roleFilter === "all"
+                    ? "No users found."
+                    : `No ${roleFilter}s found.`}
+                </p>
+                <p className="text-slate-500 text-sm">
+                  {roleFilter === "all"
+                    ? "Start by registering your first user above."
+                    : "Try selecting a different role filter."}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredUsers.map((user) => (
+                <Card
+                  key={user.id}
+                  className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-lg">{getRoleIcon(user.role)}</div>
+                        <div>
+                          <CardTitle className="text-lg text-slate-900">{user.name}</CardTitle>
+                          <p className="text-sm text-slate-600">@{user.username}</p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={`${getRoleColor(user.role)} border text-xs font-medium`}
+                      >
+                        {user.role}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                      <Calendar className="h-4 w-4" />
+                      Joined {new Date(user.createdAt).toLocaleDateString()}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setEditForm(user)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                    >
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit User
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
