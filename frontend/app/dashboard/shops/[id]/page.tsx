@@ -25,6 +25,7 @@ export default function ShopDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showPreviousImages, setShowPreviousImages] = useState(false)
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -95,9 +96,8 @@ export default function ShopDetailsPage() {
 
   const renderImage = (imageSrc: string, altText: string, badgeText: string, badgeColor: string) => {
     const fullImageSrc = imageSrc.startsWith("http") ? imageSrc : `${API_BASE_URL || ""}${imageSrc}`
-
     return (
-      <div className="relative">
+      <div className="relative cursor-zoom-in" onClick={() => setEnlargedImage(fullImageSrc)}>
         <img
           src={fullImageSrc || "/placeholder.svg"}
           alt={altText}
@@ -116,6 +116,33 @@ export default function ShopDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Image Modal */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div
+            className="relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-4 right-4 bg-white/80 rounded-full p-2 shadow-lg transition hover:bg-pink-200 hover:scale-110"
+              onClick={() => setEnlargedImage(null)}
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7 text-gray-700">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={enlargedImage}
+              alt="Enlarged"
+              className="w-[80vw] max-w-4xl max-h-[80vh] rounded-2xl shadow-2xl border-4 border-white"
+            />
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-6 flex items-center justify-between">
