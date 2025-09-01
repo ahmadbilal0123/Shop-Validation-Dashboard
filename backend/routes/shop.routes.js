@@ -2,22 +2,40 @@
 import express from "express";
 import { isAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
 import {
-  assignShopsToAuditor,
+  assignShops,
+  getShopById,
   getShops,
+  getVisitCounts,
+  getVisitedShops,
+  recordPhotoCLickLocation,
+  recordStartAuditLocation,
+  resetAllVisits,
   uploadShops,
+  uploadVisitPictures,
 } from "../controllers/shop.controller.js";
 import { upload } from "../middlewares/upload.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
+import { uploadVisitImages } from "../utils/multer.js";
 
 const router = express.Router();
 
 router.post("/upload", verifyJWT, isAdmin, upload.single("file"), uploadShops);
 router.get("/get-shops", verifyJWT, getShops);
+router.get("/get-visited-shops", verifyJWT, getVisitedShops);
+router.get("/get-shop/:id", verifyJWT, getShopById);
 router.post(
   "/assign-shops",
   verifyJWT,
   allowRoles("admin", "manager", "supervisor", "executive"),
-  assignShopsToAuditor
+  assignShops
 );
+
+router.post("/start-audit-location", verifyJWT, recordStartAuditLocation);
+router.post("/photoclick-location", verifyJWT, recordPhotoCLickLocation);
+router.post("/visit", verifyJWT, uploadVisitImages, uploadVisitPictures);
+
+router.delete("/reset-visits", resetAllVisits);
+
+router.get("/get-visit-stats", verifyJWT, getVisitCounts);
 
 export default router;
