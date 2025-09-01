@@ -107,9 +107,12 @@ export default function ShopDetailsPage() {
             target.src = "/placeholder.svg?height=256&width=400&text=Image+Not+Available"
           }}
         />
-        <div className={`absolute top-2 left-2 ${badgeColor} text-white px-3 py-1 rounded-lg text-sm font-semibold`}>
-          {badgeText}
-        </div>
+        {/* Only show badge if not enlarged */}
+        {!enlargedImage && (
+          <div className={`absolute top-2 left-2 ${badgeColor} text-white px-3 py-1 rounded-lg text-sm font-semibold`}>
+            {badgeText}
+          </div>
+        )}
       </div>
     )
   }
@@ -337,7 +340,7 @@ export default function ShopDetailsPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {img.shopImage && (
-                              <div key={`${img._id || Math.random()}-shop`} className="relative group">
+                              <div key={`${img._id || Math.random()}-shop`} className="relative group cursor-zoom-in" onClick={() => setEnlargedImage(img.shopImage.startsWith("http") ? img.shopImage : `${API_BASE_URL || ""}${img.shopImage}`)}>
                                 <img
                                   src={
                                     img.shopImage.startsWith("http")
@@ -358,7 +361,7 @@ export default function ShopDetailsPage() {
                             )}
 
                             {img.shelfImage && (
-                              <div key={`${img._id || Math.random()}-shelf`} className="relative group">
+                              <div key={`${img._id || Math.random()}-shelf`} className="relative group cursor-zoom-in" onClick={() => setEnlargedImage(img.shelfImage.startsWith("http") ? img.shelfImage : `${API_BASE_URL || ""}${img.shelfImage}`)}>
                                 <img
                                   src={
                                     img.shelfImage.startsWith("http")
