@@ -23,15 +23,22 @@ export default function VisitsPage() {
   const uniqueCities = Array.from(new Set(shops.map((shop) => shop.city).filter(Boolean)))
 
   // Filter shops based on search and filters
-  const filteredShops = shops.filter((shop) => {
-    const matchesSearch =
-      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.address.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || shop.status === statusFilter
-    const matchesCity = cityFilter === "all" || shop.city === cityFilter
-    return matchesSearch && matchesStatus && matchesCity
-  })
-
+ const filteredShops = shops
+    .filter((shop) => {
+      const matchesSearch =
+        shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        shop.address.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === "all" || shop.status === statusFilter
+      const matchesCity = cityFilter === "all" || shop.city === cityFilter
+      return matchesSearch && matchesStatus && matchesCity
+    })
+    // Sort so latest added shops appear first (by createdAt or updatedAt desc)
+    .sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+      const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+      return dateB - dateA
+    })
+    
   // Calculate stats
   const totalVisits = shops.reduce((sum, shop) => sum + (shop.visitImages?.length || 0), 0)
 

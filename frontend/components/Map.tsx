@@ -111,8 +111,8 @@ export default function LeafletMap({ lat, lng, markers, selectedPinIdx }: Leafle
 									.bindPopup(`
 										<div style="text-align: center;">
 											<strong>${m.label || "Location"}</strong><br/>
-											Lat: ${m.lat.toFixed(4)}<br/>
-											Lng: ${m.lng.toFixed(4)}
+											Lat: ${m.lat.toFixed(6)}<br/>
+											Lng: ${m.lng.toFixed(6)}
 										</div>
 									`)
 								markerRefs.current.push(marker)
@@ -123,8 +123,8 @@ export default function LeafletMap({ lat, lng, markers, selectedPinIdx }: Leafle
 								.bindPopup(`
 									<div style="text-align: center;">
 										<strong>Shop Location</strong><br/>
-										Lat: ${lat.toFixed(4)}<br/>
-										Lng: ${lng.toFixed(4)}
+										Lat: ${lat.toFixed(6)}<br/>
+										Lng: ${lng.toFixed(6)}
 									</div>
 								`)
 							markerRefs.current.push(marker)
