@@ -7,11 +7,17 @@ export function cn(...inputs: ClassValue[]) {
 
 // Get API base URL from environment
 export function getApiBaseUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+  let baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
   if (!baseUrl) {
     console.warn("NEXT_PUBLIC_API_BASE_URL is not configured")
     return ""
   }
+
+  // Force HTTP instead of HTTPS
+  if (baseUrl.startsWith("https://")) {
+    baseUrl = baseUrl.replace("https://", "http://")
+  }
+
   return baseUrl
 }
 
