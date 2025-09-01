@@ -25,6 +25,8 @@ const navigation = [
   { name: "Visits", href: "/dashboard/visits", icon: MapPin },
   { name: "Shops", href: "/dashboard/shops", icon: Store },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "manage_users" },
+  { name: "Reports", href: "/dashboard/reports", icon: Users, permission: "manage_users" }
+
 ]
 
 export function DashboardSidebar() {

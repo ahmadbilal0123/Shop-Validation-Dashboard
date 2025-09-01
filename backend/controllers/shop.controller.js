@@ -1,3 +1,18 @@
+// Get visited shops (visit: true)
+export const getVisitedShops = async (req, res) => {
+  try {
+    // You can add more filters from req.query if needed
+    const visitedShops = await shopModel.find({ visit: true });
+    res.status(200).json({
+      message: "Visited shops fetched successfully",
+      count: visitedShops.length,
+      data: visitedShops,
+    });
+  } catch (error) {
+    console.error("Error fetching visited shops:", error);
+    res.status(500).json({ message: "Error fetching visited shops", error: error.message });
+  }
+};
 import xlsx from "xlsx";
 import shopModel from "../models/shop.model.js";
 import userModel from "../models/user.model.js";
