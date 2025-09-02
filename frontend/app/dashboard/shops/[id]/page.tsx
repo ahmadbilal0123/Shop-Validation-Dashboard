@@ -16,6 +16,48 @@ interface ShopData {
   [key: string]: any
 }
 
+// ZoomableImage component for modal image zoom
+function ZoomableImage({ src }: { src: string }) {
+  const [zoomed, setZoomed] = useState(false)
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+
+  const handleDoubleClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    setZoomed(z => !z)
+    if (!zoomed) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      setPosition({ x, y })
+    } else {
+      setPosition({ x: 0, y: 0 })
+    }
+  }
+
+  return (
+    <img
+      src={src}
+      alt="Zoomed"
+      className={`rounded-2xl shadow-2xl border-4 border-white transition-transform duration-300 cursor-zoom-in ${zoomed ? 'cursor-zoom-out' : ''}`}
+      style={
+        zoomed
+          ? {
+              transform: `scale(2) translate(${-position.x}px, ${-position.y}px)`,
+              maxWidth: 'none',
+              maxHeight: 'none',
+            }
+          : {
+              width: '900px',
+              height: 'auto',
+              maxHeight: '85vh',
+              objectFit: 'cover',
+              display: 'block'
+            }
+      }
+      onDoubleClick={handleDoubleClick}
+    />
+  )
+}
+
 export default function ShopDetailsPage() {
   const params = useParams()
   const router = useRouter()
@@ -26,6 +68,8 @@ export default function ShopDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPreviousImages, setShowPreviousImages] = useState(false)
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
+  const [allImages, setAllImages] = useState<string[]>([])
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -52,6 +96,32 @@ export default function ShopDetailsPage() {
 
     loadShopData()
   }, [shopId])
+
+  // Keyboard navigation for modal
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!enlargedImage) return
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        navigateToPrevImage()
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        navigateToNextImage()
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        setEnlargedImage(null)
+      }
+    }
+
+    if (enlargedImage) {
+      document.addEventListener('keydown', handleKeyPress)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress)
+    }
+  }, [enlargedImage, allImages, currentImageIndex])
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -94,10 +164,53 @@ export default function ShopDetailsPage() {
     return images.length > 1 ? images.slice(0, -1).reverse() : []
   }
 
+  // Get all images for navigation
+  const getAllImagesForNavigation = () => {
+    const allImgs: string[] = []
+    if (shop?.visitImages?.length) {
+      shop.visitImages.forEach((img: any) => {
+        if (img.shopImage) {
+          const fullSrc = img.shopImage.startsWith("http") ? img.shopImage : `${API_BASE_URL || ""}${img.shopImage}`
+          allImgs.push(fullSrc)
+        }
+        if (img.shelfImage) {
+          const fullSrc = img.shelfImage.startsWith("http") ? img.shelfImage : `${API_BASE_URL || ""}${img.shelfImage}`
+          allImgs.push(fullSrc)
+        }
+      })
+    }
+    return allImgs
+  }
+
+  // Navigation functions
+  const openImageWithNavigation = (imageSrc: string) => {
+    const allImgs = getAllImagesForNavigation()
+    const index = allImgs.findIndex(img => img === imageSrc)
+    setAllImages(allImgs)
+    setCurrentImageIndex(index >= 0 ? index : 0)
+    setEnlargedImage(imageSrc)
+  }
+
+  const navigateToNextImage = () => {
+    if (allImages.length > 1) {
+      const nextIndex = (currentImageIndex + 1) % allImages.length
+      setCurrentImageIndex(nextIndex)
+      setEnlargedImage(allImages[nextIndex])
+    }
+  }
+
+  const navigateToPrevImage = () => {
+    if (allImages.length > 1) {
+      const prevIndex = currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1
+      setCurrentImageIndex(prevIndex)
+      setEnlargedImage(allImages[prevIndex])
+    }
+  }
+
   const renderImage = (imageSrc: string, altText: string, badgeText: string, badgeColor: string) => {
     const fullImageSrc = imageSrc.startsWith("http") ? imageSrc : `${API_BASE_URL || ""}${imageSrc}`
     return (
-      <div className="relative cursor-zoom-in" onClick={() => setEnlargedImage(fullImageSrc)}>
+      <div className="relative cursor-zoom-in" onClick={() => openImageWithNavigation(fullImageSrc)}>
         <img
           src={fullImageSrc || "/placeholder.svg"}
           alt={altText}
@@ -129,8 +242,9 @@ export default function ShopDetailsPage() {
             className="relative"
             onClick={e => e.stopPropagation()}
           >
+            {/* Close Button */}
             <button
-              className="absolute top-4 right-4 bg-white/80 rounded-full p-2 shadow-lg transition hover:bg-pink-200 hover:scale-110"
+              className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-2 shadow-lg transition hover:bg-pink-200 hover:scale-110"
               onClick={() => setEnlargedImage(null)}
               aria-label="Close"
             >
@@ -138,11 +252,43 @@ export default function ShopDetailsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <img
-              src={enlargedImage}
-              alt="Enlarged"
-              className="w-[80vw] max-w-4xl max-h-[80vh] rounded-2xl shadow-2xl border-4 border-white"
-            />
+
+            {/* Previous Arrow */}
+            {allImages.length > 1 && (
+              <button
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-3 shadow-lg transition hover:bg-blue-200 hover:scale-110"
+                onClick={navigateToPrevImage}
+                aria-label="Previous Image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
+
+            {/* Next Arrow */}
+            {allImages.length > 1 && (
+              <button
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-3 shadow-lg transition hover:bg-blue-200 hover:scale-110"
+                onClick={navigateToNextImage}
+                aria-label="Next Image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            )}
+
+            {/* Image Counter */}
+            {allImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/80 px-4 py-2 rounded-full shadow-lg">
+                <span className="text-sm font-semibold text-gray-700">
+                  {currentImageIndex + 1} / {allImages.length}
+                </span>
+              </div>
+            )}
+
+            <ZoomableImage src={enlargedImage} />
           </div>
         </div>
       )}
@@ -340,7 +486,7 @@ export default function ShopDetailsPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {img.shopImage && (
-                              <div key={`${img._id || Math.random()}-shop`} className="relative group cursor-zoom-in" onClick={() => setEnlargedImage(img.shopImage.startsWith("http") ? img.shopImage : `${API_BASE_URL || ""}${img.shopImage}`)}>
+                              <div key={`${img._id || Math.random()}-shop`} className="relative group cursor-zoom-in" onClick={() => openImageWithNavigation(img.shopImage.startsWith("http") ? img.shopImage : `${API_BASE_URL || ""}${img.shopImage}`)}>
                                 <img
                                   src={
                                     img.shopImage.startsWith("http")
@@ -361,7 +507,7 @@ export default function ShopDetailsPage() {
                             )}
 
                             {img.shelfImage && (
-                              <div key={`${img._id || Math.random()}-shelf`} className="relative group cursor-zoom-in" onClick={() => setEnlargedImage(img.shelfImage.startsWith("http") ? img.shelfImage : `${API_BASE_URL || ""}${img.shelfImage}`)}>
+                              <div key={`${img._id || Math.random()}-shelf`} className="relative group cursor-zoom-in" onClick={() => openImageWithNavigation(img.shelfImage.startsWith("http") ? img.shelfImage : `${API_BASE_URL || ""}${img.shelfImage}`)}>
                                 <img
                                   src={
                                     img.shelfImage.startsWith("http")
@@ -603,3 +749,5 @@ export default function ShopDetailsPage() {
             </div>
           </div>
         )}
+
+        

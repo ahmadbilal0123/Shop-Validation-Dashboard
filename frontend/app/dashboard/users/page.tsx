@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, Briefcase, Search, Filter } from "lucide-react"
+import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, EyeOff, Briefcase, Search, Filter } from "lucide-react"
 
 export default function UsersPage() {
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +22,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState<string>("all")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showEditPassword, setShowEditPassword] = useState(false)
+  const [formKey, setFormKey] = useState(0) // Add key to force form re-render
 
   const editFormRef = useRef<HTMLDivElement>(null)
 
@@ -48,9 +51,17 @@ export default function UsersPage() {
 
     const res = await registerUser(form)
     if (res.success) {
+      // Clear form completely - this should clear all fields
       setForm({ name: "", username: "", password: "", role: "user" })
       setSuccess("🎉 User registered successfully!")
+      setShowPassword(false) // Reset password visibility
+      setFormKey(prev => prev + 1) // Force form re-render with new key
       await loadUsers()
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null)
+      }, 3000)
     } else {
       setError(res.error || "Failed to register user")
     }
@@ -69,7 +80,13 @@ export default function UsersPage() {
     if (res.success) {
       setSuccess("✅ User updated successfully!")
       setEditForm(null)
+      setShowEditPassword(false) // Reset edit password visibility
       await loadUsers()
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null)
+      }, 3000)
     } else {
       setError(res.error || "Failed to update user")
     }
@@ -146,7 +163,7 @@ export default function UsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <form onSubmit={handleRegister} className="grid gap-6 md:grid-cols-2">
+            <form key={formKey} onSubmit={handleRegister} className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700">Full Name</Label>
                 <Input
@@ -169,14 +186,27 @@ export default function UsersPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700">Password</Label>
-                <Input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter secure password"
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    required
+                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 pl-10"
+                    placeholder="Enter secure password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 hover:text-slate-600"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700">Role</Label>
@@ -236,13 +266,26 @@ export default function UsersPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-slate-700">Password</Label>
-                  <Input
-                    type="password"
-                    placeholder="Enter new password"
-                    value={editForm.password || ""}
-                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                    className="border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showEditPassword ? "text" : "password"}
+                      placeholder="Enter new password"
+                      value={editForm.password || ""}
+                      onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                      className="border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 pl-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 hover:text-slate-600"
+                      onClick={() => setShowEditPassword(!showEditPassword)}
+                    >
+                      {showEditPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   <small className="text-slate-500">Leave blank to keep the current password</small>
                 </div>
                 <div className="space-y-2">

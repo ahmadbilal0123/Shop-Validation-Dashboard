@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin, Phone, Mail, Calendar, Star, Filter, Building2,Clock,CheckCircle2, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { fetchVisitStats } from "@/lib/api"  // 👈 import it
 
@@ -262,23 +262,21 @@ useEffect(() => {
                   </Button>
                 )}
                 {/* Filter Dropdown for Visited/Unvisited */}
-                <select
-                  value={statusFilter}
-                  onChange={e => {
+                <Select 
+                  value={statusFilter || "all"} 
+                  onValueChange={(value) => {
                     setPage(1);
-                    setStatusFilter(e.target.value);
+                    setStatusFilter(value === "all" ? undefined : value);
                   }}
-                  className="h-12 px-4 border border-slate-200 rounded-lg bg-white text-slate-700 font-semibold transition-colors duration-200 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-700 focus:outline-none custom-select-focus"
                 >
-                <style jsx>{`
-                  .custom-select-focus:focus {
-                    border-color: #94a3b8 !important; /* slate-400 */
-                    box-shadow: none !important;
-                  }
-                `}</style>
-                  <option value="all">All</option>
-                  <option value="visited">Visited</option>
-                </select>
+                  <SelectTrigger className="w-32 h-12 border-slate-200 bg-white font-semibold">
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="visited">Visited</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </form>
             
