@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useState, useRef } from "react"
 import { registerUser, fetchAllUsers, updateUser, type User } from "@/lib/api"
+import { getSession } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, EyeOff, Briefcase, Search, Filter } from "lucide-react"
+import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, EyeOff, Briefcase, Search, Filter, Package, RefreshCw } from "lucide-react"
 
 export default function UsersPage() {
   const [error, setError] = useState<string | null>(null)
@@ -25,11 +26,31 @@ export default function UsersPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showEditPassword, setShowEditPassword] = useState(false)
   const [formKey, setFormKey] = useState(0) // Add key to force form re-render
+  const [userShopCounts, setUserShopCounts] = useState<{ [userId: string]: number }>({})
 
   const editFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadUsers()
+    
+    // Listen for focus events to refresh data when returning to the page
+    const handleFocus = () => {
+      loadUsers() // Refresh users and shop counts when page gets focus
+    }
+    
+    // Auto-refresh shop counts every 30 seconds
+    const interval = setInterval(() => {
+      if (users.length > 0) {
+        loadUserShopCounts(users)
+      }
+    }, 30000)
+    
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      clearInterval(interval)
+    }
   }, [])
 
   const loadUsers = async () => {
@@ -37,10 +58,80 @@ export default function UsersPage() {
     const res = await fetchAllUsers()
     if (res.success) {
       setUsers(res.users)
+      // Load shop counts for each user
+      await loadUserShopCounts(res.users)
     } else {
       setError(res.error || "Failed to load users")
     }
     setLoading(false)
+  }
+
+  const loadUserShopCounts = async (usersList: User[]) => {
+    try {
+      const counts: { [userId: string]: number } = {}
+      const session = getSession()
+      
+      // Fetch shop count for each user using the correct API endpoint
+      await Promise.all(
+        usersList.map(async (user) => {
+          try {
+            let totalCount = 0
+
+            // For auditors, use the specific API endpoint
+            if (user.role === "auditor") {
+              const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/get-assigned-shops-for-auditor/${user.id}`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session?.token}`,
+                    "ngrok-skip-browser-warning": "true",
+                  },
+                }
+              )
+              
+              if (response.ok) {
+                const data = await response.json()
+                totalCount = data.count || 0
+              }
+            } else {
+              // For other roles (including QC), fetch from general shops API and filter
+              const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session?.token}`,
+                    "ngrok-skip-browser-warning": "true",
+                  },
+                }
+              )
+              
+              if (response.ok) {
+                const data = await response.json()
+                const shops = data.data || []
+                
+                // Count shops assigned to this user (either as auditor or QC)
+                totalCount = shops.filter((shop: any) => 
+                  shop.assignedTo === user.id || shop.assignedQc === user.id
+                ).length
+              }
+            }
+            
+            counts[user.id] = totalCount
+          } catch (error) {
+            console.error(`Error fetching shop count for user ${user.id}:`, error)
+            counts[user.id] = 0
+          }
+        })
+      )
+      
+      setUserShopCounts(counts)
+    } catch (error) {
+      console.error("Error loading user shop counts:", error)
+    }
   }
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -138,10 +229,19 @@ export default function UsersPage() {
           <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
             <Users className="h-8 w-8 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-4xl font-bold text-slate-900">User Management</h1>
             <p className="text-slate-600 mt-1">Manage user accounts and permissions</p>
           </div>
+          <Button
+            onClick={loadUsers}
+            variant="outline"
+            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {error && (
@@ -408,6 +508,15 @@ export default function UsersPage() {
                       <Calendar className="h-4 w-4" />
                       Joined {new Date(user.createdAt).toLocaleDateString()}
                     </div>
+                    
+                    {/* Assigned Shops Count */}
+                    <div className="flex items-center gap-2 text-sm text-blue-600 mb-4 bg-blue-50 p-2 rounded-lg">
+                      <Package className="h-4 w-4" />
+                      <span className="font-semibold">
+                        {userShopCounts[user.id] !== undefined ? userShopCounts[user.id] : "..."} Assigned Shops
+                      </span>
+                    </div>
+                    
                     <Button
                       size="sm"
                       onClick={() => setEditForm(user)}

@@ -247,13 +247,12 @@ export default function AssignShopsPage() {
               {filteredUsers.map((user) => (
                 <Card
                   key={user.id}
-                  className={`bg-white/90 backdrop-blur-sm border rounded-xl transition-all duration-200 hover:shadow-md ${
+                  className={`bg-white/90 backdrop-blur-sm border rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer ${
                     selectedAuditorId === user.id
                       ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
                       : "border-blue-100 hover:border-blue-200"
                   }`}
-                  onDoubleClick={() => setSelectedAuditorId(user.id)}
-                  style={{ cursor: "pointer" }}
+                  onClick={() => setSelectedAuditorId(user.id)}
                 >
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-3 sm:gap-0">
@@ -262,16 +261,15 @@ export default function AssignShopsPage() {
                         name="auditor"
                         checked={selectedAuditorId === user.id}
                         onChange={() => setSelectedAuditorId(user.id)}
+                        onClick={(e) => e.stopPropagation()} // Prevent double triggering
                         className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
                       />
                       <div className="flex-1 min-w-0">
-                        <Label htmlFor={user.id} className="cursor-pointer block">
-                          <div className="font-semibold text-gray-900 text-base sm:text-lg truncate">{user.name}</div>
-                          <div className="text-sm text-gray-600 mt-1 truncate">{user.email}</div>
-                          <Badge variant="secondary" className="text-xs mt-2 bg-blue-100 text-blue-800 border-blue-200">
-                            {user.role}
-                          </Badge>
-                        </Label>
+                        <div className="font-semibold text-gray-900 text-base sm:text-lg truncate">{user.name}</div>
+                        <div className="text-sm text-gray-600 mt-1 truncate">{user.email}</div>
+                        <Badge variant="secondary" className="text-xs mt-2 bg-blue-100 text-blue-800 border-blue-200">
+                          {user.role}
+                        </Badge>
                       </div>
                       {selectedAuditorId === user.id && (
                         <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full">

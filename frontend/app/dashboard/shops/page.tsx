@@ -377,7 +377,8 @@ export default function ShopsPage() {
                 key={shop.id}
                 className={`group relative bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 ${
                   selectedShopIds.includes(shop.id) ? "ring-2 ring-blue-400 shadow-lg scale-[1.02]" : ""
-                }`}
+                } ${selectMode ? "cursor-pointer" : ""}`}
+                onClick={selectMode ? () => toggleShopSelection(shop.id) : undefined}
               >
                 {selectMode && (
                   <div className="absolute top-4 right-4 z-10">
@@ -462,7 +463,12 @@ export default function ShopsPage() {
 
                   <Button
                     size="sm"
-                    onClick={() => router.push(`/dashboard/shops/${shop.id}`)}
+                    onClick={(e) => {
+                      if (selectMode) {
+                        e.stopPropagation() // Prevent card click when in select mode
+                      }
+                      router.push(`/dashboard/shops/${shop.id}`)
+                    }}
                     className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <Eye className="h-4 w-4 mr-2" />
