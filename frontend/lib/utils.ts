@@ -5,20 +5,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// HTTP to HTTPS utility function (from your original utility.js)
+export function ensureHttps(url: string): string {
+  if (!url) return ""
+
+  // If URL starts with http://, replace with https://
+  if (url.startsWith("http://")) {
+    return url.replace("http://", "https://")
+  }
+
+  // If URL doesn't have protocol, add https://
+  if (!url.startsWith("https://") && !url.startsWith("http://")) {
+    return `https://${url}`
+  }
+
+  return url
+}
+
 // Get API base URL from environment
 export function getApiBaseUrl(): string {
-  let baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
   if (!baseUrl) {
     console.warn("NEXT_PUBLIC_API_BASE_URL is not configured")
     return ""
   }
-
-  // Force HTTP instead of HTTPS
-  if (baseUrl.startsWith("https://")) {
-    baseUrl = baseUrl.replace("https://", "http://")
-  }
-
-  return baseUrl
+  return ensureHttps(baseUrl)
 }
 
 // Build full API URL
