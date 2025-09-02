@@ -1,15 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { fetchShopById } from "@/lib/api"
+import { fetchShopById,assignShopsToUser } from "@/lib/api"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSession } from "@/lib/auth"
-import { assignShopsToUser} from "@/lib/api"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Search, UserCheck, Package } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 

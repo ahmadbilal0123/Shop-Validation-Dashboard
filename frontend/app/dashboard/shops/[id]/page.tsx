@@ -142,8 +142,28 @@ export default function ShopDetailsPage() {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ")
 
-  const formatFieldValue = (value: any) => {
+  const formatFieldValue = (value: any, fieldName?: string) => {
     if (value === null || value === undefined) return "Not provided"
+    
+    // Special handling for visitImages - only show essential image paths
+    if (fieldName === "visitImages" && Array.isArray(value)) {
+      return value.map((img: any, index: number) => (
+        <div key={img._id || index} className="mb-3 p-3 rounded-lg">
+          <div className="text-sm font-medium text-gray-700 mb-2">Visit #{index + 1}</div>
+          {img.shopImage && (
+            <div className="text-xs text-blue-600 mb-1">
+              <strong>Shop Image:</strong> {img.shopImage}
+            </div>
+          )}
+          {img.shelfImage && (
+            <div className="text-xs text-green-600">
+              <strong>Shelf Image:</strong> {img.shelfImage}
+            </div>
+          )}
+        </div>
+      ))
+    }
+    
     if (typeof value === "object") return JSON.stringify(value, null, 2)
     if (typeof value === "boolean") return value ? "Yes" : "No"
     return String(value)
@@ -572,7 +592,7 @@ export default function ShopDetailsPage() {
                     {String(first[1]).toUpperCase()}
                   </Badge>
                 ) : (
-                  formatFieldValue(first[1])
+                  formatFieldValue(first[1], first[0])
                 )}
               </td>
 
@@ -588,7 +608,7 @@ export default function ShopDetailsPage() {
                         {String(second[1]).toUpperCase()}
                       </Badge>
                     ) : (
-                      formatFieldValue(second[1])
+                      formatFieldValue(second[1], second[0])
                     )}
                   </td>
                 </>
