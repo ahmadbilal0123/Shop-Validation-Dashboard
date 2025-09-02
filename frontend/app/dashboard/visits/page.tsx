@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Search, Eye, Store, TrendingUp } from "lucide-react"
+import { MapPin, Calendar, Search, Eye, Store, TrendingUp, Users } from "lucide-react"
 import { fetchVisitedShops, type Shop } from "@/lib/api"
 import { useRouter } from "next/navigation"
 
@@ -18,6 +18,50 @@ export default function VisitsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("all")
+
+  // Selection state with persistence
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
+  const [assignLoading] = useState(false)
+
+  // Load saved selections on mount
+  useEffect(() => {
+    const savedSelections = sessionStorage.getItem('selectedShopIds_visits')
+    const savedSelectMode = sessionStorage.getItem('selectMode_visits')
+    
+    if (savedSelections) {
+      try {
+        const parsedSelections = JSON.parse(savedSelections)
+        if (Array.isArray(parsedSelections)) {
+          setSelectedShopIds(parsedSelections)
+        }
+      } catch (error) {
+        console.error('Error parsing saved selections:', error)
+      }
+    }
+    
+    if (savedSelectMode === 'true') {
+      setSelectMode(true)
+    }
+  }, [])
+
+  // Save selections whenever they change
+  useEffect(() => {
+    if (selectedShopIds.length > 0) {
+      sessionStorage.setItem('selectedShopIds_visits', JSON.stringify(selectedShopIds))
+    } else {
+      sessionStorage.removeItem('selectedShopIds_visits')
+    }
+  }, [selectedShopIds])
+
+  // Save select mode whenever it changes
+  useEffect(() => {
+    if (selectMode) {
+      sessionStorage.setItem('selectMode_visits', 'true')
+    } else {
+      sessionStorage.removeItem('selectMode_visits')
+    }
+  }, [selectMode])
 
   // Get unique cities for filter
   const uniqueCities = Array.from(new Set(shops.map((shop) => shop.city).filter(Boolean)))
@@ -71,6 +115,35 @@ export default function VisitsPage() {
       month: "short",
       day: "numeric",
     })
+  }
+
+  // Selection handlers
+  const handleShopSelection = (shopId: string) => {
+    setSelectedShopIds((prev) => {
+      if (prev.includes(shopId)) {
+        return prev.filter((id) => id !== shopId)
+      } else {
+        return [...prev, shopId]
+      }
+    })
+  }
+
+  const handleSelectAll = () => {
+    if (selectedShopIds.length === filteredShops.length) {
+      setSelectedShopIds([])
+    } else {
+      setSelectedShopIds(filteredShops.map((shop) => shop.id))
+    }
+  }
+
+  const handleAssignShopsClick = async () => {
+    if (selectedShopIds.length === 0) {
+      alert("Please select at least one shop.")
+      return
+    }
+
+    const shopIdsParam = selectedShopIds.join(",")
+    router.push(`/dashboard/shops/assign?shopIds=${shopIdsParam}`)
   }
 
   if (loading) {
@@ -179,7 +252,8 @@ export default function VisitsPage() {
 
         <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+              {/* Left section - Search field */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
@@ -190,19 +264,64 @@ export default function VisitsPage() {
                 />
               </div>
 
-              <Select value={cityFilter} onValueChange={setCityFilter}>
-                <SelectTrigger className="w-full md:w-48 border-slate-200 bg-white/50">
-                  <SelectValue placeholder="Filter by city" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Cities</SelectItem>
-                  {uniqueCities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Right section - All buttons + Filter */}
+              <div className="flex flex-wrap gap-2 sm:gap-3 items-center justify-end w-full lg:w-auto">
+                {selectMode && (
+                  <Button
+                    onClick={handleSelectAll}
+                    variant="outline"
+                    className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 bg-transparent"
+                  >
+                    {selectedShopIds.length === filteredShops.length ? "Deselect All" : "Select All"}
+                  </Button>
+                )}
+
+                <Button
+                  onClick={() => {
+                    setSelectMode((prev) => !prev)
+                    if (selectMode) {
+                      // Only clear selections when explicitly canceling
+                      setSelectedShopIds([])
+                      sessionStorage.removeItem('selectedShopIds_visits')
+                      sessionStorage.removeItem('selectMode_visits')
+                    }
+                  }}
+                  variant={selectMode ? "outline" : "default"}
+                  className={
+                    selectMode
+                      ? "border-blue-300 text-blue-700 hover:bg-blue-50"
+                      : "bg-blue-700 hover:bg-blue-800 text-white"
+                  }
+                >
+                  {selectMode ? "Cancel" : "Select Shops"}
+                </Button>
+
+                {selectMode && (
+                  <Button
+                    onClick={handleAssignShopsClick}
+                    disabled={assignLoading || selectedShopIds.length === 0}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+                  >
+                    {assignLoading
+                      ? "Assigning..."
+                      : `Assign ${selectedShopIds.length} Shop${selectedShopIds.length !== 1 ? "s" : ""}`}
+                  </Button>
+                )}
+
+                <Select value={cityFilter} onValueChange={setCityFilter}>
+                  <SelectTrigger className="w-48 border-slate-200 bg-white/50">
+                    <SelectValue placeholder="Filter by city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Cities</SelectItem>
+                    {uniqueCities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -223,61 +342,94 @@ export default function VisitsPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredShops.map((shop) => (
-              <Card
-                key={shop.id}
-                className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/70 backdrop-blur-sm hover:bg-white/90"
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">
-                        {shop.name}
-                      </CardTitle>
-                      <div className="flex items-start gap-2 text-sm text-slate-600">
-                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-slate-400" />
-                        <span className="line-clamp-2 leading-relaxed">{shop.address}</span>
+            {filteredShops.map((shop) => {
+              const isSelected = selectedShopIds.includes(shop.id)
+              return (
+                <Card
+                  key={shop.id}
+                  className={`group hover:shadow-xl transition-all duration-300 border-0 backdrop-blur-sm hover:bg-white/90 cursor-pointer ${
+                    selectMode
+                      ? isSelected
+                        ? "bg-blue-100/80 ring-2 ring-blue-500 shadow-lg"
+                        : "bg-white/70 hover:bg-blue-50/70"
+                      : "bg-white/70"
+                  }`}
+                  onClick={() => {
+                    if (selectMode) {
+                      handleShopSelection(shop.id)
+                    }
+                  }}
+                >
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">
+                          {shop.name}
+                        </CardTitle>
+                        <div className="flex items-start gap-2 text-sm text-slate-600">
+                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-slate-400" />
+                          <span className="line-clamp-2 leading-relaxed">{shop.address}</span>
+                        </div>
                       </div>
+                      {/* Selection indicator */}
+                      {selectMode && (
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                          isSelected 
+                            ? "bg-blue-500 border-blue-500" 
+                            : "border-slate-300 bg-white"
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="pt-0 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">City</span>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                      {shop.city || "Unknown"}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Total Visits</span>
-                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">
-                      {shop.visitImages?.length || 0} visits
-                    </Badge>
-                  </div>
-
-                  {shop.lastVisit && (
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                      <span className="text-sm text-slate-500 flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Last Visit
-                      </span>
-                      <span className="text-sm font-medium text-slate-700">{formatDate(shop.lastVisit)}</span>
+                  <CardContent className="pt-0 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">City</span>
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                        {shop.city || "Unknown"}
+                      </Badge>
                     </div>
-                  )}
 
-                  <Button
-                    size="sm"
-                       onClick={() => router.push(`/dashboard/shops/${shop.id}`)}
-                    className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Shop Details
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">Total Visits</span>
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">
+                        {shop.visitImages?.length || 0} visits
+                      </Badge>
+                    </div>
+
+                    {shop.lastVisit && (
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <span className="text-sm text-slate-500 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Last Visit
+                        </span>
+                        <span className="text-sm font-medium text-slate-700">{formatDate(shop.lastVisit)}</span>
+                      </div>
+                    )}
+
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        if (selectMode) {
+                          e.stopPropagation() // Prevent card click when in select mode
+                        }
+                        router.push(`/dashboard/shops/${shop.id}`)
+                      }}
+                      className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Shop Details
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>

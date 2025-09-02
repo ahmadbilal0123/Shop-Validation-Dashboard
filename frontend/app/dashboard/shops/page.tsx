@@ -42,10 +42,50 @@ export default function ShopsPage() {
     setShowVisitedOnly(false)
   }, [])
 
-  // Selection state
+  // Selection state with persistence
   const [selectMode, setSelectMode] = useState(false)
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
+
+  // Load saved selections on mount
+  useEffect(() => {
+    const savedSelections = sessionStorage.getItem('selectedShopIds')
+    const savedSelectMode = sessionStorage.getItem('selectMode')
+    
+    if (savedSelections) {
+      try {
+        const parsedSelections = JSON.parse(savedSelections)
+        if (Array.isArray(parsedSelections)) {
+          setSelectedShopIds(parsedSelections)
+        }
+      } catch (error) {
+        console.error('Error parsing saved selections:', error)
+      }
+    }
+    
+    if (savedSelectMode === 'true') {
+      setSelectMode(true)
+    }
+  }, [])
+
+  // Save selections whenever they change
+  useEffect(() => {
+    if (selectedShopIds.length > 0) {
+      sessionStorage.setItem('selectedShopIds', JSON.stringify(selectedShopIds))
+    } else {
+      sessionStorage.removeItem('selectedShopIds')
+    }
+  }, [selectedShopIds])
+
+  // Save select mode whenever it changes
+  useEffect(() => {
+    if (selectMode) {
+      sessionStorage.setItem('selectMode', 'true')
+    } else {
+      sessionStorage.removeItem('selectMode')
+      // Only clear selections when explicitly canceling, not on page load
+    }
+  }, [selectMode])
 
   // Filter shops based on search query
   const filterShopsBySearch = (shops: Shop[], query: string) => {
@@ -296,7 +336,12 @@ export default function ShopsPage() {
               <Button
                 onClick={() => {
                   setSelectMode((prev) => !prev)
-                  setSelectedShopIds([]) // reset selection
+                  if (selectMode) {
+                    // Only clear selections when explicitly canceling
+                    setSelectedShopIds([])
+                    sessionStorage.removeItem('selectedShopIds')
+                    sessionStorage.removeItem('selectMode')
+                  }
                 }}
                 variant={selectMode ? "outline" : "default"}
                 className={

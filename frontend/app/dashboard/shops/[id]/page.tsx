@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { fetchShopById } from "@/lib/api"
+import { fetchShopById, fetchAllUsers } from "@/lib/api"
+import { getSession } from "@/lib/auth"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, Star, ImageIcon, History } from "lucide-react"
+import { AlertCircle, ArrowLeft, MapPin, Phone, Star, ImageIcon, History, User, UserCheck } from "lucide-react"
 import MapDynamic from "@/components/MapDynamic"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -34,38 +35,27 @@ function ZoomableImage({ src }: { src: string }) {
   }
 
   return (
- <img
-  src={src}
-  alt="Zoomed"
-  className={`rounded-2xl shadow-2xl border-4 border-white transition-all duration-300 ${
-    zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
-  }`}
-  style={
-    zoomed
-      ? {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          width: '90vmin', // square size based on smaller of viewport width/height
-          height: '90vmin',
-          objectFit: 'contain', // keeps image aspect ratio inside square
-          transform: 'translate(-50%, -50%)', // center perfectly
-          zIndex: 9999,
-          backgroundColor: 'rgba(0,0,0,0.7)', // optional overlay
-          padding: 0,
-          margin: 0,
-        }
-      : {
-          width: '100%',
-          maxWidth: '900px',
-          height: 'auto',
-          maxHeight: '85vh',
-          objectFit: 'cover',
-          display: 'block',
-        }
-  }
-  onDoubleClick={handleDoubleClick}
-/>
+    <img
+      src={src}
+      alt="Zoomed"
+      className={`rounded-2xl shadow-2xl border-4 border-white transition-transform duration-300 cursor-zoom-in ${zoomed ? 'cursor-zoom-out' : ''}`}
+      style={
+        zoomed
+          ? {
+              transform: `scale(2) translate(${-position.x}px, ${-position.y}px)`,
+              maxWidth: 'none',
+              maxHeight: 'none',
+            }
+          : {
+              width: '900px',
+              height: 'auto',
+              maxHeight: '85vh',
+              objectFit: 'cover',
+              display: 'block'
+            }
+      }
+      onDoubleClick={handleDoubleClick}
+    />
   )
 }
 
@@ -81,6 +71,83 @@ export default function ShopDetailsPage() {
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
   const [allImages, setAllImages] = useState<string[]>([])
+  const [assignedUser, setAssignedUser] = useState<{ name: string; role: string } | null>(null)
+  const [assignedQC, setAssignedQC] = useState<{ name: string; role: string } | null>(null)
+  const [visitedByUser, setVisitedByUser] = useState<{ name: string; role: string } | null>(null)
+
+  // Function to fetch assigned user details
+  const fetchAssignedUser = async (userId: string) => {
+    try {
+      console.log("fetchAssignedUser called with userId:", userId)
+      
+      // Use the same approach as users page
+      const usersResponse = await fetchAllUsers()
+      if (usersResponse.success) {
+        console.log("Users fetched successfully:", usersResponse.users)
+        const user = usersResponse.users.find((u: any) => u.id === userId)
+        console.log("Found user:", user)
+        if (user) {
+          setAssignedUser({ name: user.name, role: user.role })
+          console.log("Set assigned user:", { name: user.name, role: user.role })
+        } else {
+          console.log("User not found with ID:", userId)
+        }
+      } else {
+        console.error("Failed to fetch users:", usersResponse.error)
+      }
+    } catch (error) {
+      console.error("Error fetching assigned user:", error)
+    }
+  }
+
+  // Function to fetch assigned QC details
+  const fetchAssignedQC = async (userId: string) => {
+    try {
+      console.log("fetchAssignedQC called with userId:", userId)
+      
+      // Use the same approach as users page
+      const usersResponse = await fetchAllUsers()
+      if (usersResponse.success) {
+        console.log("QC Users fetched successfully:", usersResponse.users)
+        const user = usersResponse.users.find((u: any) => u.id === userId)
+        console.log("Found QC user:", user)
+        if (user) {
+          setAssignedQC({ name: user.name, role: user.role })
+          console.log("Set assigned QC:", { name: user.name, role: user.role })
+        } else {
+          console.log("QC User not found with ID:", userId)
+        }
+      } else {
+        console.error("Failed to fetch QC users:", usersResponse.error)
+      }
+    } catch (error) {
+      console.error("Error fetching assigned QC:", error)
+    }
+  }
+
+  // Function to fetch visitedBy user details
+  const fetchVisitedByUser = async (userId: string) => {
+    try {
+      console.log("fetchVisitedByUser called with userId:", userId)
+      
+      const usersResponse = await fetchAllUsers()
+      if (usersResponse.success) {
+        console.log("VisitedBy Users fetched successfully:", usersResponse.users)
+        const user = usersResponse.users.find((u: any) => u.id === userId)
+        console.log("Found visitedBy user:", user)
+        if (user) {
+          setVisitedByUser({ name: user.name, role: user.role })
+          console.log("Set visitedBy user:", { name: user.name, role: user.role })
+        } else {
+          console.log("VisitedBy User not found with ID:", userId)
+        }
+      } else {
+        console.error("Failed to fetch visitedBy users:", usersResponse.error)
+      }
+    } catch (error) {
+      console.error("Error fetching visitedBy user:", error)
+    }
+  }
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -94,6 +161,27 @@ export default function ShopDetailsPage() {
 
         if (response.success && response.data) {
           setShop(response.data)
+          console.log("Shop data loaded:", response.data)
+          console.log("assignedTo:", response.data.assignedTo)
+          console.log("assignedQc:", response.data.assignedQc)
+          
+          // Fetch assigned user details if shop is assigned
+          if (response.data.assignedTo) {
+            console.log("Fetching auditor for ID:", response.data.assignedTo)
+            await fetchAssignedUser(response.data.assignedTo)
+          }
+          
+          // Fetch assigned QC details if shop has QC assigned
+          if (response.data.assignedQc) {
+            console.log("Fetching QC for ID:", response.data.assignedQc)
+            await fetchAssignedQC(response.data.assignedQc)
+          }
+          
+          // Fetch visitedBy user details if shop has been visited
+          if (response.data.visitedBy) {
+            console.log("Fetching visitedBy user for ID:", response.data.visitedBy)
+            await fetchVisitedByUser(response.data.visitedBy)
+          }
         } else {
           setError(response.error || "Failed to load shop data")
         }
@@ -431,6 +519,81 @@ export default function ShopDetailsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Assigned Personnel */}
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <UserCheck className="h-6 w-6 text-blue-500" />
+                    Assigned User
+                  </h3>
+                  <div className="space-y-4">
+                    {/* Assigned Auditor */}
+                    {assignedUser && (
+                      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-lg font-semibold text-gray-900">{assignedUser.name}</p>
+                          </div>
+                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                            {assignedUser.role.charAt(0).toUpperCase() + assignedUser.role.slice(1)}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Assigned QC */}
+                    {assignedQC && (
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-lg font-semibold text-gray-900">{assignedQC.name}</p>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                            {assignedQC.role.charAt(0).toUpperCase() + assignedQC.role.slice(1)}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!assignedUser && !assignedQC && (
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl">
+                        <p className="text-gray-500 italic">No personnel assigned</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Visit History */}
+                {shop.visitedBy && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <History className="h-6 w-6 text-purple-500" />
+                      Visit History
+                    </h3>
+                    <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Last Visitor ({shop.visitImages?.length || 0} visits)</p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {visitedByUser ? visitedByUser.name : 'Loading...'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          {visitedByUser && (
+                            <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
+                              {visitedByUser.role.charAt(0).toUpperCase() + visitedByUser.role.slice(1)}
+                            </Badge>
+                          )}
+                          {shop.visitedAt && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              {new Date(shop.visitedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -458,7 +621,7 @@ export default function ShopDetailsPage() {
                   {/* Latest Images Section */}
                   <div>
                     <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span> Latest Image
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span> Latest Upload
                     </h4>
                     {getActualLatestImages().map((img: any) => (
                       <div key={`latest-${img._id}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -29,6 +29,8 @@ export interface Shop {
   city_village?: string
   assignedAt?: string
   auditorId?: string
+  assignedTo?: string
+  assignedQc?: string
 
   // ✅ New fields
   visit?: boolean
@@ -72,6 +74,8 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     city_village: shop.city_village || "",
     assignedAt: shop.assignedAt || shop.assigned_at,
     auditorId: shop.auditorId || shop.auditor_id || auditorId,
+    assignedTo: shop.assignedTo,
+    assignedQc: shop.assignedQc,
     visit: shop.visit ?? false,
     visitImages: Array.isArray(shop.visitImages)
       ? shop.visitImages.map((img: any) => {
@@ -219,7 +223,7 @@ export async function fetchUnassignedShops(params?: {
     // 👇 Force the params into a flexible object before adding `unassigned`
     const queryParams = buildQueryParams({
       ...(params as Record<string, any>),
-      unassigned: "true", // always send as string
+      unassigned: "false", // always send as string
     })
 
     const apiUrl = buildApiUrl("/api/shops/get-shops")
