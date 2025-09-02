@@ -34,27 +34,38 @@ function ZoomableImage({ src }: { src: string }) {
   }
 
   return (
-    <img
-      src={src}
-      alt="Zoomed"
-      className={`rounded-2xl shadow-2xl border-4 border-white transition-transform duration-300 cursor-zoom-in ${zoomed ? 'cursor-zoom-out' : ''}`}
-      style={
-        zoomed
-          ? {
-              transform: `scale(2) translate(${-position.x}px, ${-position.y}px)`,
-              maxWidth: 'none',
-              maxHeight: 'none',
-            }
-          : {
-              width: '900px',
-              height: 'auto',
-              maxHeight: '85vh',
-              objectFit: 'cover',
-              display: 'block'
-            }
-      }
-      onDoubleClick={handleDoubleClick}
-    />
+ <img
+  src={src}
+  alt="Zoomed"
+  className={`rounded-2xl shadow-2xl border-4 border-white transition-all duration-300 ${
+    zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
+  }`}
+  style={
+    zoomed
+      ? {
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          width: '90vmin', // square size based on smaller of viewport width/height
+          height: '90vmin',
+          objectFit: 'contain', // keeps image aspect ratio inside square
+          transform: 'translate(-50%, -50%)', // center perfectly
+          zIndex: 9999,
+          backgroundColor: 'rgba(0,0,0,0.7)', // optional overlay
+          padding: 0,
+          margin: 0,
+        }
+      : {
+          width: '100%',
+          maxWidth: '900px',
+          height: 'auto',
+          maxHeight: '85vh',
+          objectFit: 'cover',
+          display: 'block',
+        }
+  }
+  onDoubleClick={handleDoubleClick}
+/>
   )
 }
 
@@ -447,7 +458,7 @@ export default function ShopDetailsPage() {
                   {/* Latest Images Section */}
                   <div>
                     <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span> Latest Upload
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span> Latest Image
                     </h4>
                     {getActualLatestImages().map((img: any) => (
                       <div key={`latest-${img._id}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
