@@ -23,11 +23,19 @@ import { useState } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Visits", href: "/dashboard/visits", icon: MapPin },
-  { name: "Shops", href: "/dashboard/shops", icon: Store },
+  {
+    name: "Auditors",
+    icon: Users,
+    children: [
+      { name: "Visits", href: "/dashboard/visits", icon: MapPin },
+      { name: "Shops", href: "/dashboard/shops", icon: Store },
+      { name: "Pending", href: "/dashboard/pending", icon: TriangleAlert },
+    ],
+  },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "manage_users" },
   { name: "Reports", href: "/dashboard/reports", icon: TriangleAlert, permission: "manage_users" },
 ]
+
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -56,31 +64,74 @@ export function DashboardSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2 px-4 py-6">
-        {navigation.map((item) => {
-          if (!hasPermission(item.permission)) return null
+     <nav className="flex-1 space-y-2 px-4 py-6">
+  {navigation.map((item) => {
+    if (!hasPermission(item.permission)) return null
 
-          const isActive = pathname === item.href
-          return (
-            <Link key={item.name} href={item.href} onClick={onNavigate}>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start h-12 text-slate-300  hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-blue-600/20 transition-all duration-200",
-                  isActive &&
-                    "bg-gradient-to-r from-blue-600/30 to-blue-600/30 text-white border-slate-600/50 shadow-lg"
-                )}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                <span className="font-medium">{item.name}</span>
-                {isActive && (
-                  <div className="ml-auto w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full" />
-                )}
-              </Button>
-            </Link>
-          )
-        })}
-      </nav>
+    // Dropdown logic
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+    if (item.children) {
+      const isOpen = openDropdown === item.name
+      return (
+        <div key={item.name}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start h-12 text-slate-300 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-blue-600/20 transition-all duration-200 flex items-center"
+            onClick={() =>
+              setOpenDropdown(isOpen ? null : item.name)
+            }
+          >
+            <item.icon className="mr-3 h-5 w-5" />
+            <span className="font-medium">{item.name}</span>
+            <span className="ml-auto">{isOpen ? "▲" : "▼"}</span>
+          </Button>
+
+          {isOpen &&
+            item.children.map((child) => {
+              const isActive = pathname === child.href
+              return (
+                <Link key={child.name} href={child.href}>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start h-12 pl-10 text-slate-300 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-blue-600/20 transition-all duration-200",
+                      isActive &&
+                        "bg-gradient-to-r from-blue-600/30 to-blue-600/30 text-white border-slate-600/50 shadow-lg"
+                    )}
+                  >
+                    <child.icon className="mr-3 h-5 w-5" />
+                    {child.name}
+                  </Button>
+                </Link>
+              )
+            })}
+        </div>
+      )
+    }
+
+    const isActive = pathname === item.href
+    return (
+      <Link key={item.name} href={item.href}>
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start h-12 text-slate-300 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-blue-600/20 transition-all duration-200",
+            isActive &&
+              "bg-gradient-to-r from-blue-600/30 to-blue-600/30 text-white border-slate-600/50 shadow-lg"
+          )}
+        >
+          <item.icon className="mr-3 h-5 w-5" />
+          <span className="font-medium">{item.name}</span>
+          {isActive && (
+            <div className="ml-auto w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full" />
+          )}
+        </Button>
+      </Link>
+    )
+  })}
+</nav>
+
 
       {/* User Info & Logout */}
       <div className="border-t border-slate-700/50 p-4 bg-gradient-to-r from-slate-800/50 to-slate-700/50">
