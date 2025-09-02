@@ -99,6 +99,14 @@ useEffect(() => {
         if (searchQuery && searchQuery.trim() !== '') {
           filteredShops = filterShopsBySearch(filteredShops, searchQuery)
         }
+        
+        // Sort so latest added/updated shops appear first
+        filteredShops = filteredShops.sort((a, b) => {
+          const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+          const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+          return dateB - dateA
+        })
+        
         setShops(filteredShops)
         setTotalShops(filteredShops.length)
       } else {

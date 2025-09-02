@@ -93,7 +93,15 @@ export default function ShopsPage() {
         setAllShops(response.shops)
         // By default, show only visited shops (visitImages.length > 0)
         const visitedShops = response.shops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
-        const filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : response.shops, searchQuery)
+        let filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : response.shops, searchQuery)
+        
+        // Sort so latest added/updated shops appear first
+        filteredShops = filteredShops.sort((a, b) => {
+          const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+          const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+          return dateB - dateA
+        })
+        
         setShops(filteredShops)
         setTotalShops(filteredShops.length)
       } else {
@@ -111,7 +119,15 @@ export default function ShopsPage() {
   useEffect(() => {
     if (allShops.length > 0) {
       const visitedShops = allShops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
-      const filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : allShops, searchQuery)
+      let filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : allShops, searchQuery)
+      
+      // Sort so latest added/updated shops appear first
+      filteredShops = filteredShops.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+        return dateB - dateA
+      })
+      
       setShops(filteredShops)
       setTotalShops(filteredShops.length)
     }
