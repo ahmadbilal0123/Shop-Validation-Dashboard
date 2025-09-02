@@ -50,7 +50,7 @@ export function DashboardSidebar() {
             <Store className="w-4 h-4 text-white" />
           </div>
           <h1 className="text-xl font-bold text-white">
-            Shop Validation
+           ShelfSense
           </h1>
         </div>
       </div>

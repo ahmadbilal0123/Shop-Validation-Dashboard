@@ -136,7 +136,7 @@ export default function LoginPage() {
           }}
         />
         <div className="relative z-10">
-          <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">Welcome to Shop Validation</h1>
+          <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">Welcome to ShelfSense</h1>
           <p className="text-lg text-white/95 max-w-lg drop-shadow-md">
             Connecting auditors and teams with verified shops — manage validations, assignments and reports from a single place.
           </p>
