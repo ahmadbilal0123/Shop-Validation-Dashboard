@@ -24,7 +24,7 @@ import { useState } from "react"
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   {
-    name: "Auditors",
+    name: "Shop Details",
     icon: Users,
     children: [
       { name: "Visits", href: "/dashboard/visits", icon: MapPin },
