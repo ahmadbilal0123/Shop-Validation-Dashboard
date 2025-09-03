@@ -135,49 +135,96 @@ export default function LoginPage() {
             backgroundImage: `linear-gradient(135deg, rgba(108, 62, 244, 0.85), rgba(162, 89, 236, 0.85)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
           }}
         />
-       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center">
-  <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">
-    Welcome to ShelfSense
+       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-8">
+  {/* Main Title */}
+  <h1 className="text-5xl md:text-6xl font-bold leading-tight drop-shadow-2xl mb-6 bg-gradient-to-r from-white to-white/90 bg-clip-text">
+    Welcome to
+    <span className="block text-transparent bg-gradient-to-r from-yellow-200 to-orange-200 bg-clip-text">
+      ShelfSense
+    </span>
   </h1>
   
-  <p className="text-lg text-white/95 max-w-lg drop-shadow-md">
-    Powered By <span className="text-black text-lg text-bold drop-shadow-md" >Gen-T Ai Solutions</span>
+  {/* Subtitle */}
+  <p className="text-xl md:text-2xl text-white/95 max-w-2xl leading-relaxed drop-shadow-lg mb-8">
+    Advanced Shop Validation & Management Platform
   </p>
+  
+  {/* Company Attribution */}
+  <div className="flex flex-col items-center gap-3">
+    <div className="h-px w-32 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+    <p className="text-lg font-medium text-white/90 drop-shadow-md">
+      Powered by
+    </p>
+    <div className="bg-white/10 backdrop-blur-md rounded-xl px-6 py-3 border border-white/20">
+      <span className="text-2xl font-bold bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-300 bg-clip-text text-transparent drop-shadow-lg">
+        Gen-T AI Solutions
+      </span>
+    </div>
+  </div>
+  
+  {/* Feature highlights */}
+  <div className="mt-12 flex flex-wrap justify-center gap-4 max-w-lg">
+    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+      <span className="text-sm text-white/90">Real-time Analytics</span>
+    </div>
+    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+      <span className="text-sm text-white/90">GPS Tracking</span>
+    </div>
+    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+      <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+      <span className="text-sm text-white/90">Smart Reports</span>
+    </div>
+  </div>
 </div>
 
   </div>
 
   {/* Login Card Section - Responsive for all devices */}
   <div className="flex items-center justify-center w-full h-screen p-4 md:p-12 relative">
-  {/* Mobile-only purple gradient background */}
-  <div className="absolute md:hidden inset-0 w-full h-full bg-gradient-to-br from-[#6c3ef4] via-[#a259ec] to-[#1447e6] z-0" />
-  <Card className="w-full max-w-md shadow-xl rounded-2xl relative z-10">
-          <CardHeader className="text-center pt-8">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full ">
-              <img src="/logo.png" alt="" className="h-8 w-8" />
-            </div>
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription className="text-slate-600">Sign in to your account to continue</CardDescription>
-          </CardHeader>
+    {/* Mobile-only enhanced gradient background */}
+    <div className="absolute md:hidden inset-0 w-full h-full bg-gradient-to-br from-[#6c3ef4] via-[#a259ec] to-[#1447e6] z-0">
+      <div className="absolute inset-0 bg-black/20"></div>
+      <div className="absolute top-0 left-0 w-full h-full opacity-30">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-32 right-16 w-40 h-40 bg-yellow-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-purple-400/10 rounded-full blur-3xl"></div>
+      </div>
+    </div>
+    
+    <Card className="w-full max-w-md shadow-2xl rounded-3xl relative z-10 border-0 bg-white/95 backdrop-blur-xl md:bg-white">
+      <CardHeader className="text-center pt-8 pb-6">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1447E6] to-[#6c3ef4] shadow-lg">
+          <img src="/logo.png" alt="ShelfSense Logo" className="h-10 w-10" />
+        </div>
+        <CardTitle className="text-3xl font-bold text-slate-800 mb-2">Welcome Back</CardTitle>
+        <CardDescription className="text-slate-600 text-base">
+          Sign in to your ShelfSense account
+        </CardDescription>
+      </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="username" className="text-sm font-medium text-slate-700">Email</Label>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-sm font-semibold text-slate-700">Email Address</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Enter your email"
+                  placeholder="Enter your email address"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="text-base px-3 py-2"
+                  className="text-base px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-[#1447E6] focus:ring-2 focus:ring-[#1447E6]/20 transition-all duration-200"
                 />
               </div>
-              <div>
+              
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
-                  <a className="text-[#1447E6] text-sm hover:underline" href="#">Forgot password?</a>
+                  <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</Label>
+                  <a className="text-[#1447E6] text-sm hover:underline transition-colors duration-200 font-medium" href="#">
+                    Forgot password?
+                  </a>
                 </div>
                 <div className="relative">
                   <Input
@@ -187,34 +234,59 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="text-base px-3 py-2"
+                    className="text-base px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-[#1447E6] focus:ring-2 focus:ring-[#1447E6]/20 transition-all duration-200"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 rounded-lg transition-colors duration-200"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4 text-[#1447E6]" /> : <Eye className="h-4 w-4 text-[#1447E6]" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-slate-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-slate-500" />
+                    )}
                   </Button>
                 </div>
               </div>
 
               {error && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4 text-[#1447E6]" />
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="border-red-200 bg-red-50">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-700 font-medium">{error}</AlertDescription>
                 </Alert>
               )}
 
               <Button
                 type="submit"
-                className="w-full bg-[#1447E6] hover:bg-[#0f36b2] text-white px-4 py-2 rounded-lg font-medium text-base"
+                className="w-full bg-gradient-to-r from-[#1447E6] to-[#6c3ef4] hover:from-[#0f36b2] hover:to-[#5a2ec4] text-white px-4 py-3 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Signing in...
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
+              
+              {/* Additional footer text */}
+              <div className="text-center pt-4">
+                <p className="text-sm text-slate-500">
+                  By signing in, you agree to our{" "}
+                  <a href="#" className="text-[#1447E6] hover:underline font-medium">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="#" className="text-[#1447E6] hover:underline font-medium">
+                    Privacy Policy
+                  </a>
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>
