@@ -246,7 +246,7 @@ export default function ShopsPage() {
                 Admin Shop Management
               </h1>
               <p className="text-blue-700 text-sm sm:text-base">
-                Efficiently manage and assign shops to auditors with our streamlined dashboard
+                Efficiently manage and assign shops to auditors our all the users
               </p>
             </div>
 

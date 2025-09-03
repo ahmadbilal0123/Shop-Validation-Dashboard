@@ -159,7 +159,7 @@ useEffect(() => {
               <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">Admin DashBoard</h1>
               <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Recently Visited Shops</h1>
               <p className="text-slate-600 text-base sm:text-lg font-medium">
-                Discover visited shops from the last 30 days
+                Showing Recently Visited Shops in the Last 30 Days
               </p>
             </div>
             <div className="flex justify-center sm:justify-end">

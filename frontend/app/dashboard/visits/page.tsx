@@ -192,13 +192,13 @@ const handleAssignShopsClick = async () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-8">
         <div className="text-center space-y-4 py-8">
-          <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-full mb-4">
+          {/* <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-full mb-4">
             <Store className="h-5 w-5 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">ShelfSense</span>
-          </div>
+          </div> */}
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance">Your Shop Visits</h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty">
-            Track, manage, and analyze all your visited shops in one beautiful dashboard
+            This are The shops you have visited so far. You can select multiple shops to assign them to a QC user.
           </p>
         </div>
 

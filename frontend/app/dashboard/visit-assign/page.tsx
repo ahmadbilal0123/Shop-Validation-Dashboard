@@ -235,12 +235,12 @@ export default function AssignShopsPage() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto ">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <Users className="w-5 sm:w-6 h-5 sm:h-6 text-blue-600" />
-                Select QC ({filteredUsers.length} available)
+                Select QC ({filteredUsers.length})
               </h2>
             </div>
 

@@ -263,7 +263,7 @@ export default function AssignShopsPage() {
               <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <Users className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
-                Select Auditors
+                Select Auditors ({filteredUsers.length})
               </h2>
             </div>
 
