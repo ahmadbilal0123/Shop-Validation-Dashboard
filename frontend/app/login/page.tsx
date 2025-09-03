@@ -135,17 +135,12 @@ export default function LoginPage() {
             backgroundImage: `linear-gradient(135deg, rgba(108, 62, 244, 0.85), rgba(162, 89, 236, 0.85)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
           }}
         />
-        <div className="relative z-10">
-          <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">Welcome to ShelfSense</h1>
-          <p className="text-lg text-white/95 max-w-lg drop-shadow-md">
-            Connecting auditors and teams with verified shops — manage validations, assignments and reports from a single place.
-          </p>
-          <div className="mt-6 space-y-3">
-            <p className="font-medium drop-shadow-md">✓ Reliable reporting</p>
-            <p className="font-medium drop-shadow-md">✓ Fast shop assignment</p>
-            <p className="font-medium drop-shadow-md">✓ Role based access control</p>
-          </div>
-        </div>
+       <div className="flex items-center justify-center h-screen">
+  <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">
+    Welcome to ShelfSense
+  </h1>
+</div>
+
   </div>
 
   {/* Login Card Section - Responsive for all devices */}

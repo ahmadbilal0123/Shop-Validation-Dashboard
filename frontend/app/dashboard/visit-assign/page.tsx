@@ -1,14 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { fetchShopById,assignShopsToUser } from "@/lib/api"
+import { fetchShopById, assignShopsToUser } from "@/lib/api"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSession } from "@/lib/auth"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Users, Search, UserCheck, Package } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { ArrowLeft, Users, Search, UserCheck, Package, Grid3X3, List } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
 interface User {
@@ -18,7 +19,7 @@ interface User {
   role: string
 }
 
-export default function AssignShopsPage() {
+export default function VisitAssignPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -27,6 +28,22 @@ export default function AssignShopsPage() {
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
+    // Load preference from localStorage, default to 'list'
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('qcViewMode');
+      return (savedMode === 'grid' || savedMode === 'list') ? savedMode as 'list' | 'grid' : 'list';
+    }
+    return 'list';
+  })
+
+  // Function to handle view mode changes and save to localStorage
+  const handleViewModeChange = (mode: 'list' | 'grid') => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('qcViewMode', mode);
+    }
+  };
 
   const shopIds = searchParams.get("shopIds")?.split(",") || []
   const [shopNames, setShopNames] = useState<{ [id: string]: string }>({})
@@ -106,6 +123,12 @@ export default function AssignShopsPage() {
             variant: "destructive",
           })
         }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load QC users.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error loading users:", error)
@@ -170,50 +193,50 @@ export default function AssignShopsPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading QC users...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 overflow-hidden">
+      {/* Fixed Header */}
+      <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 z-40 shadow-sm py-4 sm:py-5 flex-shrink-0">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between mb-4 relative">
             <Button
               variant="outline"
               onClick={() => router.push("/dashboard/visits")}
-              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 w-full sm:w-auto justify-center"
+              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 h-10 px-4"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Visits
             </Button>
-            <h1 className="text-2xl sm:text-4xl font-bold text-blue-900 text-center sm:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-blue-900 absolute left-1/2 transform -translate-x-1/2">
               Assign Shops to QC
             </h1>
+            <div></div> {/* Invisible spacer for balance */}
           </div>
 
-          {/* Selected Shops Display Section */}
-          <div className="bg-blue-50/80 backdrop-blur-sm rounded-2xl border border-blue-200 p-4 sm:p-6 mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5" />
+          {/* Selected Shops Display Section - Compact */}
+          <div className="bg-blue-50/80 backdrop-blur-sm rounded-xl border border-blue-200 shadow-sm p-3 sm:p-4 mb-4">
+            <h2 className="text-base sm:text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+              <Package className="w-4 h-4" />
               Selected Shops ({shopIds.length})
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
               {shopIds.map((shopId, index) => (
                 <div
                   key={shopId}
-                  className="bg-white/80 backdrop-blur-sm rounded-xl border border-blue-200 p-3 sm:p-4 shadow-sm"
+                  className="bg-white/80 backdrop-blur-sm rounded-lg border border-blue-200 shadow-sm p-2 sm:p-3"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-xs">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{shopNames[shopId] || `Shop #${shopId.slice(-6)}`}</p>
-                      <p className="text-xs text-gray-600 truncate">ID: {shopId}</p>
+                      <p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{shopNames[shopId] || `Shop #${shopId.slice(-6)}`}</p>
                     </div>
                   </div>
                 </div>
@@ -221,132 +244,190 @@ export default function AssignShopsPage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Badge variant="outline" className="px-3 sm:px-4 py-2 bg-green-50 border-green-200 text-green-700 font-semibold w-full sm:w-auto justify-center">
-              <Users className="w-4 h-4 mr-2" />
-              {selectedAuditorId ? 1 : 0} QC Selected
-            </Badge>
-            <Badge variant="outline" className="px-3 sm:px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto justify-center">
-              <Package className="w-4 h-4 mr-2" />
-              {shopIds.length} Shops to Assign
-            </Badge>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-green-50 border-green-200 text-green-700 font-semibold w-full sm:w-auto justify-center">
+                <Users className="w-3 h-3 mr-1" />
+                {selectedAuditorId ? 1 : 0} QC Selected
+              </Badge>
+              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto justify-center">
+                <Package className="w-3 h-3 mr-1" />
+                {shopIds.length} Shops to Assign
+              </Badge>
+            </div>
+            <Button
+              onClick={handleAssignShops}
+              disabled={assigning || !selectedAuditorId}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+            >
+              {assigning ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Assigning...
+                </>
+              ) : (
+                <>
+                  <UserCheck className="w-4 h-4 mr-2" />
+                  Assign Shops
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto ">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Users className="w-5 sm:w-6 h-5 sm:h-6 text-blue-600" />
-                Select QC ({filteredUsers.length})
-              </h2>
-            </div>
-
-            {/* No QC Users Message */}
-            {users.length === 0 && !loading && (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No QC Users Available</h3>
-                <p className="text-gray-500 mb-4">
-                  No QC users are currently available for shop assignment.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/dashboard/users")}
-                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                >
-                  Manage Users
-                </Button>
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-shrink-0 px-4 sm:px-6 pt-2">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 h-[calc(100vh-140px)] flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
+                  Select QC Users
+                </h2>
               </div>
-            )}
 
-            {users.length > 0 && (
-              <>
-                {/* Search Users */}
-                <div className="relative mb-6">
+              {/* Search Users + View Toggle - Compact */}
+              <div className="flex gap-2 mb-3">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
                   <Input
-                    placeholder="Search QC users by name..."
+                    placeholder="Search QC users..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                    className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-9"
                   />
                 </div>
+                <div className="flex border border-blue-200 rounded-lg overflow-hidden">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleViewModeChange('list')}
+                    className={`px-3 py-2 h-9 rounded-none ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-blue-600'}`}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleViewModeChange('grid')}
+                    className={`px-3 py-2 h-9 rounded-none border-l border-blue-200 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-blue-600'}`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
 
-                {/* Users List as cards */}
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto mb-8">
-                  {filteredUsers.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">No QC users match your search.</p>
-                    </div>
-                  ) : (
-                    filteredUsers.map((user) => (
+              {/* Users List/Grid - Scrollable area */}
+              <div className="flex-1 overflow-y-auto pr-2" style={{minHeight: '300px', maxHeight: 'calc(100vh - 400px)'}}>
+                {users.length === 0 && !loading && (
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No QC Users Available</h3>
+                    <p className="text-gray-500 mb-4">
+                      No QC users are currently available for shop assignment.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push("/dashboard/users")}
+                      className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                    >
+                      Manage Users
+                    </Button>
+                  </div>
+                )}
+
+                {filteredUsers.length === 0 && users.length > 0 && (
+                  <div className="text-center py-8">
+                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">No QC users match your search.</p>
+                  </div>
+                )}
+
+                {viewMode === 'list' ? (
+                  <div className="space-y-3">
+                    {filteredUsers.map((user) => (
                       <Card
                         key={user.id}
-                        className={`bg-white/90 backdrop-blur-sm border rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer ${
+                        className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
                           selectedAuditorId === user.id
                             ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
                             : "border-blue-100 hover:border-blue-200"
                         }`}
                         onClick={() => setSelectedAuditorId(user.id)}
                       >
-                        <CardContent className="p-4 sm:p-6">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-3 sm:gap-0">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-3">
                             <input
                               type="radio"
                               name="qc"
                               checked={selectedAuditorId === user.id}
                               onChange={() => setSelectedAuditorId(user.id)}
-                              onClick={(e) => e.stopPropagation()} // Prevent double triggering
-                              className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-900 text-base sm:text-lg truncate">{user.name}</div>
-                              <div className="text-sm text-gray-600 mt-1 truncate">{user.email}</div>
-                              <Badge variant="secondary" className="text-xs mt-2 bg-blue-100 text-blue-800 border-blue-200">
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.name}</div>
+                              <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
+                              <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-2 py-0.5">
                                 {user.role}
                               </Badge>
                             </div>
                             {selectedAuditorId === user.id && (
-                              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full">
-                                <UserCheck className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
+                              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-green-100 rounded-full">
+                                <UserCheck className="w-3 sm:w-4 h-3 sm:h-4 text-green-600" />
                               </div>
                             )}
                           </div>
                         </CardContent>
                       </Card>
-                    ))
-                  )}
-                </div>
-
-                {/* Assign Button */}
-                <div className="mt-8">
-                  <Button
-                    onClick={handleAssignShops}
-                    disabled={assigning || !selectedAuditorId || users.length === 0}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
-                  >
-                    {assigning ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 sm:h-5 w-4 sm:w-5 border-b-2 border-white mr-2 sm:mr-3"></div>
-                        Assigning Shops...
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className="w-4 sm:w-5 h-4 sm:h-5 mr-2 sm:mr-3" />
-                        Assign {shopIds.length} Shops to QC
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {filteredUsers.map((user) => (
+                      <Card
+                        key={user.id}
+                        className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
+                          selectedAuditorId === user.id
+                            ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
+                            : "border-blue-100 hover:border-blue-200"
+                        }`}
+                        onClick={() => setSelectedAuditorId(user.id)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="radio"
+                              name="qc"
+                              checked={selectedAuditorId === user.id}
+                              onChange={() => setSelectedAuditorId(user.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500 mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{user.name}</div>
+                              <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
+                              <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-1 py-0.5">
+                                {user.role}
+                              </Badge>
+                            </div>
+                            {selectedAuditorId === user.id && (
+                              <div className="flex items-center justify-center w-5 h-5 bg-green-100 rounded-full flex-shrink-0">
+                                <UserCheck className="w-3 h-3 text-green-600" />
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
