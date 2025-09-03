@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState, useRef } from "react"
-import { registerUser, fetchAllUsers, updateUser, type User } from "@/lib/api"
+import { registerUser, fetchAllUsers, updateUser, type User, fetchAssignedShopsForAuditor, fetchShops, type Shop } from "@/lib/api"
 import { getSession } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, EyeOff, Briefcase, Search, Filter, Package, RefreshCw } from "lucide-react"
+import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, EyeOff, Briefcase, Search, Filter, Package, RefreshCw, MapPin } from "lucide-react"
 
 export default function UsersPage() {
   const [error, setError] = useState<string | null>(null)
@@ -27,6 +27,12 @@ export default function UsersPage() {
   const [showEditPassword, setShowEditPassword] = useState(false)
   const [formKey, setFormKey] = useState(0) // Add key to force form re-render
   const [userShopCounts, setUserShopCounts] = useState<{ [userId: string]: number }>({})
+
+  // New state for assigned shops detail
+  const [assignedUser, setAssignedUser] = useState<User | null>(null)
+  const [assignedShops, setAssignedShops] = useState<Shop[]>([])
+  const [assignedLoading, setAssignedLoading] = useState(false)
+  const [assignedError, setAssignedError] = useState<string | null>(null)
 
   const editFormRef = useRef<HTMLDivElement>(null)
 
@@ -221,6 +227,37 @@ export default function UsersPage() {
   const filteredUsers = users.filter((user) => {
     return roleFilter === "all" || user.role === roleFilter
   })
+
+  // Handler for clicking on user card to show assigned shops
+  const handleUserCardClick = async (user: User) => {
+    setAssignedUser(user)
+    setAssignedShops([])
+    setAssignedLoading(true)
+    setAssignedError(null)
+    try {
+      if (user.role === "auditor") {
+        const res = await fetchAssignedShopsForAuditor(user.id)
+        if (res.success) {
+          setAssignedShops(res.shops)
+        } else {
+          setAssignedError(res.error || "Failed to load assigned shops")
+        }
+      } else {
+        // For other roles (including QC), fetch and filter
+        const res = await fetchShops()
+        if (res.success) {
+          setAssignedShops(res.shops.filter(shop =>
+            shop.assignedTo === user.id || shop.assignedQc === user.id
+          ))
+        } else {
+          setAssignedError(res.error || "Failed to load assigned shops")
+        }
+      }
+    } catch (e) {
+      setAssignedError("Network error occurred")
+    }
+    setAssignedLoading(false)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -485,7 +522,8 @@ export default function UsersPage() {
               {filteredUsers.map((user) => (
                 <Card
                   key={user.id}
-                  className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                  onClick={() => handleUserCardClick(user)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -519,7 +557,10 @@ export default function UsersPage() {
                     
                     <Button
                       size="sm"
-                      onClick={() => setEditForm(user)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditForm(user)
+                      }}
                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
                     >
                       <Edit3 className="h-4 w-4 mr-2" />
@@ -531,6 +572,77 @@ export default function UsersPage() {
             </div>
           )}
         </div>
+
+        {/* Assigned Shops Drawer/Modal */}
+        {assignedUser && (
+          <div className="fixed inset-0 z-50 flex">
+            {/* Overlay */}
+            <div
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              onClick={() => setAssignedUser(null)}
+            />
+            {/* Drawer */}
+            <div className="relative ml-auto w-full max-w-lg bg-white rounded-l-xl shadow-2xl p-8 overflow-y-auto">
+              <h2 className="text-2xl font-bold mb-4">
+                Shops Assigned to {assignedUser.name}
+              </h2>
+              {assignedLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-slate-600">Loading shops...</span>
+                </div>
+              ) : assignedError ? (
+                <Alert variant="destructive" className="border-red-200 bg-red-50 mb-6">
+                  <AlertDescription className="text-red-800">{assignedError}</AlertDescription>
+                </Alert>
+              ) : assignedShops.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Package className="h-10 w-10 mx-auto mb-4" />
+                  <p>No shops assigned to this user.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {assignedShops.map(shop => (
+                    <Card key={shop.id} className="border shadow hover:shadow-lg transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg font-bold text-blue-700">{shop.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <MapPin className="h-4 w-4 text-slate-400" />
+                          <span>{shop.address}, {shop.city}, {shop.state} {shop.zipCode}</span>
+                        </div>
+                        <div className="flex gap-4 text-sm text-slate-600">
+                          <span>Status: <Badge className="bg-yellow-100 text-yellow-700">{shop.status}</Badge></span>
+                          <span>Visits: {shop.visitCount}</span>
+                        </div>
+                        {shop.lastVisit && (
+                          <div className="mt-2 text-xs text-slate-500">
+                            Last Visit: {new Date(shop.lastVisit).toLocaleDateString()}
+                          </div>
+                        )}
+                        <Button
+                          size="sm"
+                          className="mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                          onClick={() => window.open(`/dashboard/shops/${shop.id}`, "_blank")}
+                        >
+                          View Shop Details
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                className="mt-6 w-full border-slate-300 text-slate-700"
+                onClick={() => setAssignedUser(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
