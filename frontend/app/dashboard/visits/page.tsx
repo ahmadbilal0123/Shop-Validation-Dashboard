@@ -194,7 +194,7 @@ const handleAssignShopsClick = async () => {
         <div className="text-center space-y-4 py-8">
           <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-full mb-4">
             <Store className="h-5 w-5 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">Shop Management</span>
+            <span className="text-sm font-medium text-blue-800">ShelfSense</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance">Your Shop Visits</h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty">
