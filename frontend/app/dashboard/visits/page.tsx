@@ -136,15 +136,16 @@ export default function VisitsPage() {
     }
   }
 
-  const handleAssignShopsClick = async () => {
-    if (selectedShopIds.length === 0) {
-      alert("Please select at least one shop.")
-      return
-    }
-
-    const shopIdsParam = selectedShopIds.join(",")
-    router.push(`/dashboard/shops/assign?shopIds=${shopIdsParam}`)
+const handleAssignShopsClick = async () => {
+  if (selectedShopIds.length === 0) {
+    alert("Please select at least one shop.")
+    return
   }
+
+  const shopIdsParam = selectedShopIds.join(",")
+  // Changed from /dashboard/visit-assign/assign to /dashboard/visit-assign
+  router.push(`/dashboard/visit-assign?shopIds=${shopIdsParam}`)
+}
 
   if (loading) {
     return (
