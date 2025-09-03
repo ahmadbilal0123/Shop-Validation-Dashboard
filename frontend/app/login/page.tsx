@@ -153,7 +153,7 @@ export default function LoginPage() {
   <div className="absolute md:hidden inset-0 w-full h-full bg-gradient-to-br from-[#6c3ef4] via-[#a259ec] to-[#1447e6] z-0" />
   <Card className="w-full max-w-md shadow-xl rounded-2xl relative z-10">
           <CardHeader className="text-center pt-8">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full ">
               <img src="/logo.png" alt="" className="h-8 w-8" />
             </div>
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
