@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { fetchPendingAndVisitedShops, Shop } from "@/lib/api" // adjust import path if needed
+import { fetchPendingAndVisitedShops, Shop } from "@/lib/api"
 
 const PendingShopsPage: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([])
@@ -12,8 +12,7 @@ const PendingShopsPage: React.FC = () => {
     async function loadPendingShops() {
       setLoading(true)
       setError("")
-      // pending=false, visited=true
-      const res = await fetchPendingAndVisitedShops({ pending: false, visited: true })
+      const res = await fetchPendingAndVisitedShops()
       if (res.success) {
         setShops(res.shops)
       } else {

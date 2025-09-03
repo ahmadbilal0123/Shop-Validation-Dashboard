@@ -746,50 +746,46 @@ export async function fetchVisitStats(): Promise<{
     return { success: false, error: error instanceof Error ? error.message : "Network error" }
   }
 }
-export async function fetchPendingAndVisitedShops(opts: {
-  pending?: boolean
-  visited?: boolean
-}): Promise<ShopsResponse> {
+export async function fetchPendingAndVisitedShops(): Promise<ShopsResponse> {
   try {
-    // Always set visited to true in the payload, regardless of what is passed
-    const params = new URLSearchParams()
-    if (typeof opts.pending !== "undefined") params.append("pending", String(opts.pending))
-    params.append("visited", "true") // Force visited to true
+    // Only send 'visit=true' in the query string
+    const params = new URLSearchParams();
+    params.append("visit", "true");
 
-    const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops")
-    const urlWithParams = `${apiUrl}?${params}`
+    const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops");
+    const urlWithParams = `${apiUrl}?${params}`;
 
-    const headers = buildAuthHeaders()
-    const response = await fetch(urlWithParams, { method: "GET", headers })
+    const headers = buildAuthHeaders();
+    const response = await fetch(urlWithParams, { method: "GET", headers });
 
-    const errorCheck = await validateResponse(response)
-    if (errorCheck) return errorCheck
+    const errorCheck = await validateResponse(response);
+    if (errorCheck) return errorCheck;
 
-    const data = await response.json()
+    const data = await response.json();
 
     if (response.status === 401) {
-      return buildError("Unauthorized. Please log in again.")
+      return buildError("Unauthorized. Please log in again.");
     }
 
     if (response.ok && data) {
-      let shopsArray: any[] = []
+      let shopsArray: any[] = [];
 
       if (Array.isArray(data)) {
-        shopsArray = data
+        shopsArray = data;
       } else if (Array.isArray(data.data)) {
-        shopsArray = data.data
+        shopsArray = data.data;
       } else if (Array.isArray(data.shops)) {
-        shopsArray = data.shops
+        shopsArray = data.shops;
       } else {
-        shopsArray = []
+        shopsArray = [];
       }
 
-      const shops = mapShops(shopsArray)
-      return { success: true, shops, total: data.count || data.total || shops.length }
+      const shops = mapShops(shopsArray);
+      return { success: true, shops, total: data.count || data.total || shops.length };
     }
 
-    return buildError(data.message || data.error || "Failed to fetch shops")
+    return buildError(data.message || data.error || "Failed to fetch shops");
   } catch (error) {
-    return buildError(error instanceof Error ? error.message : "Network error")
+    return buildError(error instanceof Error ? error.message : "Network error");
   }
 }
