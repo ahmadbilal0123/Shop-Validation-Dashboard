@@ -750,7 +750,7 @@ export async function fetchPendingAndVisitedShops(): Promise<ShopsResponse> {
   try {
     // Only send 'visit=true' in the query string
     const params = new URLSearchParams();
-    params.append("visit", "true");
+    params.append("visit", "false");
 
     const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops");
     const urlWithParams = `${apiUrl}?${params}`;
