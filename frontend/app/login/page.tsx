@@ -135,10 +135,14 @@ export default function LoginPage() {
             backgroundImage: `linear-gradient(135deg, rgba(108, 62, 244, 0.85), rgba(162, 89, 236, 0.85)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
           }}
         />
-       <div className="flex items-center justify-center h-screen">
+       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center">
   <h1 className="text-4xl font-extrabold leading-tight drop-shadow-lg">
     Welcome to ShelfSense
   </h1>
+  
+  <p className="text-lg text-white/95 max-w-lg drop-shadow-md">
+    Powered By <span className="text-black text-lg text-bold drop-shadow-md" >Gen-T Ai Solutions</span>
+  </p>
 </div>
 
   </div>
@@ -149,8 +153,8 @@ export default function LoginPage() {
   <div className="absolute md:hidden inset-0 w-full h-full bg-gradient-to-br from-[#6c3ef4] via-[#a259ec] to-[#1447e6] z-0" />
   <Card className="w-full max-w-md shadow-xl rounded-2xl relative z-10">
           <CardHeader className="text-center pt-8">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-              <Shield className="h-8 w-8 text-[#1447E6]" />
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
+              <img src="/logo.png" alt="" className="h-8 w-8" />
             </div>
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
             <CardDescription className="text-slate-600">Sign in to your account to continue</CardDescription>

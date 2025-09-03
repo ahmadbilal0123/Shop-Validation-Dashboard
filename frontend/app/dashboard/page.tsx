@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { fetchShops, type Shop, type ShopsResponse } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MapPin, Phone, Mail, Calendar, Star, Filter, Building2,Clock,CheckCircle2, TrendingUp } from "lucide-react"
+import { MapPin, Calendar, Star, Filter, Building2,Clock,CheckCircle2,RefreshCw  } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -171,6 +171,7 @@ useEffect(() => {
                 {totalShops} Visited Shops
               </Badge>
             </div>
+            
           </div>
         </div>
       </div>
