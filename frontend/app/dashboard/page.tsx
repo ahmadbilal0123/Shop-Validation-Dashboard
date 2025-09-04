@@ -280,20 +280,7 @@ useEffect(() => {
     </CardContent>
   </Card>
 
-<Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-600 uppercase">Assigned Shop</p>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{shops.length}</p>
-        </div>
-        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-  <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-</div>
 
-      </div>
-    </CardContent>
-  </Card>
 
    <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
     <CardContent className="p-6">
