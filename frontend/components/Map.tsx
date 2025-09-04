@@ -166,6 +166,19 @@ export default function LeafletMap({ lat, lng, markers, selectedPinIdx }: Leafle
 			useEffect(() => {
 				if (selectedPinIdx != null && markerRefs.current[selectedPinIdx] && mapInstanceRef.current) {
 					const marker = markerRefs.current[selectedPinIdx]
+					
+					// Reset all markers to default z-index
+					markerRefs.current.forEach((m, idx) => {
+						if (m && m.setZIndexOffset) {
+							m.setZIndexOffset(0)
+						}
+					})
+					
+					// Bring selected marker to front
+					if (marker.setZIndexOffset) {
+						marker.setZIndexOffset(1000)
+					}
+					
 					mapInstanceRef.current.setView(marker.getLatLng(), 16, { animate: true })
 					marker.openPopup()
 				}

@@ -210,9 +210,10 @@ export function DashboardSidebar() {
 
                   {/* Dropdown Items */}
                   {(isOpen || shouldCollapse) && !shouldCollapse &&
-                    item.children.map((child) => {
+                    item.children.map((child, index) => {
                       const isActive = pathname === child.href
                       const matchesSearch = !searchQuery || child.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      const isLast = index === item.children!.length - 1
                       if (!matchesSearch) return null
                       
                       return (
@@ -220,11 +221,15 @@ export function DashboardSidebar() {
                           <Button
                             variant="ghost"
                             className={cn(
-                              "w-full justify-start h-10 pl-12 text-slate-300 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-blue-600/20 transition-all duration-200 group",
+                              "w-full justify-start h-10 pl-8 text-slate-300 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-blue-600/20 transition-all duration-200 group relative",
                               isActive &&
                                 "bg-gradient-to-r from-blue-600/30 to-blue-600/30 text-white border-l-2 border-blue-500 shadow-lg"
                             )}
                           >
+                            {/* Simple curve indicator before icon */}
+                            <span className="text-slate-500/60 text-sm font-mono mr-2">
+                              {isLast ? "└─" : "├─"}
+                            </span>
                             <child.icon className={cn(
                               "mr-3 h-4 w-4 transition-colors duration-200",
                               isActive && "text-blue-400"

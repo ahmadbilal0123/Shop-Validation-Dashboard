@@ -24,17 +24,18 @@ export default function RecentShopsPage() {
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
 const [visitStats, setVisitStats] = useState<{ visited: number; notVisited: number; total: number } | null>(null)
 
-useEffect(() => {
-  const loadStats = async () => {
-    const response = await fetchVisitStats()
-    if (response.success) {
-      setVisitStats({
-        visited: response.visited || 0,
-        notVisited: response.notVisited || 0,
-        total: response.total || 0,
-      })
-    }
+const loadStats = async () => {
+  const response = await fetchVisitStats()
+  if (response.success) {
+    setVisitStats({
+      visited: response.visited || 0,
+      notVisited: response.notVisited || 0,
+      total: response.total || 0,
+    })
   }
+}
+
+useEffect(() => {
   loadStats()
 }, [])
 
@@ -80,44 +81,47 @@ useEffect(() => {
     })
   }
 
+  const loadShopsData = async () => {
+    setError(null)
+    const response: ShopsResponse = await fetchShops({
+      status: statusFilter === "all" ? undefined : statusFilter,
+      city: cityFilter,
+      search: searchQuery,
+    })
+
+    if (response.success) {
+      let filteredShops = response.shops
+      filteredShops = filterRecentShops(filteredShops)
+      if (statusFilter === "visited") {
+        filteredShops = filterVisitedShops(filteredShops)
+      }
+      if (searchQuery && searchQuery.trim() !== '') {
+        filteredShops = filterShopsBySearch(filteredShops, searchQuery)
+      }
+      
+      // Sort so latest added/updated shops appear first
+      filteredShops = filteredShops.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+        return dateB - dateA
+      })
+      
+      setShops(filteredShops)
+      setTotalShops(filteredShops.length)
+    } else {
+      setError(response.error || "Failed to load shops.")
+    }
+  }
+
   const loadShops = async () => {
     setLoading(true)
-    setError(null)
     try {
-      const response: ShopsResponse = await fetchShops({
-        status: statusFilter === "all" ? undefined : statusFilter,
-        city: cityFilter,
-        search: searchQuery,
-      })
-
-      if (response.success) {
-        let filteredShops = response.shops
-        filteredShops = filterRecentShops(filteredShops)
-        if (statusFilter === "visited") {
-          filteredShops = filterVisitedShops(filteredShops)
-        }
-        if (searchQuery && searchQuery.trim() !== '') {
-          filteredShops = filterShopsBySearch(filteredShops, searchQuery)
-        }
-        
-        // Sort so latest added/updated shops appear first
-        filteredShops = filteredShops.sort((a, b) => {
-          const dateA = new Date(a.updatedAt || a.createdAt).getTime()
-          const dateB = new Date(b.updatedAt || b.createdAt).getTime()
-          return dateB - dateA
-        })
-        
-        setShops(filteredShops)
-        setTotalShops(filteredShops.length)
-      } else {
-        setError(response.error || "Failed to load shops.")
-      }
+      await loadShopsData()
     } catch (err) {
       console.error("Error loading shops:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred.")
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -149,20 +153,83 @@ useEffect(() => {
     // The useEffect will automatically trigger loadShops when searchQuery changes
   }
 
+  // Comprehensive refresh function that loads both shops and stats - EXACTLY like users page
+  const refreshDashboard = async () => {
+    console.log("🔄 DASHBOARD: refreshDashboard called, setting loading to TRUE")
+    setLoading(true)
+    console.log("🔄 DASHBOARD: loading state should now be TRUE")
+    setError(null)
+    try {
+      const response: ShopsResponse = await fetchShops({
+        status: statusFilter === "all" ? undefined : statusFilter,
+        city: cityFilter,
+        search: searchQuery,
+      })
+
+      if (response.success) {
+        let filteredShops = response.shops
+        filteredShops = filterRecentShops(filteredShops)
+        if (statusFilter === "visited") {
+          filteredShops = filterVisitedShops(filteredShops)
+        }
+        if (searchQuery && searchQuery.trim() !== '') {
+          filteredShops = filterShopsBySearch(filteredShops, searchQuery)
+        }
+        
+        // Sort so latest added/updated shops appear first
+        filteredShops = filteredShops.sort((a, b) => {
+          const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+          const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+          return dateB - dateA
+        })
+        
+        setShops(filteredShops)
+        setTotalShops(filteredShops.length)
+      } else {
+        setError(response.error || "Failed to load shops.")
+      }
+      
+      // Also load stats
+      await loadStats()
+      console.log("🔄 DASHBOARD: All data loaded successfully")
+    } catch (error) {
+      console.error("Error refreshing dashboard:", error)
+      setError(error instanceof Error ? error.message : "An unexpected error occurred.")
+    }
+    console.log("🔄 DASHBOARD: Setting loading to FALSE")
+    setLoading(false)
+    console.log("🔄 DASHBOARD: refresh complete, loading should now be FALSE")
+  }
+
+  // Debug: Log loading state changes
+  console.log("🎯 DASHBOARD RENDER: loading =", loading)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
       <div className="bg-white/90 backdrop-blur-md border-b border-blue-100/50 top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-2 text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">Admin DashBoard</h1>
-              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Recently Visited Shops</h1>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
+              <Building2 className="h-8 w-8 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">Admin Dashboard</h1>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Recently Visited Shops</h2>
               <p className="text-slate-600 text-base sm:text-lg font-medium">
                 Showing Recently Visited Shops in the Last 30 Days
               </p>
             </div>
-            <div className="flex justify-center sm:justify-end">
+            <div className="flex flex-col items-end gap-2">
+              <Button
+                onClick={refreshDashboard}
+                variant="outline"
+                className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
               <Badge
                 variant="outline"
                 className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 font-semibold"
@@ -171,6 +238,8 @@ useEffect(() => {
                 {totalShops} Visited Shops
               </Badge>
             </div>
+          </div>
+          <div className="mt-4">
             
           </div>
         </div>
@@ -178,7 +247,7 @@ useEffect(() => {
 
       <div className="container mx-auto px-4 sm:px-6 py-8">
         {/* Stats Cards - Only show Total and Visited */}
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
   {/* Card 1 - Total Shops */}
   <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
     <CardContent className="p-6">
@@ -211,12 +280,12 @@ useEffect(() => {
     </CardContent>
   </Card>
 
-   <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+<Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
     <CardContent className="p-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-600 uppercase">Pending Shops</p>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{visitStats?.notVisited ?? "..."}</p>
+          <p className="text-sm font-semibold text-slate-600 uppercase">Assigned Shop</p>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{shops.length}</p>
         </div>
         <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
   <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
@@ -225,6 +294,23 @@ useEffect(() => {
       </div>
     </CardContent>
   </Card>
+
+   <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-600 uppercase">Pending Shops</p>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{shops.length}</p>
+        </div>
+        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+  <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+</div>
+
+      </div>
+    </CardContent>
+  </Card>
+
+     
 </div>
 
         {/* Search and Filter Section */}
@@ -303,9 +389,29 @@ useEffect(() => {
           </CardContent>
         </Card>
 
-        {/* Shop Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {shops.map((shop) => (
+        {/* Main Content Area - Loading State Check */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-slate-600">Loading dashboard...</span>
+          </div>
+        ) : error ? (
+          <Card className="bg-red-50 border-red-200 shadow-lg">
+            <CardContent className="py-8 text-center">
+              <p className="text-red-600 font-semibold">{error}</p>
+              <Button 
+                onClick={() => loadShops()} 
+                className="mt-4 bg-red-600 hover:bg-red-700"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Shop Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {shops.map((shop) => (
             <Card
               key={shop.id}
               className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all group"
@@ -386,43 +492,9 @@ useEffect(() => {
                 </Button>
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        {/* No Results Message */}
-        {!loading && shops.length === 0 && (
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg">
-            <CardContent className="py-12 text-center">
-              <CheckCircle2 className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">No Visited Shops Found</h3>
-              <p className="text-slate-500">
-                {searchQuery ? "Try adjusting your search criteria." : "No shops have been visited in the last 30 days."}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading visited shops...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <Card className="bg-red-50 border-red-200 shadow-lg">
-            <CardContent className="py-8 text-center">
-              <p className="text-red-600 font-semibold">{error}</p>
-              <Button 
-                onClick={loadShops} 
-                className="mt-4 bg-red-600 hover:bg-red-700"
-              >
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

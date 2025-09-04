@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Search, Eye, Store, TrendingUp, Users } from "lucide-react"
+import { MapPin, Calendar, Search, Eye, Store, TrendingUp, Users, RefreshCw } from "lucide-react"
 import { fetchVisitedShops, type Shop } from "@/lib/api"
 import { useRouter } from "next/navigation"
 
@@ -109,6 +109,11 @@ export default function VisitsPage() {
     }
   }
 
+  // Refresh function - exactly like other pages
+  const refreshVisits = async () => {
+    await loadVisitedShops()
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -151,12 +156,9 @@ const handleAssignShopsClick = async () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200"></div>
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600 absolute top-0 left-0"></div>
-            </div>
-            <p className="mt-6 text-slate-600 font-medium">Loading your shop visits...</p>
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-slate-600">Loading visits...</span>
           </div>
         </div>
       </div>
@@ -196,13 +198,28 @@ const handleAssignShopsClick = async () => {
             <Store className="h-5 w-5 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">ShelfSense</span>
           </div> */}
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance">Your Shop Visits</h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty">
-            This are The shops you have visited so far. You can select multiple shops to assign them to a QC user.
-          </p>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance">Your Shop Visits</h1>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty mt-4">
+                This are The shops you have visited so far. You can select multiple shops to assign them to a QC user.
+              </p>
+            </div>
+            
+            {/* Refresh Button */}
+            <Button
+              onClick={refreshVisits}
+              variant="outline"
+              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -233,7 +250,7 @@ const handleAssignShopsClick = async () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          {/* <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -248,7 +265,7 @@ const handleAssignShopsClick = async () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">

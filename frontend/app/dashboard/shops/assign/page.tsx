@@ -162,11 +162,14 @@ export default function AssignShopsPage() {
     }
   }
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // CHANGE: Only show auditors, not QC or other roles
+  const filteredUsers = users
+    .filter(user => user.role === "auditor")
+    .filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
 
   if (loading) {
     return (

@@ -357,7 +357,7 @@ export default function UsersPage() {
                     <SelectItem value="supervisor">Supervisor</SelectItem>
                     <SelectItem value="executive">Executive</SelectItem>
                     <SelectItem value="auditor">Auditor</SelectItem>
-                    <SelectItem value="qc">qc</SelectItem> {/* qc role */}
+                    <SelectItem value="qc">QC</SelectItem> {/* qc role */}
                   </SelectContent>
                 </Select>
               </div>
@@ -487,7 +487,7 @@ export default function UsersPage() {
                   <SelectItem value="supervisor">Supervisor</SelectItem>
                   <SelectItem value="executive">Executive</SelectItem>
                   <SelectItem value="auditor">Auditor</SelectItem>
-                  <SelectItem value="qc">qc</SelectItem>
+                  <SelectItem value="qc">QC</SelectItem>
                 </SelectContent>
               </Select>
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">

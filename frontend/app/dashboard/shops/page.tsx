@@ -22,6 +22,7 @@ import {
   Clock,
   AlertCircle,
   Filter,
+  RefreshCw,
 } from "lucide-react"
 
 export default function ShopsPage() {
@@ -155,6 +156,11 @@ export default function ShopsPage() {
     }
   }
 
+  // Refresh function - exactly like users page  
+  const refreshShops = async () => {
+    await loadShops(false)
+  }
+
   // Apply search filter and visited filter when search query or visited toggle changes
   useEffect(() => {
     if (allShops.length > 0) {
@@ -260,6 +266,17 @@ export default function ShopsPage() {
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-700" />
                 <span className="font-semibold text-indigo-800">{selectedShopIds.length} Selected</span>
               </div>
+
+              {/* Refresh Button */}
+              <Button
+                onClick={refreshShops}
+                variant="outline"
+                className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </div>
           </div>
         </div>
@@ -378,16 +395,13 @@ export default function ShopsPage() {
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading shops...</p>
+        {/* Main Content Area - Loading State Check */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-slate-600">Loading shops...</span>
           </div>
-        )}
-
-        {/* Error State */}
-        {error && (
+        ) : error ? (
           <Card className="bg-red-50 border-red-200 shadow-lg">
             <CardContent className="py-8 text-center">
               <p className="text-red-600 font-semibold">{error}</p>
@@ -399,10 +413,7 @@ export default function ShopsPage() {
               </Button>
             </CardContent>
           </Card>
-        )}
-
-        {/* No Results Message */}
-        {!loading && !error && shops.length === 0 && (
+        ) : shops.length === 0 ? (
           <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg">
             <CardContent className="py-12 text-center">
               <Package className="h-16 w-16 text-slate-300 mx-auto mb-4" />
@@ -428,10 +439,8 @@ export default function ShopsPage() {
               )}
             </CardContent>
           </Card>
-        )}
-
-        {/* Shops Grid */}
-        {!loading && !error && shops.length > 0 && (
+        ) : (
+          /* Shops Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {shops.map((shop) => (
               <Card
