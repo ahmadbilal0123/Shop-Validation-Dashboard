@@ -447,7 +447,7 @@ export async function assignShopsToUser(
   userId: string,
   shopIds: string[],
   role: string
-): Promise<{ success: boolean; message?: string; error?: string }> {
+): Promise<{ success: boolean; message?: string; error?: string; alreadyAssigned?: string[] }> {
   try {
     const session = getSession()
     if (!session?.token) {
@@ -476,7 +476,11 @@ export async function assignShopsToUser(
           ? "Shops already assigned to this user"
           : `Server error: ${response.status} ${response.statusText}`)
 
-      return { success: false, error: errorMessage }
+      return { 
+        success: false, 
+        error: errorMessage,
+        alreadyAssigned: data.alreadyAssigned || []
+      }
     }
 
     // ✅ Normalize response
@@ -746,6 +750,7 @@ export async function fetchVisitStats(): Promise<{
     return { success: false, error: error instanceof Error ? error.message : "Network error" }
   }
 }
+
 export async function fetchPendingAndVisitedShops(): Promise<ShopsResponse> {
   try {
     // Only send 'visit=true' in the query string

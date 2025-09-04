@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Search, UserCheck, Package, Grid3X3, List } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { showAssignmentNotification, showErrorNotification, showAssignmentErrorNotification } from "@/lib/notifications"
 
 interface User {
   id: string
@@ -23,7 +23,6 @@ interface User {
 export default function AssignShopsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [selectedAuditorId, setSelectedAuditorId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -82,11 +81,7 @@ export default function AssignShopsPage() {
       const token = session?.token
 
       if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "No authentication token found. Please log in.",
-          variant: "destructive",
-        })
+        showErrorNotification("Authentication Error", "No authentication token found. Please log in.")
         router.push("/login")
         return
       }
@@ -108,15 +103,24 @@ export default function AssignShopsPage() {
           email: auditor.username,
           role: auditor.role,
         }))
-        setUsers(mappedUsers)
+        
+        // Filter to show only auditors (exclude QC users)
+        const auditorsOnly = mappedUsers.filter((user: User) => 
+          user.role.toLowerCase() === 'auditor'
+        )
+        
+        setUsers(auditorsOnly)
+        
+        // Show message if no auditors found
+        if (auditorsOnly.length === 0) {
+          showErrorNotification("No Auditors Found", "No auditors are available for assignment.")
+        }
+      } else {
+        showErrorNotification("Failed to Load Users", "Unable to fetch auditor list from server.")
       }
     } catch (error) {
       console.error("Error loading users:", error)
-      toast({
-        title: "Error",
-        description: "Error loading users. Please try again.",
-        variant: "destructive",
-      })
+      showErrorNotification("Error", "Error loading users. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -124,52 +128,63 @@ export default function AssignShopsPage() {
 
   const handleAssignShops = async () => {
     if (!selectedAuditorId) {
-      toast({
-        title: "No Auditor Selected",
-        description: "Please select an auditor before assigning shops.",
-        variant: "destructive",
-      })
+      showErrorNotification("No Auditor Selected", "Please select an auditor before assigning shops.")
       return
     }
 
     setAssigning(true)
     try {
       const selectedAuditor = users.find(u => u.id === selectedAuditorId)
+      console.log("Selected auditor:", selectedAuditor) // Debug log
+      
       const result = await assignShopsToUser(selectedAuditorId, shopIds, selectedAuditor?.role || "auditor")
 
+      console.log("Assignment result:", result) // Debug log
+
       if (result.success) {
-        toast({
-          title: "Success",
-          description: result.message || "Shops assigned successfully!",
+        // Get shop names for the notification
+        const assignedShopNames = shopIds.map(id => shopNames[id] || `Shop #${id.slice(-6)}`)
+        
+        showAssignmentNotification({
+          userName: selectedAuditor?.name || "Unknown User",
+          userRole: selectedAuditor?.role || "auditor", 
+          shopCount: shopIds.length,
+          shopNames: assignedShopNames
         })
+        
         router.push("/dashboard/shops")
       } else {
-        toast({
-          title: "Already Assigned",
-          description: result.error || "Some shops are already assigned.",
-          variant: "destructive",
-        })
+        console.log("Assignment failed with error:", result.error) // Debug log
+        
+        // Check if it's an assignment error with specific shop details
+        if (result.error?.includes("already assigned") || (result.alreadyAssigned && result.alreadyAssigned.length > 0)) {
+          // Get shop names for already assigned shops if available
+          const alreadyAssignedNames = result.alreadyAssigned 
+            ? result.alreadyAssigned.map((id: string) => shopNames[id] || `Shop #${id.slice(-6)}`)
+            : []
+          
+          showAssignmentErrorNotification(
+            "Assignment Failed", 
+            result.error || "Some shops are already assigned to another auditor.",
+            alreadyAssignedNames
+          )
+        } else {
+          showErrorNotification("Assignment Error", result.error || "Failed to assign shops.")
+        }
       }
     } catch (error) {
       console.error("Assign error:", error)
-      toast({
-        title: "Error",
-        description: (error as Error).message || "Error assigning shops.",
-        variant: "destructive",
-      })
+      showErrorNotification("Error", (error as Error).message || "Error assigning shops.")
     } finally {
       setAssigning(false)
     }
   }
 
-  // CHANGE: Only show auditors, not QC or other roles
-  const filteredUsers = users
-    .filter(user => user.role === "auditor")
-    .filter(
-      (user) =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   if (loading) {
     return (
@@ -303,7 +318,18 @@ export default function AssignShopsPage() {
 
             {/* Users List/Grid - Scrollable area */}
             <div className="flex-1 overflow-y-auto pr-2" style={{minHeight: '300px', maxHeight: 'calc(100vh - 400px)'}}>
-              {viewMode === 'list' ? (
+              {filteredUsers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Users className="w-12 h-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Auditors Found</h3>
+                  <p className="text-gray-600 max-w-sm">
+                    {searchQuery 
+                      ? `No auditors match "${searchQuery}". Try adjusting your search.`
+                      : "No auditors are currently available for shop assignment."
+                    }
+                  </p>
+                </div>
+              ) : viewMode === 'list' ? (
                 <div className="space-y-3">
                   {filteredUsers.map((user) => (
                     <Card

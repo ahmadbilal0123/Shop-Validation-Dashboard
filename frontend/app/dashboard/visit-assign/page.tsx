@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Search, UserCheck, Package, Grid3X3, List } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { showAssignmentNotification, showErrorNotification, showAssignmentErrorNotification } from "@/lib/notifications"
 
 interface User {
   id: string
@@ -19,10 +19,14 @@ interface User {
   role: string
 }
 
+// Function to get properly formatted role display name
+const getRoleDisplayName = (role: string): string => {
+  return role.toLowerCase() === 'qc' ? 'QC' : role
+}
+
 export default function VisitAssignPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [selectedAuditorId, setSelectedAuditorId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -81,11 +85,7 @@ export default function VisitAssignPage() {
       const token = session?.token
 
       if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "No authentication token found. Please log in.",
-          variant: "destructive",
-        })
+        showErrorNotification("Authentication Error", "No authentication token found. Please log in.")
         router.push("/login")
         return
       }
@@ -117,26 +117,14 @@ export default function VisitAssignPage() {
         
         // Show message if no QC users found
         if (qcOnly.length === 0) {
-          toast({
-            title: "No QC Users Found",
-            description: "No QC users are available for assignment.",
-            variant: "destructive",
-          })
+          showErrorNotification("No QC Users Found", "No QC users are available for assignment.")
         }
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load QC users.",
-          variant: "destructive",
-        })
+        showErrorNotification("Error", "Failed to load QC users.")
       }
     } catch (error) {
       console.error("Error loading users:", error)
-      toast({
-        title: "Error",
-        description: "Error loading QC users. Please try again.",
-        variant: "destructive",
-      })
+      showErrorNotification("Error", "Error loading QC users. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -144,39 +132,52 @@ export default function VisitAssignPage() {
 
   const handleAssignShops = async () => {
     if (!selectedAuditorId) {
-      toast({
-        title: "No QC Selected",
-        description: "Please select a QC user before assigning shops.",
-        variant: "destructive",
-      })
+      showErrorNotification("No QC Selected", "Please select a QC user before assigning shops.")
       return
     }
 
     setAssigning(true)
     try {
       const selectedAuditor = users.find(u => u.id === selectedAuditorId)
-      const result = await assignShopsToUser(selectedAuditorId, shopIds, selectedAuditor?.role || "qc")
+      const result = await assignShopsToUser(selectedAuditorId, shopIds, selectedAuditor?.role || "QC")
+
+      console.log("Assignment result:", result) // Debug log
 
       if (result.success) {
-        toast({
-          title: "Success",
-          description: result.message || "Shops assigned successfully!",
+        // Get shop names for the notification
+        const assignedShopNames = shopIds.map(id => shopNames[id] || `Shop #${id.slice(-6)}`)
+        
+        showAssignmentNotification({
+          userName: selectedAuditor?.name || "Unknown User",
+          userRole: selectedAuditor?.role || "QC",
+          shopCount: shopIds.length,
+          shopNames: assignedShopNames,
+          message: result.message
         })
+        
         router.push("/dashboard/visits")
       } else {
-        toast({
-          title: "Already Assigned",
-          description: result.error || "Some shops are already assigned.",
-          variant: "destructive",
-        })
+        console.log("Assignment failed with error:", result.error) // Debug log
+        
+        // Check if it's an assignment error with specific shop details
+        if (result.error?.includes("already assigned") || (result.alreadyAssigned && result.alreadyAssigned.length > 0)) {
+          // Get shop names for already assigned shops if available
+          const alreadyAssignedNames = result.alreadyAssigned 
+            ? result.alreadyAssigned.map((id: string) => shopNames[id] || `Shop #${id.slice(-6)}`)
+            : []
+          
+          showAssignmentErrorNotification(
+            "Assignment Failed", 
+            result.error || "Some shops are already assigned to another QC user.",
+            alreadyAssignedNames
+          )
+        } else {
+          showErrorNotification("Assignment Error", result.error || "Failed to assign shops.")
+        }
       }
     } catch (error) {
       console.error("Assign error:", error)
-      toast({
-        title: "Error",
-        description: (error as Error).message || "Error assigning shops.",
-        variant: "destructive",
-      })
+      showErrorNotification("Error", (error as Error).message || "Error assigning shops.")
     } finally {
       setAssigning(false)
     }
@@ -370,7 +371,7 @@ export default function VisitAssignPage() {
                               <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.name}</div>
                               <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
                               <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-2 py-0.5">
-                                {user.role}
+                                {getRoleDisplayName(user.role)}
                               </Badge>
                             </div>
                             {selectedAuditorId === user.id && (
@@ -409,7 +410,7 @@ export default function VisitAssignPage() {
                               <div className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{user.name}</div>
                               <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
                               <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-1 py-0.5">
-                                {user.role}
+                                {getRoleDisplayName(user.role)}
                               </Badge>
                             </div>
                             {selectedAuditorId === user.id && (

@@ -249,53 +249,73 @@ useEffect(() => {
         {/* Stats Cards - Only show Total and Visited */}
        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
   {/* Card 1 - Total Shops */}
-  <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-600 uppercase">Total Shops</p>
-          <p className="text-2xl sm:text-3xl font-bold text-slate-900">{visitStats?.total ?? "..."}</p>
-          <p className="text-xs text-slate-500">All registered shops</p>
-        </div>
-        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-          <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-        </div>
+<Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+  <CardContent className="p-6">
+    <div className="flex items-center justify-between">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-slate-600 uppercase">Total Shops</p>
+        <p className="text-2xl sm:text-3xl font-bold text-slate-900">{shops.length}</p>
+        <p className="text-xs text-slate-500">All registered shops</p>
       </div>
-    </CardContent>
-  </Card>
-
-  {/* Card 2 - Visited Shops */}
-  <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-blue-600 uppercase">Visited Shops</p>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{visitStats?.visited ?? "..."}</p>
-          <p className="text-xs text-blue-500">Successfully visited</p>
-        </div>
-     <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-  <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-</div>
+      <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+        <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
       </div>
-    </CardContent>
-  </Card>
+    </div>
+  </CardContent>
+</Card>
 
-
-
-   <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-600 uppercase">Pending Shops</p>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{shops.length}</p>
-        </div>
-        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
-  <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-</div>
-
+{/* Visited Shops */}
+<Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+  <CardContent className="p-6">
+    <div className="flex items-center justify-between">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-blue-600 uppercase">Visited Shops</p>
+        <p className="text-2xl sm:text-3xl font-bold text-blue-600">{visitStats?.visited ?? 0}</p>
+        <p className="text-xs text-blue-500">Successfully visited</p>
       </div>
-    </CardContent>
-  </Card>
+      <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+        <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+{/* Assigned Shops */}
+<Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+  <CardContent className="p-6">
+    <div className="flex items-center justify-between">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-slate-600 uppercase">Assigned Shops</p>
+        <p className="text-2xl sm:text-3xl font-bold text-blue-600">
+          {shops.length - (visitStats?.visited ?? 0)}
+        </p>
+        <p className="text-xs text-blue-500">Shops assigned but not yet visited</p>
+      </div>
+      <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+        <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+{/* Pending Shops */}
+<Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg hover:shadow-xl transition-all">
+  <CardContent className="p-6">
+    <div className="flex items-center justify-between">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-slate-600 uppercase">Pending Shops</p>
+        <p className="text-2xl sm:text-3xl font-bold text-blue-600">
+          {shops.length - (visitStats?.visited ?? 0)}
+        </p>
+        <p className="text-xs text-blue-500">Shops yet to be visited</p>
+      </div>
+      <div className="h-12 w-12 sm:h-14 sm:w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+        <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
 
      
 </div>

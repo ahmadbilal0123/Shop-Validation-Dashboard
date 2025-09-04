@@ -60,7 +60,9 @@ export default function UsersPage() {
   }, [])
 
   const loadUsers = async () => {
+    console.log("🔄 USERS: loadUsers called, setting loading to TRUE")
     setLoading(true)
+    console.log("🔄 USERS: loading state should now be TRUE")
     const res = await fetchAllUsers()
     if (res.success) {
       setUsers(res.users)
@@ -69,7 +71,9 @@ export default function UsersPage() {
     } else {
       setError(res.error || "Failed to load users")
     }
+    console.log("🔄 USERS: Setting loading to FALSE")
     setLoading(false)
+    console.log("🔄 USERS: loadUsers complete, loading should now be FALSE")
   }
 
   const loadUserShopCounts = async (usersList: User[]) => {
@@ -223,6 +227,19 @@ export default function UsersPage() {
     return <Icon className="h-4 w-4" />
   }
 
+  const getRoleDisplayName = (role: string) => {
+    const roleNames = {
+      admin: "Admin",
+      manager: "Manager", 
+      supervisor: "Supervisor",
+      executive: "Executive",
+      auditor: "Auditor",
+      qc: "QC",
+      user: "User",
+    }
+    return roleNames[role as keyof typeof roleNames] || role
+  }
+
   // Filter users based on role
   const filteredUsers = users.filter((user) => {
     return roleFilter === "all" || user.role === roleFilter
@@ -259,24 +276,27 @@ export default function UsersPage() {
     setAssignedLoading(false)
   }
 
+  // Debug: Log loading state changes
+  console.log("🎯 USERS RENDER: loading =", loading)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="container mx-auto p-6 space-y-8 max-w-7xl">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
-            <Users className="h-8 w-8 text-white" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-8">
+          <div className="p-2 sm:p-3 bg-blue-600 rounded-xl shadow-lg">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
           </div>
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-slate-900">User Management</h1>
-            <p className="text-slate-600 mt-1">Manage user accounts and permissions</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">User Management</h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-1">Manage user accounts and permissions</p>
           </div>
           <Button
             onClick={loadUsers}
             variant="outline"
-            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-3 sm:px-4 py-2 text-xs sm:text-sm"
             disabled={loading}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
@@ -294,42 +314,42 @@ export default function UsersPage() {
 
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="bg-white rounded-t-lg border-b">
-            <CardTitle className="flex items-center gap-2 text-xl text-black">
-              <UserPlus className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-black">
+              <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
               Register New User
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <form key={formKey} onSubmit={handleRegister} className="grid gap-6 md:grid-cols-2">
+          <CardContent className="p-4 sm:p-6">
+            <form key={formKey} onSubmit={handleRegister} className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-slate-700">Full Name</Label>
+                <Label className="text-xs sm:text-sm font-medium text-slate-700">Full Name</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter full name"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-slate-700">Username</Label>
+                <Label className="text-xs sm:text-sm font-medium text-slate-700">Username</Label>
                 <Input
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   required
-                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter username"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-slate-700">Password</Label>
+                <Label className="text-xs sm:text-sm font-medium text-slate-700">Password</Label>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     required
-                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 pl-10"
+                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 pl-10 text-sm sm:text-base"
                     placeholder="Enter secure password"
                   />
                   <button
@@ -338,17 +358,17 @@ export default function UsersPage() {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                     )}
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-slate-700">Role</Label>
+                <Label className="text-xs sm:text-sm font-medium text-slate-700">Role</Label>
                 <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value })}>
-                  <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -365,7 +385,7 @@ export default function UsersPage() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                 >
                   {submitting ? "Registering..." : "Add User"}
                 </Button>
@@ -469,14 +489,16 @@ export default function UsersPage() {
 
         {/* Users Directory */}
         <div>
-          <div className="flex items-center gap-3 mb-6">
-            <Search className="h-6 w-6 text-slate-600" />
-            <h2 className="text-2xl font-bold text-slate-900">Users Directory</h2>
-            <div className="ml-auto flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Search className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" />
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Users Directory</h2>
+            </div>
+            <div className="w-full sm:w-auto sm:ml-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-40 border-slate-200 bg-white">
+                <SelectTrigger className="w-full sm:w-40 border-slate-200 bg-white">
                   <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-slate-600" />
+                    <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
                     <SelectValue placeholder="Filter by role" />
                   </div>
                 </SelectTrigger>
@@ -490,7 +512,7 @@ export default function UsersPage() {
                   <SelectItem value="qc">QC</SelectItem>
                 </SelectContent>
               </Select>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm px-2 py-1">
                 {filteredUsers.length} {filteredUsers.length === 1 ? "User" : "Users"}
               </Badge>
             </div>
@@ -518,39 +540,39 @@ export default function UsersPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {filteredUsers.map((user) => (
                 <Card
                   key={user.id}
                   className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                   onClick={() => handleUserCardClick(user)}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-3 p-4 sm:p-6">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 rounded-lg">{getRoleIcon(user.role)}</div>
-                        <div>
-                          <CardTitle className="text-lg text-slate-900">{user.name}</CardTitle>
-                          <p className="text-sm text-slate-600">@{user.username}</p>
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg flex-shrink-0">{getRoleIcon(user.role)}</div>
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="text-sm sm:text-lg text-slate-900 truncate">{user.name}</CardTitle>
+                          <p className="text-xs sm:text-sm text-slate-600 truncate">@{user.username}</p>
                         </div>
                       </div>
                       <Badge
-                        className={`${getRoleColor(user.role)} border text-xs font-medium`}
+                        className={`${getRoleColor(user.role)} border text-xs font-medium flex-shrink-0 ml-2`}
                       >
-                        {user.role}
+                        {getRoleDisplayName(user.role)}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                      <Calendar className="h-4 w-4" />
-                      Joined {new Date(user.createdAt).toLocaleDateString()}
+                  <CardContent className="pt-0 p-4 sm:p-6">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="truncate">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>
                     
                     {/* Assigned Shops Count */}
-                    <div className="flex items-center gap-2 text-sm text-blue-600 mb-4 bg-blue-50 p-2 rounded-lg">
-                      <Package className="h-4 w-4" />
-                      <span className="font-semibold">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-600 mb-3 sm:mb-4 bg-blue-50 p-2 rounded-lg">
+                      <Package className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="font-semibold truncate">
                         {userShopCounts[user.id] !== undefined ? userShopCounts[user.id] : "..."} Assigned Shops
                       </span>
                     </div>
@@ -561,9 +583,9 @@ export default function UsersPage() {
                         e.stopPropagation()
                         setEditForm(user)
                       }}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
                     >
-                      <Edit3 className="h-4 w-4 mr-2" />
+                      <Edit3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Edit User
                     </Button>
                   </CardContent>
@@ -582,38 +604,40 @@ export default function UsersPage() {
               onClick={() => setAssignedUser(null)}
             />
             {/* Drawer */}
-            <div className="relative ml-auto w-full max-w-lg bg-white rounded-l-xl shadow-2xl p-8 overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-4">
+            <div className="relative ml-auto w-full max-w-xs sm:max-w-sm md:max-w-lg bg-white rounded-l-xl shadow-2xl p-4 sm:p-6 lg:p-8 overflow-y-auto">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">
                 Shops Assigned to {assignedUser.name}
               </h2>
               {assignedLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-slate-600">Loading shops...</span>
+                <div className="flex items-center justify-center py-8 sm:py-12">
+                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-slate-600 text-sm sm:text-base">Loading shops...</span>
                 </div>
               ) : assignedError ? (
-                <Alert variant="destructive" className="border-red-200 bg-red-50 mb-6">
-                  <AlertDescription className="text-red-800">{assignedError}</AlertDescription>
+                <Alert variant="destructive" className="border-red-200 bg-red-50 mb-4 sm:mb-6">
+                  <AlertDescription className="text-red-800 text-sm sm:text-base">{assignedError}</AlertDescription>
                 </Alert>
               ) : assignedShops.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  <Package className="h-10 w-10 mx-auto mb-4" />
-                  <p>No shops assigned to this user.</p>
+                <div className="text-center py-8 sm:py-12 text-slate-500">
+                  <Package className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-sm sm:text-base">No shops assigned to this user.</p>
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-3 sm:gap-4">
                   {assignedShops.map(shop => (
                     <Card key={shop.id} className="border shadow hover:shadow-lg transition-all">
-                      <CardHeader>
-                        <CardTitle className="text-lg font-bold text-blue-700">{shop.name}</CardTitle>
+                      <CardHeader className="p-3 sm:p-4">
+                        <CardTitle className="text-sm sm:text-lg font-bold text-blue-700 truncate">{shop.name}</CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                          <MapPin className="h-4 w-4 text-slate-400" />
-                          <span>{shop.address}, {shop.city}, {shop.state} {shop.zipCode}</span>
+                      <CardContent className="p-3 sm:p-4 pt-0">
+                        <div className="flex items-start gap-2 text-xs sm:text-sm mb-2">
+                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                          <span className="text-slate-600 break-words">{shop.address}, {shop.city}, {shop.state} {shop.zipCode}</span>
                         </div>
-                        <div className="flex gap-4 text-sm text-slate-600">
-                          <span>Status: <Badge className="bg-yellow-100 text-yellow-700">{shop.status}</Badge></span>
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600 mb-2">
+                          <span className="flex items-center gap-1">
+                            Status: <Badge className="bg-yellow-100 text-yellow-700 text-xs">{shop.status}</Badge>
+                          </span>
                           <span>Visits: {shop.visitCount}</span>
                         </div>
                         {shop.lastVisit && (
@@ -623,7 +647,7 @@ export default function UsersPage() {
                         )}
                         <Button
                           size="sm"
-                          className="mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                          className="mt-3 sm:mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
                           onClick={() => window.open(`/dashboard/shops/${shop.id}`, "_blank")}
                         >
                           View Shop Details
@@ -635,7 +659,7 @@ export default function UsersPage() {
               )}
               <Button
                 variant="outline"
-                className="mt-6 w-full border-slate-300 text-slate-700"
+                className="mt-4 sm:mt-6 w-full border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-2"
                 onClick={() => setAssignedUser(null)}
               >
                 Close
