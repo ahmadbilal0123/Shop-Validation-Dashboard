@@ -195,7 +195,7 @@ export default function LoginPage() {
     
     <Card className="w-full max-w-md shadow-2xl rounded-3xl relative z-10 border-0 bg-white/95 backdrop-blur-xl md:bg-white">
       <CardHeader className="text-center pt-8 pb-6">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1447E6] to-[#6c3ef4] shadow-lg">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl  ">
           <img src="/logo.png" alt="ShelfSense Logo" className="h-10 w-10" />
         </div>
         <CardTitle className="text-3xl font-bold text-slate-800 mb-2">Welcome Back</CardTitle>

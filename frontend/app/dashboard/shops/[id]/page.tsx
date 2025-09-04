@@ -358,56 +358,61 @@ export default function ShopDetailsPage() {
           onClick={() => setEnlargedImage(null)}
         >
           <div
-            className="relative"
+            className="relative flex flex-col items-center"
             onClick={e => e.stopPropagation()}
           >
-            {/* Close Button */}
+            {/* Cross (Close) Top Right - absolutely positioned over the image */}
             <button
-              className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-2 shadow-lg transition hover:bg-pink-200 hover:scale-110"
+              className="absolute top-0 right-0 z-10 bg-white/80 rounded-full p-2 shadow-lg transition hover:bg-pink-200 hover:scale-110 cursor-pointer"
               onClick={() => setEnlargedImage(null)}
               aria-label="Close"
+              style={{ cursor: "pointer" }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7 text-gray-700">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-
-            {/* Previous Arrow */}
+            {/* Flex row for arrows and image */}
+            <div className="flex items-center w-full">
+              {/* Left Arrow Button - OUTSIDE LEFT of image */}
+              {allImages.length > 1 && (
+                <button
+                  className="bg-white/80 rounded-full p-3 shadow-lg transition hover:bg-blue-200 hover:scale-110 cursor-pointer mr-3"
+                  onClick={navigateToPrevImage}
+                  aria-label="Previous Image"
+                  style={{ cursor: "pointer" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+              )}
+              {/* The Image itself */}
+              <div className="relative">
+                <ZoomableImage src={enlargedImage} />
+              </div>
+              {/* Right Arrow Button - OUTSIDE RIGHT of image */}
+              {allImages.length > 1 && (
+                <button
+                  className="bg-white/80 rounded-full p-3 shadow-lg transition hover:bg-blue-200 hover:scale-110 cursor-pointer ml-3"
+                  onClick={navigateToNextImage}
+                  aria-label="Next Image"
+                  style={{ cursor: "pointer" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {/* Image Counter - BELOW IMAGE */}
             {allImages.length > 1 && (
-              <button
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-3 shadow-lg transition hover:bg-blue-200 hover:scale-110"
-                onClick={navigateToPrevImage}
-                aria-label="Previous Image"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-              </button>
-            )}
-
-            {/* Next Arrow */}
-            {allImages.length > 1 && (
-              <button
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-3 shadow-lg transition hover:bg-blue-200 hover:scale-110"
-                onClick={navigateToNextImage}
-                aria-label="Next Image"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </button>
-            )}
-
-            {/* Image Counter */}
-            {allImages.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/80 px-4 py-2 rounded-full shadow-lg">
+              <div className="mt-4 bg-white/80 px-4 py-2 rounded-full shadow-lg">
                 <span className="text-sm font-semibold text-gray-700">
                   {currentImageIndex + 1} / {allImages.length}
                 </span>
               </div>
             )}
-
-            <ZoomableImage src={enlargedImage} />
           </div>
         </div>
       )}
