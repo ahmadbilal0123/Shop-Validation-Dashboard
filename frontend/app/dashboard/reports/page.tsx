@@ -3,14 +3,24 @@
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, RefreshCw } from "lucide-react"
-import { fetchShops, fetchVisitedShops, fetchAllUsers, type Shop, type User } from "@/lib/api"
+import { AlertTriangle, RefreshCw, Eye, MapPin, Phone, Calendar, Star, ArrowLeft } from "lucide-react"
+import { fetchShops, fetchVisitedShops, fetchAllUsers, fetchShopById, type Shop, type User } from "@/lib/api"
+
+interface DetailedShop extends Shop {
+  detailedData?: any
+}
+
+type ViewMode = 'all' | 'visited' | 'unvisited' | 'detail'
 
 export default function ReportsPage() {
   const [shops, setShops] = useState<Shop[]>([])
-  const [visitedShops, setVisitedShops] = useState<Shop[]>([])
+  const [visitedShops, setVisitedShops] = useState<DetailedShop[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingDetails, setLoadingDetails] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('all')
+  const [selectedShopDetail, setSelectedShopDetail] = useState<any>(null)
+  const [loadingShopDetail, setLoadingShopDetail] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -18,16 +28,45 @@ export default function ReportsPage() {
 
   async function loadData() {
     setLoading(true)
-    const shopsRes = await fetchShops()
-    const visitedRes = await fetchVisitedShops()
-    const usersRes = await fetchAllUsers()
-    setShops(shopsRes.shops || [])
-    setVisitedShops(visitedRes.shops || [])
-    setUsers(usersRes.users || [])
-    setLoading(false)
+    try {
+      const [shopsRes, visitedRes, usersRes] = await Promise.all([
+        fetchShops(),
+        fetchVisitedShops(),
+        fetchAllUsers()
+      ])
+      
+      setShops(shopsRes.shops || [])
+      const visitedShopsData = visitedRes.shops || []
+      setVisitedShops(visitedShopsData)
+      setUsers(usersRes.users || [])
+      
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Refresh function - exactly like other pages
+  const handleViewShopDetail = async (shopId: string) => {
+    setLoadingShopDetail(true)
+    try {
+      const result = await fetchShopById(shopId)
+      if (result.success) {
+        setSelectedShopDetail(result.data)
+        setViewMode('detail')
+      } else {
+        console.error('Failed to fetch shop details:', result.error)
+        alert('Failed to load shop details: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error fetching shop details:', error)
+      alert('Error loading shop details')
+    } finally {
+      setLoadingShopDetail(false)
+    }
+  }
+
+  // Refresh function
   const refreshReports = async () => {
     await loadData()
   }
@@ -37,12 +76,247 @@ export default function ReportsPage() {
   const visitedCount = visitedShops.length
   const pendingCount = totalShops - visitedCount
   const topAuditor = users.length > 0 ? users[0].name : "N/A"
-  const reportsGenerated = visitedCount // Example: 1 report per visit
+  const reportsGenerated = visitedCount
   const avgValidationScore = shops.length > 0
     ? Math.round(
         shops.reduce((sum, shop) => sum + (shop.validationScore || 0), 0) / shops.length
       )
     : 0
+
+  // Get unvisited shops
+  const visitedShopIds = new Set(visitedShops.map(shop => shop.id))
+  const unvisitedShops = shops.filter(shop => !visitedShopIds.has(shop.id))
+
+  // Get current shops to display
+  const getCurrentShops = () => {
+    switch (viewMode) {
+      case 'visited':
+        return visitedShops
+      case 'unvisited':
+        return unvisitedShops
+      case 'all':
+      default:
+        return shops
+    }
+  }
+
+  const renderShopDetailTable = () => {
+    if (!selectedShopDetail) return null
+
+    const renderValue = (value: any): string => {
+      if (value === null || value === undefined) return 'N/A'
+      if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+      if (typeof value === 'object') {
+        if (Array.isArray(value)) {
+          return value.length > 0 ? `${value.length} items` : 'None'
+        }
+        return JSON.stringify(value, null, 2)
+      }
+      if (typeof value === 'string' && value.includes('T') && value.includes(':')) {
+        // Likely a date string
+        try {
+          return new Date(value).toLocaleString()
+        } catch {
+          return value
+        }
+      }
+      return String(value)
+    }
+
+    const getAllProperties = (obj: any, prefix = ''): Array<{ key: string, value: any }> => {
+      const properties: Array<{ key: string, value: any }> = []
+      
+      Object.keys(obj).forEach(key => {
+        // Skip ID fields
+        if (key.toLowerCase().includes('id') && key !== 'validationScore') {
+          return
+        }
+        
+        const value = obj[key]
+        const fullKey = prefix ? `${prefix}.${key}` : key
+        
+        if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+          // Recursively handle nested objects
+          properties.push(...getAllProperties(value, fullKey))
+        } else {
+          properties.push({ key: fullKey, value })
+        }
+      })
+      
+      return properties
+    }
+
+    const allProperties = getAllProperties(selectedShopDetail)
+
+    // Prepare map data
+    const shopLat = selectedShopDetail?.coordinates?.lat || selectedShopDetail?.gps_n || selectedShopDetail?.lat || 30.67
+    const shopLng = selectedShopDetail?.coordinates?.lng || selectedShopDetail?.gps_e || selectedShopDetail?.lng || 69.36
+
+    type Marker = {
+      lat: number
+      lng: number
+      label?: string
+      color?: string
+    }
+
+    let visitMarkers: Marker[] = []
+    if (Array.isArray(selectedShopDetail?.visitImages)) {
+      selectedShopDetail.visitImages.forEach((img: any, idx: number) => {
+        // Use visitLocation if present
+        if (img?.visitLocation?.startAudit?.latitude && img?.visitLocation?.startAudit?.longitude) {
+          visitMarkers.push({
+            lat: img.visitLocation.startAudit.latitude,
+            lng: img.visitLocation.startAudit.longitude,
+            label: `Visit Start #${idx + 1}`,
+            color: '#22c55e' // green
+          })
+        }
+        if (img?.visitLocation?.photoClick?.latitude && img?.visitLocation?.photoClick?.longitude) {
+          visitMarkers.push({
+            lat: img.visitLocation.photoClick.latitude,
+            lng: img.visitLocation.photoClick.longitude,
+            label: `Photo Click #${idx + 1}`,
+            color: '#3b82f6' // blue
+          })
+        }
+        if (img?.visitLocation?.proceedClick?.latitude && img?.visitLocation?.proceedClick?.longitude) {
+          visitMarkers.push({
+            lat: img.visitLocation.proceedClick.latitude,
+            lng: img.visitLocation.proceedClick.longitude,
+            label: `Proceed Click #${idx + 1}`,
+            color: '#f59e42' // orange
+          })
+        }
+      })
+    }
+
+    // Always show shop location as main marker
+    const allMarkers: Marker[] = [
+      {
+        lat: shopLat,
+        lng: shopLng,
+        label: 'Shop Location',
+        color: '#6366f1' // indigo
+      },
+      ...visitMarkers
+    ]
+
+    return (
+      <div className="space-y-6">
+        {/* Shop Details Table */}
+        <Card className="shadow-lg border border-slate-200 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="bg-white rounded-t-lg border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-xl text-black">
+                <Eye className="h-5 w-5 text-indigo-600" />
+                Shop Details: {selectedShopDetail.name || 'Unknown Shop'}
+              </CardTitle>
+              <Button
+                onClick={() => setViewMode('all')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Reports
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left p-4 font-semibold text-slate-700 w-1/3 border-b border-slate-200">Property</th>
+                    <th className="text-left p-4 font-semibold text-slate-700 w-2/3 border-b border-slate-200">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allProperties.map((property, index) => (
+                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-4 font-medium text-slate-700 capitalize border-b border-slate-100">
+                        {property.key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/\./g, ' → ')}
+                      </td>
+                      <td className="p-4 text-slate-600 border-b border-slate-100">
+                        <div className="max-w-md break-words">
+                          {typeof property.value === 'object' && property.value !== null ? (
+                            <pre className="text-xs bg-slate-100 p-2 rounded overflow-auto max-h-32 border border-slate-200">
+                              {JSON.stringify(property.value, null, 2)}
+                            </pre>
+                          ) : (
+                            renderValue(property.value)
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Map Section */}
+        <Card className="shadow-lg border border-slate-200 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="bg-white rounded-t-lg border-b border-slate-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-indigo-600" /> Shop Location
+              </h2>
+              {/* Pin color legend */}
+              <div className="flex flex-wrap gap-4 items-center mr-6">
+                <span className="flex items-center gap-2">
+                  <span
+                    style={{
+                      background: '#6366f1',
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      border: '2px solid #fff',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                    }}
+                  ></span>
+                  <span className="text-sm text-gray-700">Shop Location</span>
+                </span>
+                {visitMarkers.map((m, idx) => (
+                  <span key={idx} className="flex items-center gap-2">
+                    <span
+                      style={{
+                        background: m.color,
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        border: '2px solid #fff',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                      }}
+                    ></span>
+                    <span className="text-sm text-gray-700">{m.label}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-indigo-200 shadow-lg">
+              {/* Note: You'll need to import and use your MapDynamic component */}
+              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-500">
+                <div className="text-center">
+                  <MapPin className="h-12 w-12 mx-auto mb-2" />
+                  <p>Map Component</p>
+                  <p className="text-sm">Lat: {shopLat}, Lng: {shopLng}</p>
+                  <p className="text-xs mt-2">{visitMarkers.length} visit locations</p>
+                </div>
+              </div>
+              {/* Uncomment when MapDynamic is available:
+              <MapDynamic markers={allMarkers} selectedPinIdx={null} />
+              */}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -59,7 +333,7 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto p-6 max-w-5xl">
+      <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-600 rounded-xl shadow-lg">
@@ -76,57 +350,264 @@ export default function ReportsPage() {
             onClick={refreshReports}
             variant="outline"
             className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-            disabled={loading}
+            disabled={loading || loadingDetails}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${(loading || loadingDetails) ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
 
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-8">
-          <CardHeader className="bg-white rounded-t-lg border-b">
-            <CardTitle className="flex items-center gap-2 text-xl text-black">
-              <AlertTriangle className="h-5 w-5 text-indigo-600" />
-              Dynamic Report
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-800">Shop Summary</h2>
-                <ul className="list-disc ml-6 text-slate-600">
-                  <li>Total Shops: <span className="font-bold text-indigo-700">{totalShops}</span></li>
-                  <li>Visited Shops: <span className="font-bold text-green-700">{visitedCount}</span></li>
-                  <li>Pending Validation: <span className="font-bold text-yellow-700">{pendingCount}</span></li>
-                </ul>
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-800">Auditor Performance</h2>
-                <ul className="list-disc ml-6 text-slate-600">
-                  <li>Top Auditor: <span className="font-bold text-indigo-700">{topAuditor}</span></li>
-                  <li>Average Validation Score: <span className="font-bold text-green-700">{avgValidationScore}%</span></li>
-                  <li>Reports Generated: <span className="font-bold text-blue-700">{reportsGenerated}</span></li>
-                </ul>
-              </div>
+        {/* Show shop detail view */}
+        {viewMode === 'detail' && selectedShopDetail && (
+          <div>
+            {renderShopDetailTable()}
+          </div>
+        )}
+
+        {/* Show main reports view */}
+        {viewMode !== 'detail' && (
+          <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm">Total Shops</p>
+                      <p className="text-3xl font-bold text-indigo-700">{totalShops}</p>
+                    </div>
+                    <div className="p-3 bg-indigo-100 rounded-lg">
+                      <AlertTriangle className="h-6 w-6 text-indigo-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm">Visited Shops</p>
+                      <p className="text-3xl font-bold text-green-700">{visitedCount}</p>
+                    </div>
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <Eye className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm">Unvisited Shops</p>
+                      <p className="text-3xl font-bold text-yellow-700">{pendingCount}</p>
+                    </div>
+                    <div className="p-3 bg-yellow-100 rounded-lg">
+                      <RefreshCw className="h-6 w-6 text-yellow-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold text-slate-800 mb-2">Recent Activity</h2>
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-                <ul className="text-slate-600 space-y-2">
-                  {visitedShops.slice(0, 5).map((shop, idx) => (
-                    <li key={shop.id || idx}>
-                      Shop <span className="font-bold text-indigo-700">{shop.name}</span> validated
-                      {shop.lastVisit ? ` on ${new Date(shop.lastVisit).toLocaleDateString()}` : ""}
-                    </li>
-                  ))}
-                  {pendingCount > 0 && (
-                    <li>Pending validations: <span className="font-bold text-yellow-700">{pendingCount}</span></li>
+
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button
+                onClick={() => setViewMode('all')}
+                variant={viewMode === 'all' ? 'default' : 'outline'}
+                className={viewMode === 'all' ? 'bg-blue-600 hover:bg-blue-700' : 'border-blue-300 text-blue-700 hover:bg-blue-50'}
+              >
+                All Shops ({totalShops})
+              </Button>
+              <Button
+                onClick={() => setViewMode('visited')}
+                variant={viewMode === 'visited' ? 'default' : 'outline'}
+                className={viewMode === 'visited' ? 'bg-green-600 hover:bg-green-700' : 'border-green-300 text-green-700 hover:bg-green-50'}
+              >
+                Visited Shops ({visitedCount})
+              </Button>
+              <Button
+                onClick={() => setViewMode('unvisited')}
+                variant={viewMode === 'unvisited' ? 'default' : 'outline'}
+                className={viewMode === 'unvisited' ? 'bg-yellow-600 hover:bg-yellow-700' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'}
+              >
+                Unvisited Shops ({pendingCount})
+              </Button>
+            </div>
+
+            {/* Shops Table */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-white rounded-t-lg border-b">
+                <CardTitle className="flex items-center gap-2 text-xl text-black">
+                  <AlertTriangle className="h-5 w-5 text-indigo-600" />
+                  {viewMode === 'visited' ? 'Visited Shops Report' : 
+                   viewMode === 'unvisited' ? 'Unvisited Shops Report' : 
+                   'All Shops Report'}
+                  {loadingDetails && (
+                    <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
                   )}
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {getCurrentShops().length === 0 ? (
+                  <div className="p-8 text-center text-slate-600">
+                    <AlertTriangle className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-lg font-semibold mb-2">
+                      No {viewMode === 'visited' ? 'Visited' : viewMode === 'unvisited' ? 'Unvisited' : ''} Shops
+                    </p>
+                    <p>No shops found for the selected filter.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b">
+                        <tr>
+                          <th className="text-left p-4 font-semibold text-slate-700">Shop Name</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Address</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">City</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Phone</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Validation Score</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Visits</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Last Visit</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getCurrentShops().map((shop, index) => (
+                          <tr key={shop.id || index} className="border-b hover:bg-slate-50 transition-colors">
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <div className="font-semibold text-slate-900">
+                                  {shop.name || 'N/A'}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-start gap-2">
+                                <MapPin className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                <span className="text-slate-600 text-sm">
+                                  {shop.address || 'N/A'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-slate-600">
+                                {shop.city || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-indigo-500" />
+                                <span className="text-slate-600 text-sm">
+                                  {shop.phone || 'N/A'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <Star className="h-4 w-4 text-yellow-500" />
+                                <span className="font-semibold text-yellow-700">
+                                  {shop.validationScore ? `${shop.validationScore.toFixed(1)}%` : 'N/A'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {shop.visitImages?.length || 0} visits
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-amber-500" />
+                                <span className="text-slate-600 text-sm">
+                                  {shop.lastVisit ? new Date(shop.lastVisit).toLocaleDateString() : 'Never'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <Button
+                                size="sm"
+                                onClick={() => handleViewShopDetail(shop.id)}
+                                disabled={loadingShopDetail}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                              >
+                                {loadingShopDetail ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    View Details
+                                  </>
+                                )}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {/* Performance Summary - Only show in main view */}
+        {viewMode !== 'detail' && (
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-white rounded-t-lg border-b">
+                <CardTitle className="text-lg text-slate-800">Auditor Performance</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">Top Auditor:</span>
+                    <span className="font-bold text-indigo-700">{topAuditor}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">Average Score:</span>
+                    <span className="font-bold text-green-700">{avgValidationScore}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">Reports Generated:</span>
+                    <span className="font-bold text-blue-700">{reportsGenerated}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-white rounded-t-lg border-b">
+                <CardTitle className="text-lg text-slate-800">Validation Progress</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">Completion Rate:</span>
+                    <span className="font-bold text-green-700">
+                      {totalShops > 0 ? Math.round((visitedCount / totalShops) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: totalShops > 0 ? `${(visitedCount / totalShops) * 100}%` : '0%' 
+                      }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-sm text-slate-600">
+                    <span>{visitedCount} completed</span>
+                    <span>{pendingCount} pending</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   )

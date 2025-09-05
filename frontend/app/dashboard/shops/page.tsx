@@ -455,7 +455,13 @@ export default function ShopsPage() {
                     <input
                       type="checkbox"
                       checked={selectedShopIds.includes(shop.id)}
-                      onChange={() => toggleShopSelection(shop.id)}
+                      onChange={(e) => {
+                        e.stopPropagation(); // Prevent card click event
+                        toggleShopSelection(shop.id);
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click event
+                      }}
                       className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
                     />
                   </div>
@@ -508,8 +514,6 @@ export default function ShopsPage() {
                       </div>
                     )}
 
-                   
-
                     {shop.createdAt && (
                       <div className="flex items-center text-gray-600 group-hover:text-gray-800 transition-colors">
                         <Calendar className="w-4 h-4 mr-3 text-amber-500 flex-shrink-0" />
@@ -534,9 +538,7 @@ export default function ShopsPage() {
                   <Button
                     size="sm"
                     onClick={(e) => {
-                      if (selectMode) {
-                        e.stopPropagation() // Prevent card click when in select mode
-                      }
+                      e.stopPropagation(); // Prevent card click when clicking the button
                       router.push(`/dashboard/shops/${shop.id}`)
                     }}
                     className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"

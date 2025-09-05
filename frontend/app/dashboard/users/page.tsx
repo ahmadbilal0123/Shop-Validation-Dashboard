@@ -544,8 +544,7 @@ export default function UsersPage() {
               {filteredUsers.map((user) => (
                 <Card
                   key={user.id}
-                  className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                  onClick={() => handleUserCardClick(user)}
+                  className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <CardHeader className="pb-3 p-4 sm:p-6">
                     <div className="flex items-start justify-between">
@@ -570,11 +569,24 @@ export default function UsersPage() {
                     </div>
                     
                     {/* Assigned Shops Count */}
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-600 mb-3 sm:mb-4 bg-blue-50 p-2 rounded-lg">
+                    <div 
+                      className="relative flex items-center gap-2 text-xs sm:text-sm text-blue-600 mb-3 sm:mb-4 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer group"
+                      onClick={() => handleUserCardClick(user)}
+                    >
                       <Package className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                      <span className="font-semibold truncate">
+                      <span className="font-semibold truncate flex-1">
                         {userShopCounts[user.id] !== undefined ? userShopCounts[user.id] : "..."} Assigned Shops
                       </span>
+                      <div className="relative">
+                        <div className="flex items-center justify-center w-5 h-5 text-blue-700 font-bold text-xs group-hover:bg-blue-300 group-hover:scale-125 transition-all duration-200">
+                          ⓘ
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                          Click to see assigned shops
+                          <div className="absolute top-full right-2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-800"></div>
+                        </div>
+                      </div>
                     </div>
                     
                     <Button
@@ -638,7 +650,7 @@ export default function UsersPage() {
                           <span className="flex items-center gap-1">
                             Status: <Badge className="bg-yellow-100 text-yellow-700 text-xs">{shop.status}</Badge>
                           </span>
-                          <span>Visits: {shop.visitCount}</span>
+                          <span>Visits: {shop.visitImages?.length || 0}</span>
                         </div>
                         {shop.lastVisit && (
                           <div className="mt-2 text-xs text-slate-500">
@@ -648,7 +660,7 @@ export default function UsersPage() {
                         <Button
                           size="sm"
                           className="mt-3 sm:mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
-                          onClick={() => window.open(`/dashboard/shops/${shop.id}`, "_blank")}
+                          onClick={() => window.location.href = `/dashboard/shops/${shop.id}`}
                         >
                           View Shop Details
                         </Button>

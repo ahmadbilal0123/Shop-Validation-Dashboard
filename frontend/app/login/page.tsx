@@ -10,13 +10,79 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { buildApiUrl, getApiBaseUrl } from "@/lib/utils"
 
+// Custom CSS for animations
+const floatingAnimations = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+  }
+  @keyframes float-delayed {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(-3deg); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+  @keyframes imageSlideIn {
+    0% { 
+      opacity: 0; 
+      transform: scale(1.1) translateX(50px);
+    }
+    100% { 
+      opacity: 0.3; 
+      transform: scale(1) translateX(0);
+    }
+  }
+  @keyframes imageSlideOut {
+    0% { 
+      opacity: 0.3; 
+      transform: scale(1) translateX(0);
+    }
+    100% { 
+      opacity: 0; 
+      transform: scale(0.9) translateX(-50px);
+    }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float-delayed 8s ease-in-out infinite 2s;
+  }
+  .animate-float-slow {
+    animation: float-slow 10s ease-in-out infinite 4s;
+  }
+  .animate-slide-in {
+    animation: imageSlideIn 1s ease-out forwards;
+  }
+  .animate-slide-out {
+    animation: imageSlideOut 1s ease-in forwards;
+  }
+`
+
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const router = useRouter()
+
+  // Array of random shop images from Unsplash (specifically retail/shop interiors)
+  const shopImages = [
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Clothing store interior
+    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=2126&q=80", // Grocery store aisle
+    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Fashion boutique
+    "https://images.unsplash.com/photo-1596122962004-640ac7b8e5e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Bookstore interior
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2040&q=80", // Modern shop with shelves
+    "https://images.unsplash.com/photo-1607082349566-187342175e2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Pharmacy interior
+    "https://images.unsplash.com/photo-1567521464027-f31bd2dcb0ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Department store
+    "https://images.unsplash.com/photo-1572635196184-84e35138cf62?ixlib=rb-4.0.3&auto=format&fit=crop&w=2080&q=80", // Shopping mall store
+    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Tech store interior
+  ]
 
   // Check if API is configured
   useEffect(() => {
@@ -25,6 +91,20 @@ export default function LoginPage() {
       setError("API base URL is not configured. Please check your environment variables.")
     }
   }, [])
+
+  // Random image rotation effect with smooth transitions
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true)
+      
+      setTimeout(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % shopImages.length)
+        setIsTransitioning(false)
+      }, 500) // Half second for transition effect
+    }, 4000) // Change image every 4 seconds
+
+    return () => clearInterval(interval)
+  }, [shopImages.length])
 
   const getDefaultPermissions = (role: string): string[] => {
     switch (role) {
@@ -126,171 +206,210 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center md:grid md:grid-cols-2">
-      {/* Left Half with Shop Image Background (Desktop/Tablet only) */}
-      <div className="hidden md:flex flex-col justify-center px-16 py-24 w-full h-screen gap-6 text-white relative overflow-hidden">
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center"
-          style={{
-            backgroundImage: `linear-gradient(135deg, rgba(108, 62, 244, 0.85), rgba(162, 89, 236, 0.85)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
-          }}
-        />
-       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-8">
-  {/* Main Title */}
-  <h1 className="text-5xl md:text-6xl font-bold leading-tight drop-shadow-2xl mb-6 bg-gradient-to-r from-white to-white/90 bg-clip-text">
-    Welcome to
-    <span className="block text-transparent bg-gradient-to-r from-yellow-200 to-orange-200 bg-clip-text">
-      ShelfSense
-    </span>
-  </h1>
-  
-  {/* Subtitle */}
-  <p className="text-xl md:text-2xl text-white/95 max-w-2xl leading-relaxed drop-shadow-lg mb-8">
-    Advanced Shop Validation & Management Platform
-  </p>
-  
-  {/* Company Attribution */}
-  <div className="flex flex-col items-center gap-3">
-    <div className="h-px w-32 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
-    <p className="text-lg font-medium text-white/90 drop-shadow-md">
-      Powered by
-    </p>
-    <div className="bg-white/10 backdrop-blur-md rounded-xl px-6 py-3 border border-white/20">
-      <span className="text-2xl font-bold bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-300 bg-clip-text text-transparent drop-shadow-lg">
-        Gen-T AI Solutions
-      </span>
-    </div>
-  </div>
-  
-  {/* Feature highlights */}
-  <div className="mt-12 flex flex-wrap justify-center gap-4 max-w-lg">
-    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
-      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-      <span className="text-sm text-white/90">Real-time Analytics</span>
-    </div>
-    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
-      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-      <span className="text-sm text-white/90">GPS Tracking</span>
-    </div>
-    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
-      <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-      <span className="text-sm text-white/90">Smart Reports</span>
-    </div>
-  </div>
-</div>
+    <>
+      <style jsx>{floatingAnimations}</style>
+      <div className="min-h-screen w-full flex items-center justify-center lg:grid lg:grid-cols-2">
+      {/* Left Half - Blue & White Brand Experience (Desktop/Tablet only) */}
+      <div className="hidden lg:flex flex-col justify-center w-full h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950">
+        {/* Subtle Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Minimal floating elements */}
+          <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-float"></div>
+          <div className="absolute bottom-1/3 left-1/4 w-24 h-24 bg-blue-400/10 rounded-full blur-2xl animate-float-delayed"></div>
+          
+          {/* Clean grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:80px_80px]"></div>
+        </div>
 
-  </div>
+        {/* Shop Background Image with Smooth Animated Transitions */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img 
+            key={currentImageIndex}
+            src={shopImages[currentImageIndex]} 
+            alt="Retail shop interior" 
+            className={`w-full h-full object-cover transition-all duration-1000 ease-in-out ${
+              isTransitioning 
+                ? 'opacity-0 transform scale-110 blur-sm' 
+                : 'opacity-50 transform scale-100 blur-none'
+            }`}
+          />
+          {/* Reduced opacity overlay for better image visibility */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 via-blue-900/50 to-blue-950/60"></div>
+          
+          {/* Animated overlay pattern with reduced opacity */}
+          <div className={`absolute inset-0 bg-gradient-to-r from-blue-600/10 via-transparent to-blue-800/10 transition-opacity duration-1000 ${
+            isTransitioning ? 'opacity-100' : 'opacity-0'
+          }`}></div>
+        </div>
 
-  {/* Login Card Section - Responsive for all devices */}
-  <div className="flex items-center justify-center w-full h-screen p-4 md:p-12 relative">
-    {/* Mobile-only enhanced gradient background */}
-    <div className="absolute md:hidden inset-0 w-full h-full bg-gradient-to-br from-[#6c3ef4] via-[#a259ec] to-[#1447e6] z-0">
+        {/* Centered Content Layout */}
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-8 xl:px-16">
+          {/* Centered Brand Section */}
+          <div className="flex flex-col items-center">
+            <div>
+              <h1 className="text-6xl xl:text-7xl font-bold text-white mb-4 tracking-tight">
+                ShelfSense
+              </h1>
+              <p className="text-blue-200 text-xl xl:text-2xl font-medium text-center">
+                Powered by Gen-T AI Solutions
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  {/* Responsive Login Card Section - All devices */}
+  <div className="flex items-center justify-center w-full min-h-screen p-4 sm:p-6 lg:p-16 relative">
+    {/* Mobile/Tablet Background - Blue theme for all non-desktop screens */}
+    <div className="absolute lg:hidden inset-0 w-full h-full bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950 z-0">
       <div className="absolute inset-0 bg-black/20"></div>
       <div className="absolute top-0 left-0 w-full h-full opacity-30">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-32 right-16 w-40 h-40 bg-yellow-400/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-purple-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-16 left-8 w-24 sm:w-32 h-24 sm:h-32 bg-blue-400/20 rounded-full blur-2xl animate-float"></div>
+        <div className="absolute bottom-24 right-12 w-32 sm:w-40 h-32 sm:h-40 bg-blue-500/20 rounded-full blur-2xl animate-float-delayed"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 sm:w-48 h-40 sm:h-48 bg-blue-600/15 rounded-full blur-2xl animate-float-slow"></div>
+      </div>
+      
+      {/* Mobile Brand Header */}
+      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10 text-center">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+            <img src="/logo.png" alt="ShelfSense Logo" className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">ShelfSense</h1>
+        </div>
+        <p className="text-blue-200 text-sm font-medium">Powered by Gen-T AI Solutions</p>
       </div>
     </div>
     
-    <Card className="w-full max-w-md shadow-2xl rounded-3xl relative z-10 border-0 bg-white/95 backdrop-blur-xl md:bg-white">
-      <CardHeader className="text-center pt-8 pb-6">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl  ">
-          <img src="/logo.png" alt="ShelfSense Logo" className="h-10 w-10" />
+    <Card className="w-full max-w-sm sm:max-w-md lg:max-w-lg shadow-2xl rounded-2xl lg:rounded-3xl relative z-10 border-0 bg-white/95 sm:bg-white/98 lg:bg-white backdrop-blur-xl overflow-hidden mt-24 lg:mt-0">
+      {/* Responsive Card Header */}
+      <CardHeader className="text-center pt-8 sm:pt-10 lg:pt-12 pb-6 lg:pb-8 relative px-6 sm:px-8 lg:px-12">
+        {/* Desktop-only top accent */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hidden lg:block"></div>
+        
+        {/* Logo - Hidden on mobile since it's in the background */}
+        <div className="mx-auto mb-6 lg:mb-8 relative hidden lg:block">
+          <div className="flex h-16 lg:h-20 w-16 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 shadow-xl">
+            <img src="/logo.png" alt="ShelfSense Logo" className="h-9 lg:h-12 w-9 lg:w-12 drop-shadow-md" />
+          </div>
         </div>
-        <CardTitle className="text-3xl font-bold text-slate-800 mb-2">Welcome Back</CardTitle>
-        <CardDescription className="text-slate-600 text-base">
-          Sign in to your ShelfSense account
+        
+        <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2 lg:mb-3 tracking-tight">
+          Welcome Back
+        </CardTitle>
+        <CardDescription className="text-slate-600 text-base lg:text-lg font-medium">
+          Sign in to access your ShelfSense dashboard
         </CardDescription>
       </CardHeader>
 
-          <CardContent className="px-8 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-semibold text-slate-700">Email Address</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your email address"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="text-base px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-[#1447E6] focus:ring-2 focus:ring-[#1447E6]/20 transition-all duration-200"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</Label>
-                  <a className="text-[#1447E6] text-sm hover:underline transition-colors duration-200 font-medium" href="#">
-                    Forgot password?
-                  </a>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="text-base px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-[#1447E6] focus:ring-2 focus:ring-[#1447E6]/20 transition-all duration-200"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-slate-500" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-slate-500" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-700 font-medium">{error}</AlertDescription>
-                </Alert>
-              )}
-
+      <CardContent className="px-6 sm:px-8 lg:px-12 pb-8 lg:pb-12">
+        <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8">
+          {/* Responsive Email Field */}
+          <div className="space-y-2 lg:space-y-3">
+            <Label htmlFor="username" className="text-sm lg:text-base font-bold text-slate-700 tracking-wide">
+              Email Address
+            </Label>
+            <div className="relative group">
+              <Input
+                id="username"
+                type="text"
+                placeholder="Enter your email address"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="text-base lg:text-lg px-4 lg:px-6 py-3 lg:py-4 border-2 border-slate-200 rounded-xl lg:rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 bg-slate-50/50 hover:bg-white group-hover:border-slate-300"
+              />
+              <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-focus-within:from-blue-500/10 group-focus-within:via-blue-500/10 group-focus-within:to-blue-500/10 transition-all duration-300 pointer-events-none"></div>
+            </div>
+          </div>
+          
+          {/* Responsive Password Field */}
+          <div className="space-y-2 lg:space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm lg:text-base font-bold text-slate-700 tracking-wide">
+                Password
+              </Label>
+              <a className="text-blue-600 text-xs sm:text-sm hover:text-blue-700 hover:underline transition-all duration-200 font-semibold" href="#">
+                Forgot password?
+              </a>
+            </div>
+            <div className="relative group">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="text-base lg:text-lg px-4 lg:px-6 py-3 lg:py-4 pr-12 lg:pr-14 border-2 border-slate-200 rounded-xl lg:rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 bg-slate-50/50 hover:bg-white group-hover:border-slate-300"
+              />
               <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-[#1447E6] to-[#6c3ef4] hover:from-[#0f36b2] hover:to-[#5a2ec4] text-white px-4 py-3 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                disabled={isLoading}
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 lg:right-3 top-1/2 -translate-y-1/2 h-8 lg:h-10 w-8 lg:w-10 p-0 hover:bg-slate-100 rounded-lg lg:rounded-xl transition-all duration-200 hover:scale-110"
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Signing in...
-                  </span>
+                {showPassword ? (
+                  <EyeOff className="h-4 lg:h-5 w-4 lg:w-5 text-slate-500" />
                 ) : (
-                  "Sign In"
+                  <Eye className="h-4 lg:h-5 w-4 lg:w-5 text-slate-500" />
                 )}
               </Button>
-              
-              {/* Additional footer text */}
-              <div className="text-center pt-4">
-                <p className="text-sm text-slate-500">
-                  By signing in, you agree to our{" "}
-                  <a href="#" className="text-[#1447E6] hover:underline font-medium">
-                    Terms of Service
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="text-[#1447E6] hover:underline font-medium">
-                    Privacy Policy
-                  </a>
-                </p>
-              </div>
-            </form>
-          </CardContent>
+              <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-focus-within:from-blue-500/10 group-focus-within:via-blue-500/10 group-focus-within:to-blue-500/10 transition-all duration-300 pointer-events-none"></div>
+            </div>
+          </div>
+
+          {/* Responsive Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="border-red-300 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl lg:rounded-2xl shadow-lg">
+              <AlertTriangle className="h-4 lg:h-5 w-4 lg:w-5 text-red-600" />
+              <AlertDescription className="text-red-700 font-semibold text-sm lg:text-base">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Blue-themed Sign In Button */}
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 text-white px-4 lg:px-6 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-bold text-base lg:text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden group"
+            disabled={isLoading}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 group-hover:translate-x-full transition-transform duration-1000"></div>
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2 lg:gap-3 relative z-10">
+                <div className="w-4 lg:w-5 h-4 lg:h-5 border-2 lg:border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span className="font-bold">Signing you in...</span>
+              </span>
+            ) : (
+              <span className="relative z-10 font-bold tracking-wide">Sign In to Dashboard</span>
+            )}
+          </Button>
+          
+          {/* Responsive Footer */}
+          <div className="text-center pt-4 lg:pt-6 space-y-3 lg:space-y-4">
+            <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed px-2">
+              By signing in, you agree to our{" "}
+              <a href="#" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors">
+                Privacy Policy
+              </a>
+            </p>
+            
+            {/* Security Badge */}
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-400 pt-1 lg:pt-2">
+              <Shield className="h-3 lg:h-4 w-3 lg:w-4" />
+              <span className="font-medium">256-bit SSL Encryption</span>
+            </div>
+          </div>
+        </form>
+      </CardContent>
         </Card>
       </div>
     </div>
+    </>
   )
 }

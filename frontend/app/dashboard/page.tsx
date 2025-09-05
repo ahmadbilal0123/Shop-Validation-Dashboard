@@ -204,6 +204,13 @@ useEffect(() => {
   // Debug: Log loading state changes
   console.log("🎯 DASHBOARD RENDER: loading =", loading)
 
+
+  // Calculate assigned and pending shops
+  const assignedShops = shops.filter(shop => shop.assignedTo);
+  const pendingShops = shops.filter(
+    shop => shop.assignedTo && !((shop.visitImages && shop.visitImages.length > 0) || shop.lastVisit)
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
@@ -287,7 +294,7 @@ useEffect(() => {
       <div className="space-y-1">
         <p className="text-sm font-semibold text-slate-600 uppercase">Assigned Shops</p>
         <p className="text-2xl sm:text-3xl font-bold text-blue-600">
-          {shops.length - (visitStats?.visited ?? 0)}
+          {assignedShops.length}
         </p>
         <p className="text-xs text-blue-500">Shops assigned but not yet visited</p>
       </div>
@@ -305,7 +312,7 @@ useEffect(() => {
       <div className="space-y-1">
         <p className="text-sm font-semibold text-slate-600 uppercase">Pending Shops</p>
         <p className="text-2xl sm:text-3xl font-bold text-blue-600">
-          {shops.length - (visitStats?.visited ?? 0)}
+          {pendingShops.length}
         </p>
         <p className="text-xs text-blue-500">Shops yet to be visited</p>
       </div>
