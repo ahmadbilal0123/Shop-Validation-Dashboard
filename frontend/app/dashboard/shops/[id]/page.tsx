@@ -736,8 +736,7 @@ export default function ShopDetailsPage() {
               </Card>
             )}
 
-            {/* Full Data Table */}
-            <CardContent className="p-0">
+           <CardContent className="p-0">
   <div className="overflow-x-auto">
     <table className="w-full border border-gray-300 border-collapse">
       <thead>
@@ -749,12 +748,44 @@ export default function ShopDetailsPage() {
         </tr>
       </thead>
       <tbody>
-        {Array.from({ length: Math.ceil(Object.entries(shop).length / 2) }).map((_, i) => {
-          const first = Object.entries(shop)[i * 2]
-          const second = Object.entries(shop)[i * 2 + 1]
+        {Array.from({
+          length: Math.ceil(
+            Object.entries(shop).filter(([key]) => key.toLowerCase() !== "id").length / 2
+          ),
+        }).map((_, i) => {
+          const entries = Object.entries(shop).filter(([key]) => key.toLowerCase() !== "id")
+          const first = entries[i * 2]
+          const second = entries[i * 2 + 1]
 
-          // use actual field names in key so it’s unique + stable
           const rowKey = `${first?.[0] || "empty"}-${second?.[0] || "empty"}`
+
+          // ✅ Format field names (add space) 
+          const formatFieldName = (field: string) =>
+            field
+              .replace(/([A-Z])/g, " $1") // split camelCase
+              .replace(/_/g, " ") // replace underscores
+              .replace(/\bid\b/gi, "") // remove "id"
+              .trim()
+              .replace(/\b\w/g, (char) => char.toUpperCase()) // capitalize
+
+          // ✅ Format field values (good date formatting)
+          const formatFieldValue = (value: any, key: string) => {
+            if (!value) return "—"
+            const lowerKey = key.toLowerCase()
+            if (lowerKey.includes("date") || lowerKey.includes("time")) {
+              const date = new Date(value)
+              if (!isNaN(date.getTime())) {
+                return date.toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                })
+              }
+            }
+            return String(value)
+          }
 
           return (
             <tr
@@ -762,20 +793,24 @@ export default function ShopDetailsPage() {
               className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
             >
               {/* First column */}
-              <td className="border px-6 py-4 font-semibold text-gray-600">
-                {formatFieldName(first[0])}
-              </td>
-              <td className="border px-6 py-4 text-gray-900">
-                {first[0].toLowerCase().includes("status") ? (
-                  <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
-                    {String(first[1]).toUpperCase()}
-                  </Badge>
-                ) : (
-                  formatFieldValue(first[1], first[0])
-                )}
-              </td>
+              {first && (
+                <>
+                  <td className="border px-6 py-4 font-semibold text-gray-600">
+                    {formatFieldName(first[0])}
+                  </td>
+                  <td className="border px-6 py-4 text-gray-900">
+                    {first[0].toLowerCase().includes("status") ? (
+                      <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
+                        {String(first[1]).toUpperCase()}
+                      </Badge>
+                    ) : (
+                      formatFieldValue(first[1], first[0])
+                    )}
+                  </td>
+                </>
+              )}
 
-              {/* Second column (if exists) */}
+              {/* Second column */}
               {second ? (
                 <>
                   <td className="border px-6 py-4 font-semibold text-gray-600">
@@ -804,6 +839,7 @@ export default function ShopDetailsPage() {
     </table>
   </div>
 </CardContent>
+
 
           </div>
         )}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useParams, useRouter } from "next/navigation"
+
 import { AlertTriangle, RefreshCw, Eye, MapPin, Phone, Calendar, Star, ArrowLeft } from "lucide-react"
 import { fetchShops, fetchVisitedShops, fetchAllUsers, fetchShopById, type Shop, type User } from "@/lib/api"
 
@@ -21,7 +23,7 @@ export default function ReportsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedShopDetail, setSelectedShopDetail] = useState<any>(null)
   const [loadingShopDetail, setLoadingShopDetail] = useState(false)
-
+const router = useRouter()
   useEffect(() => {
     loadData()
   }, [])
@@ -127,11 +129,6 @@ export default function ReportsPage() {
       const properties: Array<{ key: string, value: any }> = []
       
       Object.keys(obj).forEach(key => {
-        // Skip ID fields
-        if (key.toLowerCase().includes('id') && key !== 'validationScore') {
-          return
-        }
-        
         const value = obj[key]
         const fullKey = prefix ? `${prefix}.${key}` : key
         
@@ -148,173 +145,58 @@ export default function ReportsPage() {
 
     const allProperties = getAllProperties(selectedShopDetail)
 
-    // Prepare map data
-    const shopLat = selectedShopDetail?.coordinates?.lat || selectedShopDetail?.gps_n || selectedShopDetail?.lat || 30.67
-    const shopLng = selectedShopDetail?.coordinates?.lng || selectedShopDetail?.gps_e || selectedShopDetail?.lng || 69.36
-
-    type Marker = {
-      lat: number
-      lng: number
-      label?: string
-      color?: string
-    }
-
-    let visitMarkers: Marker[] = []
-    if (Array.isArray(selectedShopDetail?.visitImages)) {
-      selectedShopDetail.visitImages.forEach((img: any, idx: number) => {
-        // Use visitLocation if present
-        if (img?.visitLocation?.startAudit?.latitude && img?.visitLocation?.startAudit?.longitude) {
-          visitMarkers.push({
-            lat: img.visitLocation.startAudit.latitude,
-            lng: img.visitLocation.startAudit.longitude,
-            label: `Visit Start #${idx + 1}`,
-            color: '#22c55e' // green
-          })
-        }
-        if (img?.visitLocation?.photoClick?.latitude && img?.visitLocation?.photoClick?.longitude) {
-          visitMarkers.push({
-            lat: img.visitLocation.photoClick.latitude,
-            lng: img.visitLocation.photoClick.longitude,
-            label: `Photo Click #${idx + 1}`,
-            color: '#3b82f6' // blue
-          })
-        }
-        if (img?.visitLocation?.proceedClick?.latitude && img?.visitLocation?.proceedClick?.longitude) {
-          visitMarkers.push({
-            lat: img.visitLocation.proceedClick.latitude,
-            lng: img.visitLocation.proceedClick.longitude,
-            label: `Proceed Click #${idx + 1}`,
-            color: '#f59e42' // orange
-          })
-        }
-      })
-    }
-
-    // Always show shop location as main marker
-    const allMarkers: Marker[] = [
-      {
-        lat: shopLat,
-        lng: shopLng,
-        label: 'Shop Location',
-        color: '#6366f1' // indigo
-      },
-      ...visitMarkers
-    ]
-
     return (
-      <div className="space-y-6">
-        {/* Shop Details Table */}
-        <Card className="shadow-lg border border-slate-200 bg-white/90 backdrop-blur-sm">
-          <CardHeader className="bg-white rounded-t-lg border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-xl text-black">
-                <Eye className="h-5 w-5 text-indigo-600" />
-                Shop Details: {selectedShopDetail.name || 'Unknown Shop'}
-              </CardTitle>
-              <Button
-                onClick={() => setViewMode('all')}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Reports
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left p-4 font-semibold text-slate-700 w-1/3 border-b border-slate-200">Property</th>
-                    <th className="text-left p-4 font-semibold text-slate-700 w-2/3 border-b border-slate-200">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allProperties.map((property, index) => (
-                    <tr key={index} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 font-medium text-slate-700 capitalize border-b border-slate-100">
-                        {property.key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/\./g, ' → ')}
-                      </td>
-                      <td className="p-4 text-slate-600 border-b border-slate-100">
-                        <div className="max-w-md break-words">
-                          {typeof property.value === 'object' && property.value !== null ? (
-                            <pre className="text-xs bg-slate-100 p-2 rounded overflow-auto max-h-32 border border-slate-200">
-                              {JSON.stringify(property.value, null, 2)}
-                            </pre>
-                          ) : (
-                            renderValue(property.value)
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="bg-white rounded-t-lg border-b">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-xl text-black">
+              <Eye className="h-5 w-5 text-indigo-600" />
+              Shop Details: {selectedShopDetail.name || 'Unknown Shop'}
+            </CardTitle>
+            <Button
+              onClick={() => setViewMode('all')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Reports
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+          <table className="w-full border border-slate-300 border-collapse">
+  <thead className="bg-slate-50">
+    <tr>
+      <th className="text-left p-4 font-semibold text-slate-700 w-1/3 border border-slate-300">Property</th>
+      <th className="text-left p-4 font-semibold text-slate-700 w-2/3 border border-slate-300">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    {allProperties.map((property, index) => (
+      <tr key={index} className="hover:bg-slate-50 transition-colors">
+        <td className="p-4 font-medium text-slate-700 capitalize border border-slate-300">
+          {property.key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/\./g, ' → ')}
+        </td>
+        <td className="p-4 text-slate-600 border border-slate-300">
+          <div className="max-w-md break-words">
+            {typeof property.value === 'object' && property.value !== null ? (
+              <pre className="text-xs bg-slate-100 p-2 rounded overflow-auto max-h-32 border border-slate-200">
+                {JSON.stringify(property.value, null, 2)}
+              </pre>
+            ) : (
+              renderValue(property.value)
+            )}
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
 
-        {/* Map Section */}
-        <Card className="shadow-lg border border-slate-200 bg-white/90 backdrop-blur-sm">
-          <CardHeader className="bg-white rounded-t-lg border-b border-slate-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-indigo-600" /> Shop Location
-              </h2>
-              {/* Pin color legend */}
-              <div className="flex flex-wrap gap-4 items-center mr-6">
-                <span className="flex items-center gap-2">
-                  <span
-                    style={{
-                      background: '#6366f1',
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      display: 'inline-block',
-                      border: '2px solid #fff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                    }}
-                  ></span>
-                  <span className="text-sm text-gray-700">Shop Location</span>
-                </span>
-                {visitMarkers.map((m, idx) => (
-                  <span key={idx} className="flex items-center gap-2">
-                    <span
-                      style={{
-                        background: m.color,
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        border: '2px solid #fff',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                      }}
-                    ></span>
-                    <span className="text-sm text-gray-700">{m.label}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-indigo-200 shadow-lg">
-              {/* Note: You'll need to import and use your MapDynamic component */}
-              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-500">
-                <div className="text-center">
-                  <MapPin className="h-12 w-12 mx-auto mb-2" />
-                  <p>Map Component</p>
-                  <p className="text-sm">Lat: {shopLat}, Lng: {shopLng}</p>
-                  <p className="text-xs mt-2">{visitMarkers.length} visit locations</p>
-                </div>
-              </div>
-              {/* Uncomment when MapDynamic is available:
-              <MapDynamic markers={allMarkers} selectedPinIdx={null} />
-              */}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -356,7 +238,6 @@ export default function ReportsPage() {
             Refresh
           </Button>
         </div>
-
         {/* Show shop detail view */}
         {viewMode === 'detail' && selectedShopDetail && (
           <div>
@@ -527,21 +408,17 @@ export default function ReportsPage() {
                               </div>
                             </td>
                             <td className="p-4">
-                              <Button
-                                size="sm"
-                                onClick={() => handleViewShopDetail(shop.id)}
-                                disabled={loadingShopDetail}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                              >
-                                {loadingShopDetail ? (
-                                  <RefreshCw className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View Details
-                                  </>
-                                )}
-                              </Button>
+                                <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/dashboard/shops/${shop.id}`)
+                    }}
+                    className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Shop Details
+                  </Button>
                             </td>
                           </tr>
                         ))}
