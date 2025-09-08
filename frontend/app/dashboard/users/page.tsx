@@ -3,7 +3,15 @@
 import type React from "react"
 
 import { useEffect, useState, useRef } from "react"
-import { registerUser, fetchAllUsers, updateUser, type User, fetchAssignedShopsForAuditor, fetchShops, type Shop } from "@/lib/api"
+import {
+  registerUser,
+  fetchAllUsers,
+  updateUser,
+  type User,
+  fetchAssignedShopsForAuditor,
+  fetchShops,
+  type Shop,
+} from "@/lib/api"
 import { getSession } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +20,23 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Users, UserPlus, Edit3, Calendar, Shield, UserIcon, Crown, Eye, EyeOff, Briefcase, Search, Filter, Package, RefreshCw, MapPin } from "lucide-react"
+import {
+  Users,
+  UserPlus,
+  Edit3,
+  Calendar,
+  Shield,
+  UserIcon,
+  Crown,
+  Eye,
+  EyeOff,
+  Briefcase,
+  Search,
+  Filter,
+  Package,
+  RefreshCw,
+  MapPin,
+} from "lucide-react"
 
 export default function UsersPage() {
   const [error, setError] = useState<string | null>(null)
@@ -38,23 +62,23 @@ export default function UsersPage() {
 
   useEffect(() => {
     loadUsers()
-    
+
     // Listen for focus events to refresh data when returning to the page
     const handleFocus = () => {
       loadUsers() // Refresh users and shop counts when page gets focus
     }
-    
+
     // Auto-refresh shop counts every 30 seconds
     const interval = setInterval(() => {
       if (users.length > 0) {
         loadUserShopCounts(users)
       }
     }, 30000)
-    
-    window.addEventListener('focus', handleFocus)
-    
+
+    window.addEventListener("focus", handleFocus)
+
     return () => {
-      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener("focus", handleFocus)
       clearInterval(interval)
     }
   }, [])
@@ -80,7 +104,7 @@ export default function UsersPage() {
     try {
       const counts: { [userId: string]: number } = {}
       const session = getSession()
-      
+
       // Fetch shop count for each user using the correct API endpoint
       await Promise.all(
         usersList.map(async (user) => {
@@ -98,46 +122,43 @@ export default function UsersPage() {
                     Authorization: `Bearer ${session?.token}`,
                     "ngrok-skip-browser-warning": "true",
                   },
-                }
+                },
               )
-              
+
               if (response.ok) {
                 const data = await response.json()
                 totalCount = data.count || 0
               }
             } else {
               // For other roles (including QC), fetch from general shops API and filter
-              const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`,
-                {
-                  method: "GET",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session?.token}`,
-                    "ngrok-skip-browser-warning": "true",
-                  },
-                }
-              )
-              
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session?.token}`,
+                  "ngrok-skip-browser-warning": "true",
+                },
+              })
+
               if (response.ok) {
                 const data = await response.json()
                 const shops = data.data || []
-                
+
                 // Count shops assigned to this user (either as auditor or QC)
-                totalCount = shops.filter((shop: any) => 
-                  shop.assignedTo === user.id || shop.assignedQc === user.id
+                totalCount = shops.filter(
+                  (shop: any) => shop.assignedTo === user.id || shop.assignedQc === user.id,
                 ).length
               }
             }
-            
+
             counts[user.id] = totalCount
           } catch (error) {
             console.error(`Error fetching shop count for user ${user.id}:`, error)
             counts[user.id] = 0
           }
-        })
+        }),
       )
-      
+
       setUserShopCounts(counts)
     } catch (error) {
       console.error("Error loading user shop counts:", error)
@@ -156,9 +177,9 @@ export default function UsersPage() {
       setForm({ name: "", username: "", password: "", role: "user" })
       setSuccess("🎉 User registered successfully!")
       setShowPassword(false) // Reset password visibility
-      setFormKey(prev => prev + 1) // Force form re-render with new key
+      setFormKey((prev) => prev + 1) // Force form re-render with new key
       await loadUsers()
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(null)
@@ -183,7 +204,7 @@ export default function UsersPage() {
       setEditForm(null)
       setShowEditPassword(false) // Reset edit password visibility
       await loadUsers()
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(null)
@@ -230,7 +251,7 @@ export default function UsersPage() {
   const getRoleDisplayName = (role: string) => {
     const roleNames = {
       admin: "Admin",
-      manager: "Manager", 
+      manager: "Manager",
       supervisor: "Supervisor",
       executive: "Executive",
       auditor: "Auditor",
@@ -263,9 +284,7 @@ export default function UsersPage() {
         // For other roles (including QC), fetch and filter
         const res = await fetchShops()
         if (res.success) {
-          setAssignedShops(res.shops.filter(shop =>
-            shop.assignedTo === user.id || shop.assignedQc === user.id
-          ))
+          setAssignedShops(res.shops.filter((shop) => shop.assignedTo === user.id || shop.assignedQc === user.id))
         } else {
           setAssignedError(res.error || "Failed to load assigned shops")
         }
@@ -293,10 +312,10 @@ export default function UsersPage() {
           <Button
             onClick={loadUsers}
             variant="outline"
-            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-3 sm:px-4 py-2 text-xs sm:text-sm"
+            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-transparent"
             disabled={loading}
           >
-            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -436,11 +455,7 @@ export default function UsersPage() {
                       className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 hover:text-slate-600"
                       onClick={() => setShowEditPassword(!showEditPassword)}
                     >
-                      {showEditPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   <small className="text-slate-500">Leave blank to keep the current password</small>
@@ -528,9 +543,7 @@ export default function UsersPage() {
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Users className="h-12 w-12 text-slate-400 mb-4" />
                 <p className="text-slate-600 text-lg">
-                  {roleFilter === "all"
-                    ? "No users found."
-                    : `No ${roleFilter}s found.`}
+                  {roleFilter === "all" ? "No users found." : `No ${roleFilter}s found.`}
                 </p>
                 <p className="text-slate-500 text-sm">
                   {roleFilter === "all"
@@ -549,15 +562,15 @@ export default function UsersPage() {
                   <CardHeader className="pb-3 p-4 sm:p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg flex-shrink-0">{getRoleIcon(user.role)}</div>
+                        <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg flex-shrink-0">
+                          {getRoleIcon(user.role)}
+                        </div>
                         <div className="min-w-0 flex-1">
                           <CardTitle className="text-sm sm:text-lg text-slate-900 truncate">{user.name}</CardTitle>
                           <p className="text-xs sm:text-sm text-slate-600 truncate">@{user.username}</p>
                         </div>
                       </div>
-                      <Badge
-                        className={`${getRoleColor(user.role)} border text-xs font-medium flex-shrink-0 ml-2`}
-                      >
+                      <Badge className={`${getRoleColor(user.role)} border text-xs font-medium flex-shrink-0 ml-2`}>
                         {getRoleDisplayName(user.role)}
                       </Badge>
                     </div>
@@ -567,9 +580,9 @@ export default function UsersPage() {
                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                       <span className="truncate">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>
-                    
+
                     {/* Assigned Shops Count */}
-                    <div 
+                    <div
                       className="relative flex items-center gap-2 text-xs sm:text-sm text-blue-600 mb-3 sm:mb-4 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer group"
                       onClick={() => handleUserCardClick(user)}
                     >
@@ -588,7 +601,7 @@ export default function UsersPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Button
                       size="sm"
                       onClick={(e) => {
@@ -611,10 +624,7 @@ export default function UsersPage() {
         {assignedUser && (
           <div className="fixed inset-0 z-50 flex">
             {/* Overlay */}
-            <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-              onClick={() => setAssignedUser(null)}
-            />
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setAssignedUser(null)} />
             {/* Drawer */}
             <div className="relative ml-auto w-full max-w-xs sm:max-w-sm md:max-w-lg bg-white rounded-l-xl shadow-2xl p-4 sm:p-6 lg:p-8 overflow-y-auto">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">
@@ -636,15 +646,19 @@ export default function UsersPage() {
                 </div>
               ) : (
                 <div className="grid gap-3 sm:gap-4">
-                  {assignedShops.map(shop => (
+                  {assignedShops.map((shop) => (
                     <Card key={shop.id} className="border shadow hover:shadow-lg transition-all">
                       <CardHeader className="p-3 sm:p-4">
-                        <CardTitle className="text-sm sm:text-lg font-bold text-blue-700 truncate">{shop.name}</CardTitle>
+                        <CardTitle className="text-sm sm:text-lg font-bold text-blue-700 truncate">
+                          {shop.name}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="p-3 sm:p-4 pt-0">
                         <div className="flex items-start gap-2 text-xs sm:text-sm mb-2">
                           <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                          <span className="text-slate-600 break-words">{shop.address}, {shop.city}, {shop.state} {shop.zipCode}</span>
+                          <span className="text-slate-600 break-words">
+                            {shop.address}, {shop.city}, {shop.state} {shop.zipCode}
+                          </span>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600 mb-2">
                           <span className="flex items-center gap-1">
@@ -660,7 +674,7 @@ export default function UsersPage() {
                         <Button
                           size="sm"
                           className="mt-3 sm:mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
-                          onClick={() => window.location.href = `/dashboard/shops/${shop.id}`}
+                          onClick={() => (window.location.href = `/dashboard/shops/${shop.id}`)}
                         >
                           View Shop Details
                         </Button>
@@ -671,7 +685,7 @@ export default function UsersPage() {
               )}
               <Button
                 variant="outline"
-                className="mt-4 sm:mt-6 w-full border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-2"
+                className="mt-4 sm:mt-6 w-full border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-2 bg-transparent"
                 onClick={() => setAssignedUser(null)}
               >
                 Close

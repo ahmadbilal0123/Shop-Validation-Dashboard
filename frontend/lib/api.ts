@@ -62,9 +62,13 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     zipCode: shop.zipCode || shop.zip_code || "",
     phone: shop.phone || shop.contact_number || "",
     status: shop.status || "active",
-    coordinates: shop.coordinates 
-      || (shop.lat && shop.lng ? { lat: shop.lat, lng: shop.lng } 
-      : (shop.gps_n && shop.gps_e ? { lat: shop.gps_n, lng: shop.gps_e } : undefined)),
+    coordinates:
+      shop.coordinates ||
+      (shop.lat && shop.lng
+        ? { lat: shop.lat, lng: shop.lng }
+        : shop.gps_n && shop.gps_e
+          ? { lat: shop.gps_n, lng: shop.gps_e }
+          : undefined),
     lastVisit: shop.lastVisit || shop.last_visit,
     visitCount: shop.visitCount || shop.visit_count || 0,
     validationScore: shop.validationScore || shop.validation_score,
@@ -79,7 +83,7 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     visit: shop.visit ?? false,
     visitImages: Array.isArray(shop.visitImages)
       ? shop.visitImages.map((img: any) => {
-          const visitLocation = img.visitLocation || {};
+          const visitLocation = img.visitLocation || {}
           return {
             _id: img._id,
             shopImage: img.shopImage || img.shop_image || "",
@@ -125,7 +129,7 @@ function buildQueryParams(params?: {
   status?: string
   city?: string
   search?: string
-  unassigned?: string   // ✅ allow unassigned
+  unassigned?: string // ✅ allow unassigned
 }): string {
   if (!params) return ""
   const queryParams = new URLSearchParams()
@@ -443,12 +447,10 @@ export async function fetchShopById(shopId: string): Promise<{
   }
 }
 
-
-
 export async function assignShopsToUser(
   userId: string,
   shopIds: string[],
-  role: string
+  role: string,
 ): Promise<{ success: boolean; message?: string; error?: string; alreadyAssigned?: string[] }> {
   try {
     const session = getSession()
@@ -478,10 +480,10 @@ export async function assignShopsToUser(
           ? "Shops already assigned to this user"
           : `Server error: ${response.status} ${response.statusText}`)
 
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: errorMessage,
-        alreadyAssigned: data.alreadyAssigned || []
+        alreadyAssigned: data.alreadyAssigned || [],
       }
     }
 
@@ -554,17 +556,16 @@ export async function fetchVisitedShops(params?: {
 
 // ========================= USERS API ========================= //
 
-
 export interface User {
   id: string
   name: string
   username: string
   password: string
   role: string
-  address: string       // user’s personal address
+  address: string // user’s personal address
   location?: string
   createdAt: string
-  shops?: Shop[]        // ✅ linked shops
+  shops?: Shop[] // ✅ linked shops
 }
 export interface UsersResponse {
   success: boolean
@@ -588,8 +589,8 @@ function transformUserData(user: any): User {
     username: user.username,
     password: user.password,
     role: user.role,
-    address: user.address || "",   // ✅ added
-    location: user.location,       // still optional
+    address: user.address || "", // ✅ added
+    location: user.location, // still optional
     createdAt: user.createdAt || new Date().toISOString(),
   }
 }
@@ -620,12 +621,11 @@ export async function fetchUsers(): Promise<UsersResponse> {
   }
 }
 
-
 export async function registerUser(userData: {
   name: string
   username: string
   password: string
-  role?: string   // optional now
+  role?: string // optional now
 }): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
   try {
     const apiUrl = buildApiUrl("/api/users/register")
@@ -693,7 +693,7 @@ export async function updateUser(
     username?: string
     role?: string
     password?: string
-  }
+  },
 ): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
   try {
     const apiUrl = buildApiUrl(`/api/users/update-user/${id}`)
@@ -756,43 +756,43 @@ export async function fetchVisitStats(): Promise<{
 export async function fetchPendingAndVisitedShops(): Promise<ShopsResponse> {
   try {
     // Only send 'visit=true' in the query string
-    const params = new URLSearchParams();
-    params.append("visit", "false");
+    const params = new URLSearchParams()
+    params.append("visit", "false")
 
-    const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops");
-    const urlWithParams = `${apiUrl}?${params}`;
+    const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops")
+    const urlWithParams = `${apiUrl}?${params}`
 
-    const headers = buildAuthHeaders();
-    const response = await fetch(urlWithParams, { method: "GET", headers });
+    const headers = buildAuthHeaders()
+    const response = await fetch(urlWithParams, { method: "GET", headers })
 
-    const errorCheck = await validateResponse(response);
-    if (errorCheck) return errorCheck;
+    const errorCheck = await validateResponse(response)
+    if (errorCheck) return errorCheck
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (response.status === 401) {
-      return buildError("Unauthorized. Please log in again.");
+      return buildError("Unauthorized. Please log in again.")
     }
 
     if (response.ok && data) {
-      let shopsArray: any[] = [];
+      let shopsArray: any[] = []
 
       if (Array.isArray(data)) {
-        shopsArray = data;
+        shopsArray = data
       } else if (Array.isArray(data.data)) {
-        shopsArray = data.data;
+        shopsArray = data.data
       } else if (Array.isArray(data.shops)) {
-        shopsArray = data.shops;
+        shopsArray = data.shops
       } else {
-        shopsArray = [];
+        shopsArray = []
       }
 
-      const shops = mapShops(shopsArray);
-      return { success: true, shops, total: data.count || data.total || shops.length };
+      const shops = mapShops(shopsArray)
+      return { success: true, shops, total: data.count || data.total || shops.length }
     }
 
-    return buildError(data.message || data.error || "Failed to fetch shops");
+    return buildError(data.message || data.error || "Failed to fetch shops")
   } catch (error) {
-    return buildError(error instanceof Error ? error.message : "Network error");
+    return buildError(error instanceof Error ? error.message : "Network error")
   }
 }

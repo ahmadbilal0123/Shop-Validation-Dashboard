@@ -4,14 +4,17 @@ import { useEffect, useState } from "react"
 import { fetchShopById } from "@/lib/api"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSession } from "@/lib/auth"
-import { assignShopsToUser} from "@/lib/api"
+import { assignShopsToUser } from "@/lib/api"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Search, UserCheck, Package, Grid3X3, List } from "lucide-react"
-import { showAssignmentNotification, showErrorNotification, showAssignmentErrorNotification } from "@/lib/notifications"
+import {
+  showAssignmentNotification,
+  showErrorNotification,
+  showAssignmentErrorNotification,
+} from "@/lib/notifications"
 
 interface User {
   id: string
@@ -24,34 +27,31 @@ export default function AssignShopsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [users, setUsers] = useState<User[]>([])
-  const [selectedAuditorId, setSelectedAuditorId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
-    // Load preference from localStorage, default to 'list'
-    if (typeof window !== 'undefined') {
-      const savedMode = localStorage.getItem('auditorViewMode');
-      return (savedMode === 'grid' || savedMode === 'list') ? savedMode as 'list' | 'grid' : 'list';
+  const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
+    if (typeof window !== "undefined") {
+      const savedMode = localStorage.getItem("userViewMode")
+      return savedMode === "grid" || savedMode === "list" ? (savedMode as "list" | "grid") : "list"
     }
-    return 'list';
+    return "list"
   })
 
-  // Function to handle view mode changes and save to localStorage
-  const handleViewModeChange = (mode: 'list' | 'grid') => {
-    setViewMode(mode);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auditorViewMode', mode);
+  const handleViewModeChange = (mode: "list" | "grid") => {
+    setViewMode(mode)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("userViewMode", mode)
     }
-  };
+  }
 
   const shopIds = searchParams.get("shopIds")?.split(",") || []
   const [shopNames, setShopNames] = useState<{ [id: string]: string }>({})
 
   useEffect(() => {
     async function loadShopNames() {
-      // Only fetch if shopIds are non-empty and not already loaded
-      const idsToFetch = shopIds.filter(id => !shopNames[id])
+      const idsToFetch = shopIds.filter((id) => !shopNames[id])
       if (idsToFetch.length === 0) return
       const names: { [id: string]: string } = { ...shopNames }
       await Promise.all(
@@ -86,37 +86,35 @@ export default function AssignShopsPage() {
         return
       }
 
-      const usersRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/get-assignies`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
+      const usersRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/get-assignies`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        }
+      )
 
       if (usersRes.ok) {
         const usersData = await usersRes.json()
-        // Use .users if present, else .auditors
         const rawList = usersData.users || usersData.auditors || []
-        const mappedUsers = rawList.map((auditor: any) => ({
-          id: auditor._id,
-          name: auditor.username,
-          email: auditor.username,
-          role: auditor.role,
+
+        const mappedUsers = rawList.map((u: any) => ({
+          id: u._id,
+          name: u.username,
+          email: u.username,
+          role: u.role,
         }))
-        
-        // Filter to show only auditors (exclude QC users)
-        const auditorsOnly = mappedUsers.filter((user: User) => 
-          user.role.toLowerCase() === 'auditor'
-        )
-        
-        setUsers(auditorsOnly)
-        
-        // Show message if no auditors found
-        if (auditorsOnly.length === 0) {
-          showErrorNotification("No Auditors Found", "No auditors are available for assignment.")
+
+        // ✅ Show all users
+        setUsers(mappedUsers)
+
+        if (mappedUsers.length === 0) {
+          showErrorNotification("No Users Found", "No users are available for assignment.")
         }
       } else {
-        showErrorNotification("Failed to Load Users", "Unable to fetch auditor list from server.")
+        showErrorNotification("Failed to Load Users", "Unable to fetch user list from server.")
       }
     } catch (error) {
       console.error("Error loading users:", error)
@@ -127,45 +125,48 @@ export default function AssignShopsPage() {
   }
 
   const handleAssignShops = async () => {
-    if (!selectedAuditorId) {
-      showErrorNotification("No Auditor Selected", "Please select an auditor before assigning shops.")
+    if (!selectedUserId) {
+      showErrorNotification("No User Selected", "Please select a user before assigning shops.")
       return
     }
 
     setAssigning(true)
     try {
-      const selectedAuditor = users.find(u => u.id === selectedAuditorId)
-      console.log("Selected auditor:", selectedAuditor) // Debug log
-      
-      const result = await assignShopsToUser(selectedAuditorId, shopIds, selectedAuditor?.role || "auditor")
+      const selectedUser = users.find((u) => u.id === selectedUserId)
 
-      console.log("Assignment result:", result) // Debug log
+      const result = await assignShopsToUser(
+        selectedUserId,
+        shopIds,
+        selectedUser?.role || "user"
+      )
 
       if (result.success) {
-        // Get shop names for the notification
-        const assignedShopNames = shopIds.map(id => shopNames[id] || `Shop #${id.slice(-6)}`)
-        
+        const assignedShopNames = shopIds.map(
+          (id) => shopNames[id] || `Shop #${id.slice(-6)}`
+        )
+
         showAssignmentNotification({
-          userName: selectedAuditor?.name || "Unknown User",
-          userRole: selectedAuditor?.role || "auditor", 
+          userName: selectedUser?.name || "Unknown User",
+          userRole: selectedUser?.role || "user",
           shopCount: shopIds.length,
-          shopNames: assignedShopNames
+          shopNames: assignedShopNames,
         })
-        
+
         router.push("/dashboard/shops")
       } else {
-        console.log("Assignment failed with error:", result.error) // Debug log
-        
-        // Check if it's an assignment error with specific shop details
-        if (result.error?.includes("already assigned") || (result.alreadyAssigned && result.alreadyAssigned.length > 0)) {
-          // Get shop names for already assigned shops if available
-          const alreadyAssignedNames = result.alreadyAssigned 
-            ? result.alreadyAssigned.map((id: string) => shopNames[id] || `Shop #${id.slice(-6)}`)
+        if (
+          result.error?.includes("already assigned") ||
+          (result.alreadyAssigned && result.alreadyAssigned.length > 0)
+        ) {
+          const alreadyAssignedNames = result.alreadyAssigned
+            ? result.alreadyAssigned.map(
+                (id: string) => shopNames[id] || `Shop #${id.slice(-6)}`
+              )
             : []
-          
+
           showAssignmentErrorNotification(
-            "Assignment Failed", 
-            result.error || "Some shops are already assigned to another auditor.",
+            "Assignment Failed",
+            result.error || "Some shops are already assigned to another user.",
             alreadyAssignedNames
           )
         } else {
@@ -183,7 +184,7 @@ export default function AssignShopsPage() {
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (loading) {
@@ -199,7 +200,7 @@ export default function AssignShopsPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 overflow-hidden">
-      {/* Fixed Header */}
+      {/* Header */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 z-40 shadow-sm py-4 sm:py-5 flex-shrink-0">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-4 relative">
@@ -212,12 +213,12 @@ export default function AssignShopsPage() {
               Back to Shops
             </Button>
             <h1 className="text-xl sm:text-2xl font-bold text-blue-900 absolute left-1/2 transform -translate-x-1/2">
-              Assign Shops to Auditors
+              Assign Shops to Users
             </h1>
-            <div></div> {/* Invisible spacer for balance */}
+            <div></div>
           </div>
 
-          {/* Selected Shops Display Section - Compact */}
+          {/* Selected Shops */}
           <div className="bg-blue-50/80 backdrop-blur-sm rounded-xl border border-blue-200 shadow-sm p-3 sm:p-4 mb-4">
             <h2 className="text-base sm:text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
               <Package className="w-4 h-4" />
@@ -234,7 +235,9 @@ export default function AssignShopsPage() {
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{shopNames[shopId] || `Shop #${shopId.slice(-6)}`}</p>
+                      <p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
+                        {shopNames[shopId] || `Shop #${shopId.slice(-6)}`}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -242,20 +245,27 @@ export default function AssignShopsPage() {
             </div>
           </div>
 
+          {/* Status & Assign Button */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-green-50 border-green-200 text-green-700 font-semibold w-full sm:w-auto justify-center">
+              <Badge
+                variant="outline"
+                className="px-2 sm:px-3 py-1 text-xs bg-green-50 border-green-200 text-green-700 font-semibold w-full sm:w-auto justify-center"
+              >
                 <Users className="w-3 h-3 mr-1" />
-                {selectedAuditorId ? 1 : 0} Auditor Selected
+                {selectedUserId ? 1 : 0} User Selected
               </Badge>
-              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto justify-center">
+              <Badge
+                variant="outline"
+                className="px-2 sm:px-3 py-1 text-xs bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto justify-center"
+              >
                 <Package className="w-3 h-3 mr-1" />
                 {shopIds.length} Shops to Assign
               </Badge>
             </div>
             <Button
               onClick={handleAssignShops}
-              disabled={assigning || !selectedAuditorId}
+              disabled={assigning || !selectedUserId}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
             >
               {assigning ? (
@@ -274,145 +284,166 @@ export default function AssignShopsPage() {
         </div>
       </div>
 
+      {/* Users List */}
       <div className="flex flex-col h-full overflow-hidden">
         <div className="flex-shrink-0 px-4 sm:px-6 pt-2">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 h-[calc(100vh-140px)] flex flex-col">
               <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Users className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
-                Select Auditors ({filteredUsers.length})
-              </h2>
-            </div>
-
-            {/* Search Users + View Toggle - Compact */}
-            <div className="flex gap-2 mb-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
-                <Input
-                  placeholder="Search auditors..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-9"
-                />
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
+                  Select Users ({filteredUsers.length})
+                </h2>
               </div>
-              <div className="flex border border-blue-200 rounded-lg overflow-hidden">
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleViewModeChange('list')}
-                  className={`px-3 py-2 h-9 rounded-none ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-blue-600'}`}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleViewModeChange('grid')}
-                  className={`px-3 py-2 h-9 rounded-none border-l border-blue-200 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-blue-600'}`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
 
-            {/* Users List/Grid - Scrollable area */}
-            <div className="flex-1 overflow-y-auto pr-2" style={{minHeight: '300px', maxHeight: 'calc(100vh - 400px)'}}>
-              {filteredUsers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Users className="w-12 h-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Auditors Found</h3>
-                  <p className="text-gray-600 max-w-sm">
-                    {searchQuery 
-                      ? `No auditors match "${searchQuery}". Try adjusting your search.`
-                      : "No auditors are currently available for shop assignment."
-                    }
-                  </p>
+              {/* Search & View Toggle */}
+              <div className="flex gap-2 mb-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-9"
+                  />
                 </div>
-              ) : viewMode === 'list' ? (
-                <div className="space-y-3">
-                  {filteredUsers.map((user) => (
-                    <Card
-                      key={user.id}
-                      className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
-                        selectedAuditorId === user.id
-                          ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
-                          : "border-blue-100 hover:border-blue-200"
-                      }`}
-                      onClick={() => setSelectedAuditorId(user.id)}
-                    >
-                      <CardContent className="p-3 sm:p-4">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="auditor"
-                            checked={selectedAuditorId === user.id}
-                            onChange={() => setSelectedAuditorId(user.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.name}</div>
-                            <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
-                            <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-2 py-0.5">
-                              {user.role}
-                            </Badge>
-                          </div>
-                          {selectedAuditorId === user.id && (
-                            <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-green-100 rounded-full">
-                              <UserCheck className="w-3 sm:w-4 h-3 sm:h-4 text-green-600" />
+                <div className="flex border border-blue-200 rounded-lg overflow-hidden">
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("list")}
+                    className={`px-3 py-2 h-9 rounded-none ${
+                      viewMode === "list" ? "bg-blue-600 text-white" : "text-blue-600"
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("grid")}
+                    className={`px-3 py-2 h-9 rounded-none border-l border-blue-200 ${
+                      viewMode === "grid" ? "bg-blue-600 text-white" : "text-blue-600"
+                    }`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Users List/Grid */}
+              <div
+                className="flex-1 overflow-y-auto pr-2"
+                style={{ minHeight: "300px", maxHeight: "calc(100vh - 400px)" }}
+              >
+                {filteredUsers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Users className="w-12 h-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
+                    <p className="text-gray-600 max-w-sm">
+                      {searchQuery
+                        ? `No users match "${searchQuery}". Try adjusting your search.`
+                        : "No users are currently available for shop assignment."}
+                    </p>
+                  </div>
+                ) : viewMode === "list" ? (
+                  <div className="space-y-3">
+                    {filteredUsers.map((user) => (
+                      <Card
+                        key={user.id}
+                        className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
+                          selectedUserId === user.id
+                            ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
+                            : "border-blue-100 hover:border-blue-200"
+                        }`}
+                        onClick={() => setSelectedUserId(user.id)}
+                      >
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name="user"
+                              checked={selectedUserId === user.id}
+                              onChange={() => setSelectedUserId(user.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                                {user.name}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-0.5 truncate">
+                                {user.email}
+                              </div>
+                              <Badge
+                                variant="secondary"
+                                className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-2 py-0.5"
+                              >
+                                {user.role}
+                              </Badge>
                             </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {filteredUsers.map((user) => (
-                    <Card
-                      key={user.id}
-                      className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
-                        selectedAuditorId === user.id
-                          ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
-                          : "border-blue-100 hover:border-blue-200"
-                      }`}
-                      onClick={() => setSelectedAuditorId(user.id)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-start gap-2">
-                          <input
-                            type="radio"
-                            name="auditor"
-                            checked={selectedAuditorId === user.id}
-                            onChange={() => setSelectedAuditorId(user.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500 mt-0.5"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{user.name}</div>
-                            <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
-                            <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-1 py-0.5">
-                              {user.role}
-                            </Badge>
+                            {selectedUserId === user.id && (
+                              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-green-100 rounded-full">
+                                <UserCheck className="w-3 sm:w-4 h-3 sm:h-4 text-green-600" />
+                              </div>
+                            )}
                           </div>
-                          {selectedAuditorId === user.id && (
-                            <div className="flex items-center justify-center w-5 h-5 bg-green-100 rounded-full flex-shrink-0">
-                              <UserCheck className="w-3 h-3 text-green-600" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {filteredUsers.map((user) => (
+                      <Card
+                        key={user.id}
+                        className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
+                          selectedUserId === user.id
+                            ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
+                            : "border-blue-100 hover:border-blue-200"
+                        }`}
+                        onClick={() => setSelectedUserId(user.id)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="radio"
+                              name="user"
+                              checked={selectedUserId === user.id}
+                              onChange={() => setSelectedUserId(user.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500 mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
+                                {user.name}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-0.5 truncate">
+                                {user.email}
+                              </div>
+                              <Badge
+                                variant="secondary"
+                                className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-1 py-0.5"
+                              >
+                                {user.role}
+                              </Badge>
                             </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                            {selectedUserId === user.id && (
+                              <div className="flex items-center justify-center w-5 h-5 bg-green-100 rounded-full flex-shrink-0">
+                                <UserCheck className="w-3 h-3 text-green-600" />
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      </div>
     </div>
-  );
+  )
 }
