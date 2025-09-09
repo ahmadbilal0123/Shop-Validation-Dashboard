@@ -121,7 +121,7 @@ export default function PendingShopsPage() {
         <div className="text-center space-y-4 py-8">
           {/* <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-full mb-4">
             <Store className="h-5 w-5 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">ShelfSense</span>
+            <span className="text-sm font-medium text-blue-800">ShelfVoice</span>
           </div> */}
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -153,8 +153,8 @@ export default function PendingShopsPage() {
                   <p className="text-3xl font-bold text-slate-900">{shops.length}</p>
                   <p className="text-xs text-slate-500">Shops pending</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                  <Store className="h-6 w-6 text-blue-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center transition-colors">
+                  <Store className="h-6 w-6 text-black" />
                 </div>
               </div>
             </CardContent>
@@ -294,7 +294,7 @@ export default function PendingShopsPage() {
                       e.stopPropagation()
                       router.push(`/dashboard/shops/${shop.id}`)
                     }}
-                    className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                    className="w-full mt-4 sm:mt-6  text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Shop Details

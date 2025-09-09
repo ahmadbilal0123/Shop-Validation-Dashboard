@@ -429,9 +429,10 @@ export default function ShopDetailsPage() {
               Back
             </Button>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {shop?.shop_name || shop?.name || "Shop Details"}
-              </h1>
+              <h1 className="text-4xl font-bold text-black">
+            {shop?.shop_name || shop?.name || "Shop Details"}
+          </h1>
+
               <p className="text-gray-600 mt-1 text-sm">Detailed information & analytics</p>
             </div>
           </div>

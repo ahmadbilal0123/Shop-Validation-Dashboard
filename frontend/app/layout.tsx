@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 // ✅ Metadata (kept same, but favicon added separately)
 export const metadata: Metadata = {
-  title: 'ShelfSense Dashboard',
+  title: 'ShelfVoice Dashboard',
   description: 'Created with v0',
   generator: 'v0.dev',
 }

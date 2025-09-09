@@ -212,26 +212,26 @@ export default function ShopsPage() {
       <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-900">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black">
               Admin Shop Management
             </h1>
-            <p className="text-blue-700 text-sm sm:text-base">
+            <p className="text-black-700 text-sm sm:text-base">
               Efficiently manage and assign shops to auditors
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-xl border border-blue-200">
-              <Package className="w-5 h-5 text-blue-700" />
-              <span className="font-semibold text-blue-800">{totalShops} Total Shops</span>
+              <Package className="w-5 h-5 text-black" />
+              <span className="font-semibold text-black">{totalShops} Total Shops</span>
             </div>
             <div className="flex items-center gap-2 bg-indigo-100 px-4 py-2 rounded-xl border border-indigo-200">
-              <Users className="w-5 h-5 text-indigo-700" />
-              <span className="font-semibold text-indigo-800">{selectedShopIds.length} Selected</span>
+              <Users className="w-5 h-5 text-black" />
+              <span className="font-semibold text-black">{selectedShopIds.length} Selected</span>
             </div>
             <Button
               onClick={refreshShops}
               variant="outline"
-              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="flex items-center gap-2 border-blue-200 text-black hover:bg-blue-50"
               disabled={loading}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -263,7 +263,7 @@ export default function ShopsPage() {
                   variant={!showVisitedOnly ? "default" : "outline"}
                   className={
                     !showVisitedOnly
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      ? "bg-black hover:bg-black text-white"
                       : "border-blue-300 text-blue-700 hover:bg-blue-50"
                   }
                   onClick={() => setShowVisitedOnly(false)}
@@ -273,12 +273,12 @@ export default function ShopsPage() {
               </div>
               {/* Search */}
               <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
                 <Input
                   placeholder="Search shops..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 border-blue-200 focus:ring-blue-400 w-full"
+                  className="pl-10 pr-10 border-blue-200 focus:ring-black w-full"
                 />
                 {searchQuery && (
                   <Button
@@ -300,8 +300,8 @@ export default function ShopsPage() {
                 variant={selectMode ? "outline" : "default"}
                 className={
                   selectMode
-                    ? "border-blue-300 text-blue-700 hover:bg-blue-50"
-                    : "bg-blue-700 hover:bg-blue-800 text-white"
+                    ? "border-blue-300 text-black hover:bg-blue-50"
+                    : "bg-black hover:bg-gray-800 text-white"
                 }
               >
                 {selectMode ? "Cancel Selection" : "Select Shops"}
@@ -311,14 +311,14 @@ export default function ShopsPage() {
                   <Button
                     onClick={handleSelectAll}
                     variant="outline"
-                    className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                    className="border-indigo-300 text-black hover:bg-indigo-50"
                   >
                     {selectedShopIds.length === shops.length ? "Deselect All" : "Select All"}
                   </Button>
                   <Button
                     onClick={handleAssignShopsClick}
                     disabled={assignLoading || selectedShopIds.length === 0}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="bg-black hover:bg-black text-white"
                   >
                     {assignLoading
                       ? "Assigning..."
@@ -460,7 +460,7 @@ export default function ShopsPage() {
                     <div className="flex items-center justify-between pt-3 border-t border-slate-200">
                       <div className="text-sm text-slate-600">
                         <span className="font-semibold">Visits:</span>{" "}
-                        <span className="text-blue-600 font-bold">{shop.visitImages?.length || 0}</span>
+                        <span className="text-black font-bold">{shop.visitImages?.length || 0}</span>
                       </div>
                       {shop.lastVisit && (
                         <div className="text-sm text-blue-600 font-semibold">
@@ -476,7 +476,7 @@ export default function ShopsPage() {
                       e.stopPropagation(); // Prevent card click when clicking the button
                       router.push(`/dashboard/shops/${shop.id}`)
                     }}
-                    className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                    className="w-full mt-4 sm:mt-6  hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Shop Details

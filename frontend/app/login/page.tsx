@@ -261,7 +261,7 @@ export default function LoginPage() {
             {/* Centered Brand Section */}
             <div className="flex flex-col items-center">
               <div>
-                <h1 className="text-6xl xl:text-7xl font-bold text-white mb-4 tracking-tight">ShelfSense</h1>
+                <h1 className="text-6xl xl:text-7xl font-bold text-white mb-4 tracking-tight">ShelfVoice</h1>
                 <p className="text-blue-200 text-xl xl:text-2xl font-medium text-center">
                   Powered by Gen-T AI Solutions
                 </p>
@@ -282,14 +282,14 @@ export default function LoginPage() {
             </div>
 
             {/* Mobile Brand Header */}
-            <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10 text-center">
+            <div className="absolute top-18 left-1/2 transform -translate-x-1/2 z-10 text-center">
               <div className="flex items-center justify-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                  <img src="/logo.png" alt="ShelfSense Logo" className="h-6 w-6" />
+                <div className="w-10 h-10  flex items-center justify-center shadow-lg">
+                  <img src="/logo.png" alt="ShelfSense Logo" className="h-10 w-20" />
                 </div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">ShelfSense</h1>
+                <h1 className="text-5xl font-bold text-white tracking-tight">ShelfVoice</h1>
               </div>
-              <p className="text-blue-200 text-sm font-medium">Powered by Gen-T AI Solutions</p>
+              <p className="text-blue-200 text-sm font-sm">Powered by Gen-T AI Solutions</p>
             </div>
           </div>
 
@@ -301,8 +301,8 @@ export default function LoginPage() {
 
               {/* Logo - Hidden on mobile since it's in the background */}
               <div className="mx-auto mb-6 lg:mb-8 relative hidden lg:block">
-                <div className="flex h-16 lg:h-20 w-16 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 shadow-xl">
-                  <img src="/logo.png" alt="ShelfSense Logo" className="h-9 lg:h-12 w-9 lg:w-12 drop-shadow-md" />
+                <div className="flex h-16 lg:h-20 w-16 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl ">
+                  <img src="/logo.png" alt="ShelfSense Logo" className="h-14 lg:h-20 w-14 lg:w-20 drop-shadow-md" />
                 </div>
               </div>
 
@@ -310,7 +310,7 @@ export default function LoginPage() {
                 Welcome Back
               </CardTitle>
               <CardDescription className="text-slate-600 text-base lg:text-lg font-medium">
-                Sign in to access your ShelfSense dashboard
+                Sign in to access your ShelfVoice dashboard
               </CardDescription>
             </CardHeader>
 
@@ -319,7 +319,7 @@ export default function LoginPage() {
                 {/* Responsive Email Field */}
                 <div className="space-y-2 lg:space-y-3">
                   <Label htmlFor="username" className="text-sm lg:text-base font-bold text-slate-700 tracking-wide">
-                    Email Address
+                    Username
                   </Label>
                   <div className="relative group">
                     <Input
@@ -341,12 +341,7 @@ export default function LoginPage() {
                     <Label htmlFor="password" className="text-sm lg:text-base font-bold text-slate-700 tracking-wide">
                       Password
                     </Label>
-                    <a
-                      className="text-blue-600 text-xs sm:text-sm hover:text-blue-700 hover:underline transition-all duration-200 font-semibold"
-                      href="#"
-                    >
-                      Forgot password?
-                    </a>
+                    
                   </div>
                   <div className="relative group">
                     <Input
@@ -362,7 +357,7 @@ export default function LoginPage() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-2 lg:right-3 top-1/2 -translate-y-1/2 h-8 lg:h-10 w-8 lg:w-10 p-0 hover:bg-slate-100 rounded-lg lg:rounded-xl transition-all duration-200 hover:scale-110"
+                      className="absolute right-2 lg:right-3 top-1/2 -translate-y-1/2 h-8 lg:h-10 w-8 lg:w-10 p-0  rounded-lg lg:rounded-xl transition-all duration-200 hover:scale-110"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -405,32 +400,7 @@ export default function LoginPage() {
                   )}
                 </Button>
 
-                {/* Responsive Footer */}
-                <div className="text-center pt-4 lg:pt-6 space-y-3 lg:space-y-4">
-                  <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
-                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed px-2">
-                    By signing in, you agree to our{" "}
-                    <a
-                      href="#"
-                      className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors"
-                    >
-                      Terms of Service
-                    </a>{" "}
-                    and{" "}
-                    <a
-                      href="#"
-                      className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors"
-                    >
-                      Privacy Policy
-                    </a>
-                  </p>
-
-                  {/* Security Badge */}
-                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400 pt-1 lg:pt-2">
-                    <Shield className="h-3 lg:h-4 w-3 lg:w-4" />
-                    <span className="font-medium">256-bit SSL Encryption</span>
-                  </div>
-                </div>
+               
               </form>
             </CardContent>
           </Card>

@@ -302,12 +302,10 @@ export default function UsersPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="container mx-auto p-6 space-y-8 max-w-7xl">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-8">
-          <div className="p-2 sm:p-3 bg-blue-600 rounded-xl shadow-lg">
-            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-          </div>
+        
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">User Management</h1>
-            <p className="text-sm sm:text-base text-slate-600 mt-1">Manage user accounts and permissions</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 text-center">User Management</h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-1 text-center">Manage user accounts and permissions</p>
           </div>
           <Button
             onClick={loadUsers}

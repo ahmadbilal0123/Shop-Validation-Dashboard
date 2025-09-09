@@ -52,7 +52,7 @@ export default function ManagerDashboard() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Store className="w-5 h-5" />
             </div>
-            <span className="text-xl font-semibold">ShelfSense</span>
+            <span className="text-xl font-semibold">ShelfVoice</span>
           </div>
         </div>
 
