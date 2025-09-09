@@ -736,7 +736,7 @@ export default function ShopDetailsPage() {
               </Card>
             )}
 
-           <CardContent className="p-0">
+   <CardContent className="p-0">
   <div className="overflow-x-auto">
     <table className="w-full border border-gray-300 border-collapse">
       <thead>
@@ -748,97 +748,101 @@ export default function ShopDetailsPage() {
         </tr>
       </thead>
       <tbody>
-        {Array.from({
-          length: Math.ceil(
-            Object.entries(shop).filter(([key]) => key.toLowerCase() !== "id").length / 2
-          ),
-        }).map((_, i) => {
-          const entries = Object.entries(shop).filter(([key]) => key.toLowerCase() !== "id")
-          const first = entries[i * 2]
-          const second = entries[i * 2 + 1]
+        {(() => {
+          // 🚫 filter unwanted + empty fields
+          const entries = Object.entries(shop).filter(([key, value]) => {
+            if (key.toLowerCase() === "id") return false
+            if (key.toLowerCase().includes("assigned")) return false
+            if (value === null || value === undefined || value === "") return false
+            return true
+          })
 
-          const rowKey = `${first?.[0] || "empty"}-${second?.[0] || "empty"}`
+          return Array.from({ length: Math.ceil(entries.length / 2) }).map((_, i) => {
+            const first = entries[i * 2]
+            const second = entries[i * 2 + 1]
+            const rowKey = `${first?.[0] || "empty"}-${second?.[0] || "empty"}`
 
-          // ✅ Format field names (add space) 
-          const formatFieldName = (field: string) =>
-            field
-              .replace(/([A-Z])/g, " $1") // split camelCase
-              .replace(/_/g, " ") // replace underscores
-              .replace(/\bid\b/gi, "") // remove "id"
-              .trim()
-              .replace(/\b\w/g, (char) => char.toUpperCase()) // capitalize
+            const formatFieldName = (field: string) =>
+              field
+                .replace(/([A-Z])/g, " $1")
+                .replace(/_/g, " ")
+                .replace(/\bid\b/gi, "")
+                .replace(/\bassigned\b/gi, "")
+                .trim()
+                .replace(/\b\w/g, (char) => char.toUpperCase())
 
-          // ✅ Format field values (good date formatting)
-          const formatFieldValue = (value: any, key: string) => {
-            if (!value) return "—"
-            const lowerKey = key.toLowerCase()
-            if (lowerKey.includes("date") || lowerKey.includes("time")) {
-              const date = new Date(value)
-              if (!isNaN(date.getTime())) {
-                return date.toLocaleString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                })
+            const formatFieldValue = (value: any, key: string) => {
+              if (!value) return "—"
+              const lowerKey = key.toLowerCase()
+              if (lowerKey.includes("date") || lowerKey.includes("time")) {
+                const date = new Date(value)
+                if (!isNaN(date.getTime())) {
+                  return date.toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                  })
+                }
               }
+              return String(value)
             }
-            return String(value)
-          }
 
-          return (
-            <tr
-              key={rowKey}
-              className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
-            >
-              {/* First column */}
-              {first && (
-                <>
-                  <td className="border px-6 py-4 font-semibold text-gray-600">
-                    {formatFieldName(first[0])}
-                  </td>
-                  <td className="border px-6 py-4 text-gray-900">
-                    {first[0].toLowerCase().includes("status") ? (
-                      <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
-                        {String(first[1]).toUpperCase()}
-                      </Badge>
-                    ) : (
-                      formatFieldValue(first[1], first[0])
-                    )}
-                  </td>
-                </>
-              )}
+            return (
+              <tr
+                key={rowKey}
+                className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-indigo-50 transition-all duration-200"
+              >
+                {/* First column */}
+                {first && (
+                  <>
+                    <td className="border px-6 py-4 font-semibold text-gray-600">
+                      {formatFieldName(first[0])}
+                    </td>
+                    <td className="border px-6 py-4 text-gray-900">
+                      {first[0].toLowerCase().includes("status") ? (
+                        <Badge className={`${getStatusColor(String(first[1]))} font-bold`}>
+                          {String(first[1]).toUpperCase()}
+                        </Badge>
+                      ) : (
+                        formatFieldValue(first[1], first[0])
+                      )}
+                    </td>
+                  </>
+                )}
 
-              {/* Second column */}
-              {second ? (
-                <>
-                  <td className="border px-6 py-4 font-semibold text-gray-600">
-                    {formatFieldName(second[0])}
-                  </td>
-                  <td className="border px-6 py-4 text-gray-900">
-                    {second[0].toLowerCase().includes("status") ? (
-                      <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
-                        {String(second[1]).toUpperCase()}
-                      </Badge>
-                    ) : (
-                      formatFieldValue(second[1], second[0])
-                    )}
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="border px-6 py-4"></td>
-                  <td className="border px-6 py-4"></td>
-                </>
-              )}
-            </tr>
-          )
-        })}
+                {/* Second column */}
+                {second ? (
+                  <>
+                    <td className="border px-6 py-4 font-semibold text-gray-600">
+                      {formatFieldName(second[0])}
+                    </td>
+                    <td className="border px-6 py-4 text-gray-900">
+                      {second[0].toLowerCase().includes("status") ? (
+                        <Badge className={`${getStatusColor(String(second[1]))} font-bold`}>
+                          {String(second[1]).toUpperCase()}
+                        </Badge>
+                      ) : (
+                        formatFieldValue(second[1], second[0])
+                      )}
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="border px-6 py-4"></td>
+                    <td className="border px-6 py-4"></td>
+                  </>
+                )}
+              </tr>
+            )
+          })
+        })()}
       </tbody>
     </table>
   </div>
 </CardContent>
+
 
 
           </div>

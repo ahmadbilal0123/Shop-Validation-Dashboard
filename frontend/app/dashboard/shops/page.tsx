@@ -36,78 +36,54 @@ export default function ShopsPage() {
   const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string>("")
-  // Visited filter state: true = show only visited shops, false = show all
   const [showVisitedOnly, setShowVisitedOnly] = useState(false)
-  // Always reset to all shops on mount
-  useEffect(() => {
-    setShowVisitedOnly(false)
-  }, [])
 
-  // Selection state with persistence
+  // Selection state
   const [selectMode, setSelectMode] = useState(false)
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
 
-  // Load saved selections on mount
-  useEffect(() => {
-    const savedSelections = sessionStorage.getItem('selectedShopIds')
-    const savedSelectMode = sessionStorage.getItem('selectMode')
-    
-    if (savedSelections) {
-      try {
-        const parsedSelections = JSON.parse(savedSelections)
-        if (Array.isArray(parsedSelections)) {
-          setSelectedShopIds(parsedSelections)
-        }
-      } catch (error) {
-        console.error('Error parsing saved selections:', error)
-      }
-    }
-    
-    if (savedSelectMode === 'true') {
-      setSelectMode(true)
-    }
-  }, [])
+  // Toggle shop selection
+  const toggleShopSelection = (shopId: string) => {
+    setSelectedShopIds((prev) =>
+      prev.includes(shopId) ? prev.filter((id) => id !== shopId) : [...prev, shopId]
+    )
+  }
 
-  // Save selections whenever they change
-  useEffect(() => {
-    if (selectedShopIds.length > 0) {
-      sessionStorage.setItem('selectedShopIds', JSON.stringify(selectedShopIds))
+  // Select/Deselect all
+  const handleSelectAll = () => {
+    if (selectedShopIds.length === shops.length) {
+      setSelectedShopIds([])
     } else {
-      sessionStorage.removeItem('selectedShopIds')
+      setSelectedShopIds(shops.map((shop) => shop.id))
     }
-  }, [selectedShopIds])
+  }
 
-  // Save select mode whenever it changes
-  useEffect(() => {
+  // Toggle select mode
+  const toggleSelectMode = () => {
+    setSelectMode((prev) => !prev)
     if (selectMode) {
-      sessionStorage.setItem('selectMode', 'true')
-    } else {
-      sessionStorage.removeItem('selectMode')
-      // Only clear selections when explicitly canceling, not on page load
+      setSelectedShopIds([]) // Clear selections when canceling
     }
-  }, [selectMode])
+  }
 
-  // Filter shops based on search query
+  // Filter shops by search
   const filterShopsBySearch = (shops: Shop[], query: string) => {
-    if (!query || query.trim() === '') return shops
-    
+    if (!query.trim()) return shops
     const searchTerm = query.toLowerCase().trim()
-    
     return shops.filter((shop) => {
-      const name = shop.name?.toLowerCase() || ''
-      const address = shop.address?.toLowerCase() || ''
-      const city = shop.city?.toLowerCase() || ''
-      const state = shop.state?.toLowerCase() || ''
-      const phone = shop.phone?.toLowerCase() || ''
-      
+      const name = shop.name?.toLowerCase() || ""
+      const address = shop.address?.toLowerCase() || ""
+      const city = shop.city?.toLowerCase() || ""
+      const state = shop.state?.toLowerCase() || ""
+      const phone = shop.phone?.toLowerCase() || ""
       return (
         name.includes(searchTerm) ||
         address.includes(searchTerm) ||
         city.includes(searchTerm) ||
         state.includes(searchTerm) ||
-        phone.includes(searchTerm) 
-            )
+        phone.includes(searchTerm)
+      )
     })
   }
 
@@ -132,17 +108,18 @@ export default function ShopsPage() {
 
       if (response.success) {
         setAllShops(response.shops)
-        // By default, show only visited shops (visitImages.length > 0)
-        const visitedShops = response.shops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
-        let filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : response.shops, searchQuery)
-        
-        // Sort so latest added/updated shops appear first
+        const visitedShops = response.shops.filter(
+          (shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0
+        )
+        let filteredShops = filterShopsBySearch(
+          showVisitedOnly ? visitedShops : response.shops,
+          searchQuery
+        )
         filteredShops = filteredShops.sort((a, b) => {
           const dateA = new Date(a.updatedAt || a.createdAt).getTime()
           const dateB = new Date(b.updatedAt || b.createdAt).getTime()
           return dateB - dateA
         })
-        
         setShops(filteredShops)
         setTotalShops(filteredShops.length)
       } else {
@@ -156,24 +133,26 @@ export default function ShopsPage() {
     }
   }
 
-  // Refresh function - exactly like users page  
+  // Refresh shops
   const refreshShops = async () => {
     await loadShops(false)
   }
 
-  // Apply search filter and visited filter when search query or visited toggle changes
+  // Apply filters on search/visited toggle
   useEffect(() => {
     if (allShops.length > 0) {
-      const visitedShops = allShops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
-      let filteredShops = filterShopsBySearch(showVisitedOnly ? visitedShops : allShops, searchQuery)
-      
-      // Sort so latest added/updated shops appear first
+      const visitedShops = allShops.filter(
+        (shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0
+      )
+      let filteredShops = filterShopsBySearch(
+        showVisitedOnly ? visitedShops : allShops,
+        searchQuery
+      )
       filteredShops = filteredShops.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt).getTime()
         const dateB = new Date(b.updatedAt || b.createdAt).getTime()
         return dateB - dateA
       })
-      
       setShops(filteredShops)
       setTotalShops(filteredShops.length)
     }
@@ -184,31 +163,17 @@ export default function ShopsPage() {
     loadShops(selectMode)
   }, [page, statusFilter, cityFilter, selectMode, showVisitedOnly])
 
-  const toggleShopSelection = (shopId: string) => {
-    setSelectedShopIds((prev) => (prev.includes(shopId) ? prev.filter((id) => id !== shopId) : [...prev, shopId]))
-  }
-
-  const handleSelectAll = () => {
-    if (selectedShopIds.length === shops.length) {
-      setSelectedShopIds([])
-    } else {
-      setSelectedShopIds(shops.map((shop) => shop.id))
-    }
-  }
-
   const handleAssignShopsClick = async () => {
     if (selectedShopIds.length === 0) {
       alert("Please select at least one shop.")
       return
     }
-
     const shopIdsParam = selectedShopIds.join(",")
     router.push(`/dashboard/shops/assign?shopIds=${shopIdsParam}`)
   }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // Search happens automatically via useEffect, this is just for form submission
   }
 
   const handleClearSearch = () => {
@@ -243,75 +208,77 @@ export default function ShopsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
-      {/* Header Section */}
+      {/* Header */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
-            <div className="space-y-2 text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-900">
-                Admin Shop Management
-              </h1>
-              <p className="text-blue-700 text-sm sm:text-base">
-                Efficiently manage and assign shops to auditors our all the users
-              </p>
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-900">
+              Admin Shop Management
+            </h1>
+            <p className="text-blue-700 text-sm sm:text-base">
+              Efficiently manage and assign shops to auditors
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-xl border border-blue-200">
+              <Package className="w-5 h-5 text-blue-700" />
+              <span className="font-semibold text-blue-800">{totalShops} Total Shops</span>
             </div>
-
-            <div className="flex flex-wrap justify-center lg:justify-end gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 bg-blue-100 px-3 sm:px-4 py-2 rounded-xl border border-blue-200 text-sm sm:text-base">
-                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
-                <span className="font-semibold text-blue-800">{totalShops} Total Shops</span>
-              </div>
-
-              <div className="flex items-center gap-2 bg-indigo-100 px-3 sm:px-4 py-2 rounded-xl border border-indigo-200 text-sm sm:text-base">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-700" />
-                <span className="font-semibold text-indigo-800">{selectedShopIds.length} Selected</span>
-              </div>
-
-              {/* Refresh Button */}
-              <Button
-                onClick={refreshShops}
-                variant="outline"
-                className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
+            <div className="flex items-center gap-2 bg-indigo-100 px-4 py-2 rounded-xl border border-indigo-200">
+              <Users className="w-5 h-5 text-indigo-700" />
+              <span className="font-semibold text-indigo-800">{selectedShopIds.length} Selected</span>
             </div>
+            <Button
+              onClick={refreshShops}
+              variant="outline"
+              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Filters + Actions Section */}
+      {/* Actions */}
       <div className="container mx-auto px-4 sm:px-6 py-6">
-        <div className="sticky top-0 bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 mb-8 z-50">
-          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-            {/* Search Input & Visited Toggle */}
-            <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
-              {/* Visited/All toggle */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              {/* Visited toggle */}
               <div className="flex items-center gap-2">
                 <Button
                   variant={showVisitedOnly ? "default" : "outline"}
-                  className={showVisitedOnly ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-300 text-green-700 hover:bg-green-50"}
+                  className={
+                    showVisitedOnly
+                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      : "border-green-300 text-green-700 hover:bg-green-50"
+                  }
                   onClick={() => setShowVisitedOnly(true)}
                 >
                   Visited Shops
                 </Button>
                 <Button
                   variant={!showVisitedOnly ? "default" : "outline"}
-                  className={!showVisitedOnly ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-300 text-blue-700 hover:bg-blue-50"}
+                  className={
+                    !showVisitedOnly
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "border-blue-300 text-blue-700 hover:bg-blue-50"
+                  }
                   onClick={() => setShowVisitedOnly(false)}
                 >
                   All Shops
                 </Button>
               </div>
+              {/* Search */}
               <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
                 <Input
-                  placeholder="Search shops by name, city, phone, or email..."
+                  placeholder="Search shops..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 w-full"
+                  className="pl-10 pr-10 border-blue-200 focus:ring-blue-400 w-full"
                 />
                 {searchQuery && (
                   <Button
@@ -319,47 +286,17 @@ export default function ShopsPage() {
                     onClick={handleClearSearch}
                     variant="ghost"
                     size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-slate-100 text-slate-500"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
                   >
                     ×
                   </Button>
                 )}
               </form>
-              
-              {/* Search Results Info */}
-              {searchQuery && !loading && (
-                <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                  <Filter className="h-4 w-4" />
-                  <span>
-                    {shops.length > 0 
-                      ? `Found ${shops.length} shop${shops.length === 1 ? '' : 's'} matching "${searchQuery}"`
-                      : `No shops found matching "${searchQuery}"`
-                    }
-                  </span>
-                  <Button
-                    onClick={handleClearSearch}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 ml-2 hover:bg-blue-100"
-                  >
-                    ×
-                  </Button>
-                </div>
-              )}
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 justify-end w-full lg:w-auto">
+            {/* Buttons */}
+            <div className="flex gap-2">
               <Button
-                onClick={() => {
-                  setSelectMode((prev) => !prev)
-                  if (selectMode) {
-                    // Only clear selections when explicitly canceling
-                    setSelectedShopIds([])
-                    sessionStorage.removeItem('selectedShopIds')
-                    sessionStorage.removeItem('selectMode')
-                  }
-                }}
+                onClick={toggleSelectMode}
                 variant={selectMode ? "outline" : "default"}
                 className={
                   selectMode
@@ -369,27 +306,25 @@ export default function ShopsPage() {
               >
                 {selectMode ? "Cancel Selection" : "Select Shops"}
               </Button>
-
               {selectMode && (
-                <Button
-                  onClick={handleSelectAll}
-                  variant="outline"
-                  className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 bg-transparent"
-                >
-                  {selectedShopIds.length === shops.length ? "Deselect All" : "Select All"}
-                </Button>
-              )}
-
-              {selectMode && (
-                <Button
-                  onClick={handleAssignShopsClick}
-                  disabled={assignLoading || selectedShopIds.length === 0}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-                >
-                  {assignLoading
-                    ? "Assigning..."
-                    : `Assign ${selectedShopIds.length} Shop${selectedShopIds.length !== 1 ? "s" : ""}`}
-                </Button>
+                <>
+                  <Button
+                    onClick={handleSelectAll}
+                    variant="outline"
+                    className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {selectedShopIds.length === shops.length ? "Deselect All" : "Select All"}
+                  </Button>
+                  <Button
+                    onClick={handleAssignShopsClick}
+                    disabled={assignLoading || selectedShopIds.length === 0}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    {assignLoading
+                      ? "Assigning..."
+                      : `Assign ${selectedShopIds.length} Shop${selectedShopIds.length !== 1 ? "s" : ""}`}
+                  </Button>
+                </>
               )}
             </div>
           </div>
