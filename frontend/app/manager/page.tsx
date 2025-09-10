@@ -14,7 +14,9 @@ import {
   Calendar,
   User,
   LogOut,
+  Menu,
 } from "lucide-react"
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth" // ✅ assumes you have a useAuth hook
 
@@ -42,14 +44,12 @@ export default function ManagerDashboard() {
     router.push("/login") // redirect to login
   }
 
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-64 bg-blue-900 text-white flex flex-col">
+  const SidebarBody = () => (
+    <div className="w-64 bg-gray-900 text-white flex flex-col h-full">
         {/* Logo */}
-        <div className="p-6 border-b border-blue-800">
+        <div className="p-6 border-b border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
               <Store className="w-5 h-5" />
             </div>
             <span className="text-xl font-semibold">ShelfVoice</span>
@@ -58,49 +58,52 @@ export default function ManagerDashboard() {
 
         {/* Navigation */}
         <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white hover:bg-blue-800 bg-blue-800"
-            >
-              <LayoutDashboard className="w-4 h-4 mr-3" />
-              Dashboard
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white hover:bg-blue-800"
-            >
-              <Store className="w-4 h-4 mr-3" />
-              Shop Details
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white hover:bg-blue-800"
-            >
-              <Users className="w-4 h-4 mr-3" />
-              Users
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white hover:bg-blue-800"
-            >
-              <BarChart3 className="w-4 h-4 mr-3" />
-              Reports
-            </Button>
-          </div>
-        </nav>
+  <div className="space-y-2">
+    <Button
+      variant="ghost"
+      className="w-full justify-start text-white hover:bg-gray-800 bg-gray-800"
+    >
+      <LayoutDashboard className="w-4 h-4 mr-3" />
+      Dashboard
+    </Button>
+
+    <Button
+      variant="ghost"
+      className="w-full justify-start text-white hover:bg-gray-800"
+      onClick={() => router.push("/manager-users")} // <-- THIS IS THE ONLY CHANGE!
+    >
+      <Users className="w-4 h-4 mr-3" />
+      Add Salesperson
+    </Button>
+    <Button
+      variant="ghost"
+      className="w-full justify-start text-white hover:bg-gray-800"
+    >
+      <Store className="w-4 h-4 mr-3" />
+      Shop Details
+    </Button>
+  
+    <Button
+      variant="ghost"
+      className="w-full justify-start text-white hover:bg-gray-800"
+    >
+      <BarChart3 className="w-4 h-4 mr-3" />
+      Reports
+    </Button>
+  </div>
+</nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-blue-800">
+        <div className="p-4 border-t border-gray-800">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
               <User className="w-4 h-4" />
             </div>
             <div>
               <div className="text-sm font-medium">
                 {user?.name || "Guest User"}
               </div>
-              <div className="text-xs text-blue-300">
+              <div className="text-xs text-gray-300">
                 {user?.role || "No Role"}
               </div>
             </div>
@@ -108,21 +111,45 @@ export default function ManagerDashboard() {
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="w-full justify-start text-red-400 hover:bg-red-600 hover:text-white"
+            className="w-full justify-start text-red-500 hover:bg-red-600 hover:text-white"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
         </div>
+    </div>
+  )
+
+  return (
+    <div className="flex min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
+      {/* Mobile Hamburger + Drawer */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            className="md:hidden fixed right-3 top-3 z-40 flex items-center justify-center h-10 w-10 rounded-xl bg-white text-black border border-black/20 hover:bg-gray-50"
+            aria-label="Open menu"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-full sm:w-72">
+          <SidebarBody />
+        </SheetContent>
+      </Sheet>
+
+      {/* Sidebar (desktop only) */}
+      <div className="hidden md:flex">
+        <SidebarBody />
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-6">
+        <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Manager Dashboard
               </h1>
               <p className="text-gray-600">
@@ -132,13 +159,13 @@ export default function ManagerDashboard() {
             <div className="flex items-center gap-4">
               <Badge
                 variant="secondary"
-                className="bg-blue-100 text-blue-700 px-4 py-2"
+                className="bg-gray-200 text-gray-800 px-4 py-2"
               >
                 <Store className="w-4 h-4 mr-2" />
                 {totalShops} Total Shops
               </Badge>
 
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="border-gray-300 text-gray-800 hover:bg-gray-100">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
@@ -147,7 +174,7 @@ export default function ManagerDashboard() {
         </div>
 
         {/* Shop Grid */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 sm:p-6">
           {shops.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <Store className="w-12 h-12 mb-4 text-gray-300" />
@@ -155,18 +182,18 @@ export default function ManagerDashboard() {
               <p className="text-sm">Connect your API to load shop data</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {shops.map((shop) => (
-                <Card key={shop.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
+                <Card key={shop.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                         {shop.name}
                       </h3>
 
                       <div className="space-y-2">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                        <div className="flex items-center text-sm text-gray-700">
+                          <MapPin className="w-4 h-4 mr-2 text-gray-500" />
                           <span>{shop.address}</span>
                         </div>
                         <div className="text-sm text-gray-500">
@@ -174,19 +201,19 @@ export default function ManagerDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2 text-orange-400" />
+                      <div className="flex items-center text-sm text-gray-700">
+                        <Calendar className="w-4 h-4 mr-2 text-gray-600" />
                         <span>Added {shop.addedDate}</span>
                       </div>
 
                       <div className="text-sm">
-                        <span className="text-gray-600">Visits: </span>
-                        <span className="font-semibold text-blue-600">
+                        <span className="text-gray-700">Visits: </span>
+                        <span className="font-semibold text-gray-900">
                           {shop.visits}
                         </span>
                       </div>
 
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Button className="w-full bg-black hover:bg-gray-900">
                         <Eye className="w-4 h-4 mr-2" />
                         View Shop Details
                       </Button>

@@ -14,9 +14,7 @@ import {
   Calendar,
   User,
   LogOut,
-  Menu,
 } from "lucide-react"
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth" // ✅ assumes you have a useAuth hook
 
@@ -44,8 +42,10 @@ export default function ManagerDashboard() {
     router.push("/login") // redirect to login
   }
 
-  const SidebarBody = () => (
-    <div className="w-64 bg-gray-900 text-white flex flex-col h-full">
+  return (
+    <div className="flex min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-900 text-white flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center gap-3">
@@ -114,30 +114,6 @@ export default function ManagerDashboard() {
             Logout
           </Button>
         </div>
-    </div>
-  )
-
-  return (
-    <div className="flex min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
-      {/* Mobile Hamburger + Drawer */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            className="md:hidden fixed right-3 top-3 z-40 flex items-center justify-center h-10 w-10 rounded-xl bg-white text-black border border-black/20 hover:bg-gray-50"
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-full sm:w-72">
-          <SidebarBody />
-        </SheetContent>
-      </Sheet>
-
-      {/* Sidebar (desktop only) */}
-      <div className="hidden md:flex">
-        <SidebarBody />
       </div>
 
       {/* Main Content */}
