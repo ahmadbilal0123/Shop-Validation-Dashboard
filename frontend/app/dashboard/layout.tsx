@@ -40,7 +40,7 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar />
       <main className="flex-1 overflow-auto">
-        <div className="p-6">{children}</div>
+        <div className="p-0 sm:p-4 md:p-6">{children}</div>
       </main>
     </div>
   )

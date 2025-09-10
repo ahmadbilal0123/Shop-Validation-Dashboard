@@ -154,11 +154,11 @@ const handleAssignShopsClick = async () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 p-4 md:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-slate-600">Loading visits...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
+            <span className="ml-3 text-gray-700">Loading visits...</span>
           </div>
         </div>
       </div>
@@ -167,19 +167,19 @@ const handleAssignShopsClick = async () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 p-4 md:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 p-4 md:p-6">
         <div className="max-w-4xl mx-auto pt-20">
-          <Card className="border-red-200 bg-red-50/50 backdrop-blur-sm">
+          <Card className="border-gray-200 bg-gray-50/70 backdrop-blur-sm">
             <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Eye className="h-8 w-8 text-red-600" />
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Eye className="h-8 w-8 text-gray-700" />
               </div>
-              <h3 className="text-lg font-semibold text-red-900 mb-2">Unable to Load Visits</h3>
-              <p className="text-red-700 mb-6">{error}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Visits</h3>
+              <p className="text-gray-700 mb-6">{error}</p>
               <Button
                 onClick={loadVisitedShops}
                 variant="outline"
-                className="border-red-300 text-red-700 hover:bg-red-50 bg-transparent"
+                className="border-gray-300 text-gray-800 hover:bg-gray-100 bg-transparent"
               >
                 Try Again
               </Button>
@@ -191,16 +191,16 @@ const handleAssignShopsClick = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
+      <div className="w-full p-4 md:p-6 space-y-8">
         <div className="text-center space-y-4 py-8">
           {/* <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-full mb-4">
             <Store className="h-5 w-5 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">ShelfSense</span>
           </div> */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance">Your Shop Visits</h1>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance text-center">Your Shop Visits</h1>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty mt-4">
                 This are The shops you have visited so far. You can select multiple shops to assign them to a QC user.
               </p>
@@ -210,7 +210,7 @@ const handleAssignShopsClick = async () => {
             <Button
               onClick={refreshVisits}
               variant="outline"
-              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="flex items-center gap-2 border-gray-300 text-gray-800 hover:bg-gray-100 w-full sm:w-auto"
               disabled={loading}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -229,7 +229,7 @@ const handleAssignShopsClick = async () => {
                   <p className="text-xs text-slate-500">Shops visited</p>
                 </div>
                 <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center  transition-colors">
-                  <Store className="h-6 w-6 text-black-600" />
+                  <Store className="h-6 w-6 text-gray-800" />
                 </div>
               </div>
             </CardContent>
@@ -244,7 +244,7 @@ const handleAssignShopsClick = async () => {
                   <p className="text-xs text-slate-500">Visit records</p>
                 </div>
                 <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center transition-colors">
-                  <Eye className="h-6 w-6 text-black-600" />
+                  <Eye className="h-6 w-6 text-gray-800" />
                 </div>
               </div>
             </CardContent>
@@ -288,7 +288,7 @@ const handleAssignShopsClick = async () => {
                   <Button
                     onClick={handleSelectAll}
                     variant="outline"
-                    className="text-black-700 hover:bg-indigo-100 bg-transparent"
+                    className="text-gray-800 hover:bg-gray-100 bg-transparent w-full sm:w-auto"
                   >
                     {selectedShopIds.length === filteredShops.length ? "Deselect All" : "Select All"}
                   </Button>
@@ -307,8 +307,8 @@ const handleAssignShopsClick = async () => {
                   variant={selectMode ? "outline" : "default"}
                   className={
                     selectMode
-                      ? " text-black-700 hover:bg-gray-200"
-                      : "bg-black hover:bg-gray-700 text-white"
+                      ? " text-gray-800 hover:bg-gray-200 w-full sm:w-auto"
+                      : "bg-black hover:bg-gray-800 text-white w-full sm:w-auto"
                   }
                 >
                   {selectMode ? "Cancel" : "Select Shops"}
@@ -318,7 +318,7 @@ const handleAssignShopsClick = async () => {
                   <Button
                     onClick={handleAssignShopsClick}
                     disabled={assignLoading || selectedShopIds.length === 0}
-                    className="bg-black hover:bg-black-700 text-white disabled:opacity-50"
+                    className="bg-black hover:bg-gray-900 text-white disabled:opacity-50 w-full sm:w-auto"
                   >
                     {assignLoading
                       ? "Assigning..."
@@ -327,7 +327,7 @@ const handleAssignShopsClick = async () => {
                 )}
 
                 <Select value={cityFilter} onValueChange={setCityFilter}>
-                  <SelectTrigger className="w-48 border-slate-200 bg-white/50">
+                  <SelectTrigger className="w-full sm:w-48 border-slate-200 bg-white/50">
                     <SelectValue placeholder="Filter by city" />
                   </SelectTrigger>
                   <SelectContent>
@@ -368,8 +368,8 @@ const handleAssignShopsClick = async () => {
                   className={`group hover:shadow-xl transition-all duration-300 border-0 backdrop-blur-sm hover:bg-white/90 cursor-pointer ${
                     selectMode
                       ? isSelected
-                        ? "bg-blue-100/80 ring-2 ring-blue-500 shadow-lg"
-                        : "bg-white/70 hover:bg-blue-50/70"
+                        ? "bg-gray-100/80 ring-2 ring-gray-700 shadow-lg"
+                        : "bg-white/70 hover:bg-gray-100/70"
                       : "bg-white/70"
                   }`}
                   onClick={() => {
@@ -393,7 +393,7 @@ const handleAssignShopsClick = async () => {
                       {selectMode && (
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                           isSelected 
-                            ? "bg-blue-500 border-blue-500" 
+                            ? "bg-black border-black" 
                             : "border-slate-300 bg-white"
                         }`}>
                           {isSelected && (
@@ -416,7 +416,7 @@ const handleAssignShopsClick = async () => {
 
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-500">Total Visits</span>
-                      <Badge className="bg-blue-100 text-black-700 hover:bg-black-200">
+                      <Badge className="bg-gray-200 text-gray-800 hover:bg-gray-300">
                         {shop.visitImages?.length || 0} visits
                       </Badge>
                     </div>
@@ -439,7 +439,7 @@ const handleAssignShopsClick = async () => {
                         }
                         router.push(`/dashboard/shops/${shop.id}`)
                       }}
-                      className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-black-600  hover:from-black-700 hover:to-black-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                      className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       View Shop Details

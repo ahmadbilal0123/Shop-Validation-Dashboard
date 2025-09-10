@@ -41,7 +41,6 @@ export default function RecentShopsPage() {
   const filterRecentShops = (shops: Shop[]) => {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
     return shops.filter((shop) => {
       if (!shop.createdAt) return false
       const createdDate = new Date(shop.createdAt)
@@ -57,16 +56,13 @@ export default function RecentShopsPage() {
 
   const filterShopsBySearch = (shops: Shop[], query: string) => {
     if (!query || query.trim() === "") return shops
-
     const searchTerm = query.toLowerCase().trim()
-
     return shops.filter((shop) => {
       const name = shop.name?.toLowerCase() || ""
       const address = shop.address?.toLowerCase() || ""
       const city = shop.city?.toLowerCase() || ""
       const state = shop.state?.toLowerCase() || ""
       const phone = shop.phone?.toLowerCase() || ""
-
       return (
         name.includes(searchTerm) ||
         address.includes(searchTerm) ||
@@ -84,7 +80,6 @@ export default function RecentShopsPage() {
       city: cityFilter,
       search: searchQuery,
     })
-
     if (response.success) {
       let filteredShops = response.shops
       filteredShops = filterRecentShops(filteredShops)
@@ -94,13 +89,11 @@ export default function RecentShopsPage() {
       if (searchQuery && searchQuery.trim() !== "") {
         filteredShops = filterShopsBySearch(filteredShops, searchQuery)
       }
-
       filteredShops = filteredShops.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt).getTime()
         const dateB = new Date(b.updatedAt || b.createdAt).getTime()
         return dateB - dateA
       })
-
       setShops(filteredShops)
       setTotalShops(filteredShops.length)
     } else {
@@ -113,7 +106,6 @@ export default function RecentShopsPage() {
     try {
       await loadShopsData()
     } catch (err) {
-      console.error("Error loading shops:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred.")
     }
     setLoading(false)
@@ -124,32 +116,22 @@ export default function RecentShopsPage() {
   }, [page, limit, statusFilter, cityFilter, searchQuery])
 
   const handleNextPage = () => {
-    if (page * limit < totalShops) {
-      setPage((prev) => prev + 1)
-    }
+    if (page * limit < totalShops) setPage((prev) => prev + 1)
   }
-
   const handlePrevPage = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1)
-    }
+    if (page > 1) setPage((prev) => prev - 1)
   }
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setPage(1)
     loadShops()
   }
-
   const handleClearSearch = () => {
     setSearchQuery("")
     setPage(1)
   }
-
   const refreshDashboard = async () => {
-    console.log("🔄 DASHBOARD: refreshDashboard called, setting loading to TRUE")
     setLoading(true)
-    console.log("🔄 DASHBOARD: loading state should now be TRUE")
     setError(null)
     try {
       const response: ShopsResponse = await fetchShops({
@@ -157,7 +139,6 @@ export default function RecentShopsPage() {
         city: cityFilter,
         search: searchQuery,
       })
-
       if (response.success) {
         let filteredShops = response.shops
         filteredShops = filterRecentShops(filteredShops)
@@ -167,31 +148,22 @@ export default function RecentShopsPage() {
         if (searchQuery && searchQuery.trim() !== "") {
           filteredShops = filterShopsBySearch(filteredShops, searchQuery)
         }
-
         filteredShops = filteredShops.sort((a, b) => {
           const dateA = new Date(a.updatedAt || a.createdAt).getTime()
           const dateB = new Date(b.updatedAt || b.createdAt).getTime()
           return dateB - dateA
         })
-
         setShops(filteredShops)
         setTotalShops(filteredShops.length)
       } else {
         setError(response.error || "Failed to load shops.")
       }
-
       await loadStats()
-      console.log("🔄 DASHBOARD: All data loaded successfully")
     } catch (error) {
-      console.error("Error refreshing dashboard:", error)
       setError(error instanceof Error ? error.message : "An unexpected error occurred.")
     }
-    console.log("🔄 DASHBOARD: Setting loading to FALSE")
     setLoading(false)
-    console.log("🔄 DASHBOARD: refresh complete, loading should now be FALSE")
   }
-
-  console.log("🎯 DASHBOARD RENDER: loading =", loading)
 
   const assignedShops = shops.filter((shop) => shop.assignedTo)
   const pendingShops = shops.filter(
@@ -200,24 +172,36 @@ export default function RecentShopsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-300 z-40 shadow-lg">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      {/* Curved border for header */}
+      <div className="bg-white border-b border-gray-300 z-40 shadow-lg rounded-t-2xl sm:rounded-t-3xl">
+        <div className="w-full px-2 sm:px-4 py-4 sm:py-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 mb-4">
-        <div className="w-full">
-          <div className="min-w-0 text-center">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-black truncate">
-              Admin Dashboard
-            </h1>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 truncate">
-              Recently Visited Shops
-            </h2>
-            <p className="text-gray-600 text-sm sm:text-base lg:text-lg font-medium">
-              Showing Recently Visited Shops in the Last 30 Days
-            </p>
-          </div>
-        </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+            <div className="w-full">
+              <div className="min-w-0 text-center">
+                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-black truncate">
+                  Admin Dashboard
+                </h1>
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-bold text-gray-800 truncate">
+                  Recently Visited Shops
+                </h2>
+                <p className="text-gray-600 text-xs sm:text-base lg:text-lg font-medium">
+                  Showing Recently Visited Shops in the Last 30 Days
+                </p>
+                {/* Mobile refresh under text */}
+                <div className="mt-3 block sm:hidden">
+                  <Button
+                    onClick={refreshDashboard}
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 border-gray-300 bg-white text-black hover:bg-gray-50 hover:border-gray-400"
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="hidden sm:flex flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <Button
                 onClick={refreshDashboard}
                 variant="outline"
@@ -238,16 +222,18 @@ export default function RecentShopsPage() {
           </div>
         </div>
       </div>
-
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="w-full px-2 sm:px-4 py-4 sm:py-8">
+        {/* Responsive grid for stats cards */}
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:border-gray-300">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">Total Shops</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-black">{shops.length}</p>
-                  <p className="text-xs text-gray-500 truncate">All registered shops</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">
+                    Total Shops
+                  </p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-black">{shops.length}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">All registered shops</p>
                 </div>
                 <div className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
                   <Building2 className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-black" />
@@ -255,14 +241,17 @@ export default function RecentShopsPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-white border-2 border-gray-300 shadow-lg hover:shadow-xl transition-all duration-200 hover:border-gray-400">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">Visited Shops</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-black">{visitStats?.visited ?? 0}</p>
-                  <p className="text-xs text-gray-500 truncate">Successfully visited</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">
+                    Visited Shops
+                  </p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-black">
+                    {visitStats?.visited ?? 0}
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">Successfully visited</p>
                 </div>
                 <div className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
                   <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-black" />
@@ -270,13 +259,14 @@ export default function RecentShopsPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:border-gray-300">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">Assigned Shops</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-black">{assignedShops.length}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">
+                    Assigned Shops
+                  </p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-black">{assignedShops.length}</p>
                 </div>
                 <div className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
                   <Clock className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-black" />
@@ -284,13 +274,14 @@ export default function RecentShopsPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:border-gray-300">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">Pending Shops</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-black">{pendingShops.length}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase truncate">
+                    Pending Shops
+                  </p>
+                  <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-black">{pendingShops.length}</p>
                 </div>
                 <div className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
                   <Clock className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-black" />
@@ -359,10 +350,9 @@ export default function RecentShopsPage() {
                 </Select>
               </div>
             </form>
-
             {searchQuery && !loading && (
               <div className="mt-4 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                <p className="text-sm text-black">
+                <p className="text-xs sm:text-sm text-black">
                   {shops.length > 0
                     ? `Found ${shops.length} visited shop${shops.length === 1 ? "" : "s"} matching "${searchQuery}"`
                     : `No visited shops found matching "${searchQuery}"`}
@@ -388,7 +378,7 @@ export default function RecentShopsPage() {
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {shops.map((shop) => (
                 <Card
                   key={shop.id}
@@ -396,17 +386,18 @@ export default function RecentShopsPage() {
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between flex-wrap gap-2">
-                      <CardTitle className="text-lg sm:text-xl font-bold text-black group-hover:text-gray-700 transition-colors flex-1 min-w-0">
-                        <span className="truncate block">{shop.name}</span>
+                      <CardTitle className="text-base sm:text-lg md:text-xl font-bold text-black group-hover:text-gray-700 transition-colors flex-1 min-w-0">
+                        {/* Shop name wraps on multiple lines for readability */}
+                        <span className="block break-words whitespace-normal">{shop.name}</span>
                       </CardTitle>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {(Array.isArray(shop.visitImages) && shop.visitImages.length > 0) || shop.lastVisit ? (
-                          <Badge className="bg-black text-white border-black">
+                          <Badge className="bg-black text-white border-black text-xs sm:text-sm">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Visited
                           </Badge>
                         ) : (
-                          <Badge className="bg-gray-100 text-black border-gray-300">
+                          <Badge className="bg-gray-100 text-black border-gray-300 text-xs sm:text-sm">
                             <Clock className="w-3 h-3 mr-1" />
                             Unvisited
                           </Badge>
@@ -420,45 +411,41 @@ export default function RecentShopsPage() {
                       </div>
                     </div>
                   </CardHeader>
-
                   <CardContent className="pt-0 space-y-4 flex flex-col h-full justify-between">
                     <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <MapPin className="h-5 w-5 text-black mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-black space-y-1 flex-1 min-w-0">
-                        <p className="font-semibold truncate">{shop.address || "No address provided"}</p>
-                        <p className="text-gray-600 truncate">
+                      <div className="text-xs sm:text-sm lg:text-base text-black space-y-1 flex-1 min-w-0">
+                        <p className="font-semibold break-words">{shop.address || "No address provided"}</p>
+                        <p className="text-gray-600 break-words">
                           {shop.city && shop.state
                             ? `${shop.city}, ${shop.state}`
                             : shop.city || shop.state || "Location not specified"}
                         </p>
-                        {shop.zipCode && <p className="text-gray-500 truncate">{shop.zipCode}</p>}
+                        {shop.zipCode && <p className="text-gray-500 break-words">{shop.zipCode}</p>}
                       </div>
                     </div>
-
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-gray-200">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-gray-600">
                         <span className="font-semibold">Visits:</span>{" "}
                         <span className="text-black font-bold">{shop.visitImages?.length || 0}</span>
                       </div>
                       {shop.lastVisit && (
-                        <div className="text-sm text-black font-semibold">
+                        <div className="text-xs sm:text-sm text-black font-semibold">
                           Last: {new Date(shop.lastVisit).toLocaleDateString()}
                         </div>
                       )}
                     </div>
-
                     <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
                       <Calendar className="h-4 w-4 text-black" />
                       <span className="text-xs sm:text-sm text-black font-semibold">
                         Added: {shop.createdAt ? new Date(shop.createdAt).toLocaleDateString() : "Unknown"}
                       </span>
                     </div>
-
                     <div className="mt-4 flex-1" />
                     <Button
                       size="sm"
                       onClick={() => (window.location.href = `/dashboard/shops/${shop.id}`)}
-                      className="w-full bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                      className="w-full bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
                     >
                       <svg
                         className="h-4 w-4 mr-2"

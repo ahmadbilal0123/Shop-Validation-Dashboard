@@ -222,16 +222,9 @@ export default function UsersPage() {
   }, [editForm])
 
   const getRoleColor = (role: string) => {
-    const colors = {
-      admin: "bg-red-100 text-red-800 border-red-200",
-      manager: "bg-purple-100 text-purple-800 border-purple-200",
-      supervisor: "bg-blue-100 text-blue-800 border-blue-200",
-      executive: "bg-green-100 text-green-800 border-green-200",
-      auditor: "bg-orange-100 text-orange-800 border-orange-200",
-      qc: "bg-yellow-100 text-yellow-800 border-yellow-200", // QC role color
-      user: "bg-gray-100 text-gray-800 border-gray-200",
-    }
-    return colors[role as keyof typeof colors] || colors.user
+    // Monochrome scheme: use neutral gray for all roles
+    const grayBadge = "bg-gray-100 text-gray-800 border-gray-200"
+    return grayBadge
   }
 
   const getRoleIcon = (role: string) => {
@@ -299,8 +292,8 @@ export default function UsersPage() {
   console.log("🎯 USERS RENDER: loading =", loading)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto p-6 space-y-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
+      <div className="w-full p-4 sm:p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-8">
         
           <div className="flex-1">
@@ -310,7 +303,7 @@ export default function UsersPage() {
           <Button
             onClick={loadUsers}
             variant="outline"
-            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-transparent"
+            className="flex items-center gap-2 border-gray-300 text-gray-800 hover:bg-gray-100 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-transparent"
             disabled={loading}
           >
             <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? "animate-spin" : ""}`} />
@@ -319,13 +312,13 @@ export default function UsersPage() {
         </div>
 
         {error && (
-          <Alert variant="destructive" className="border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          <Alert className="border-gray-300 bg-gray-50">
+            <AlertDescription className="text-gray-800">{error}</AlertDescription>
           </Alert>
         )}
         {success && (
-          <Alert className="border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800 font-medium">{success}</AlertDescription>
+          <Alert className="border-gray-300 bg-gray-50">
+            <AlertDescription className="text-gray-800 font-medium">{success}</AlertDescription>
           </Alert>
         )}
 
@@ -344,7 +337,7 @@ export default function UsersPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base"
+                  className="border-slate-200 focus:border-gray-700 focus:ring-gray-700 text-sm sm:text-base"
                   placeholder="Enter full name"
                 />
               </div>
@@ -354,7 +347,7 @@ export default function UsersPage() {
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   required
-                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base"
+                  className="border-slate-200 focus:border-gray-700 focus:ring-gray-700 text-sm sm:text-base"
                   placeholder="Enter username"
                 />
               </div>
@@ -366,7 +359,7 @@ export default function UsersPage() {
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     required
-                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 pl-10 text-sm sm:text-base"
+                    className="border-slate-200 focus:border-gray-700 focus:ring-gray-700 pl-10 text-sm sm:text-base"
                     placeholder="Enter secure password"
                   />
                   <button
@@ -385,7 +378,7 @@ export default function UsersPage() {
               <div className="space-y-2">
                 <Label className="text-xs sm:text-sm font-medium text-slate-700">Role</Label>
                 <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value })}>
-                  <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base">
+                  <SelectTrigger className="border-slate-200 focus:border-gray-700 focus:ring-gray-700 text-sm sm:text-base">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -402,7 +395,7 @@ export default function UsersPage() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
+                  className="bg-black hover:bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                 >
                   {submitting ? "Registering..." : "Add User"}
                 </Button>
@@ -427,7 +420,7 @@ export default function UsersPage() {
                   <Input
                     value={editForm.name || ""}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    className="border-slate-200 focus:border-gray-700 focus:ring-gray-700"
                   />
                 </div>
                 <div className="space-y-2">
@@ -435,7 +428,7 @@ export default function UsersPage() {
                   <Input
                     value={editForm.username || ""}
                     onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                    className="border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    className="border-slate-200 focus:border-gray-700 focus:ring-gray-700"
                   />
                 </div>
                 <div className="space-y-2">
@@ -446,7 +439,7 @@ export default function UsersPage() {
                       placeholder="Enter new password"
                       value={editForm.password || ""}
                       onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                      className="border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 pl-10"
+                      className="border-slate-200 focus:border-gray-700 focus:ring-gray-700 pl-10"
                     />
                     <button
                       type="button"
@@ -464,7 +457,7 @@ export default function UsersPage() {
                     value={editForm.role || "user"}
                     onValueChange={(value) => setEditForm({ ...editForm, role: value })}
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-indigo-500 focus:ring-indigo-500">
+                    <SelectTrigger className="border-slate-200 focus:border-gray-700 focus:ring-gray-700">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -482,7 +475,7 @@ export default function UsersPage() {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                    className="bg-black hover:bg-gray-900 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     {submitting ? "Updating..." : "Update User"}
                   </Button>
@@ -490,7 +483,7 @@ export default function UsersPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setEditForm(null)}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 px-6 py-2 rounded-lg font-medium transition-colors"
+                    className="border-slate-300 text-slate-700 hover:bg-gray-100 px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     Cancel
                   </Button>
@@ -525,7 +518,7 @@ export default function UsersPage() {
                   <SelectItem value="qc">QC</SelectItem>
                 </SelectContent>
               </Select>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm px-2 py-1">
+              <Badge variant="secondary" className="bg-gray-200 text-gray-800 text-xs sm:text-sm px-2 py-1">
                 {filteredUsers.length} {filteredUsers.length === 1 ? "User" : "Users"}
               </Badge>
             </div>
@@ -533,8 +526,8 @@ export default function UsersPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-slate-600">Loading users...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
+              <span className="ml-3 text-gray-700">Loading users...</span>
             </div>
           ) : filteredUsers.length === 0 ? (
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
@@ -581,7 +574,7 @@ export default function UsersPage() {
 
                     {/* Assigned Shops Count */}
                     <div
-                      className="relative flex items-center gap-2 text-xs sm:text-sm text-blue-600 mb-3 sm:mb-4 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer group"
+                      className="relative flex items-center gap-2 text-xs sm:text-sm text-gray-800 mb-3 sm:mb-4 bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer group"
                       onClick={() => handleUserCardClick(user)}
                     >
                       <Package className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
@@ -589,7 +582,7 @@ export default function UsersPage() {
                         {userShopCounts[user.id] !== undefined ? userShopCounts[user.id] : "..."} Assigned Shops
                       </span>
                       <div className="relative">
-                        <div className="flex items-center justify-center w-5 h-5 text-blue-700 font-bold text-xs group-hover:bg-blue-300 group-hover:scale-125 transition-all duration-200">
+                        <div className="flex items-center justify-center w-5 h-5 text-gray-800 font-bold text-xs group-hover:bg-gray-300 group-hover:scale-125 transition-all duration-200">
                           ⓘ
                         </div>
                         {/* Tooltip */}
@@ -606,7 +599,7 @@ export default function UsersPage() {
                         e.stopPropagation()
                         setEditForm(user)
                       }}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
+                      className="w-full bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-black text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
                     >
                       <Edit3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Edit User
@@ -630,12 +623,12 @@ export default function UsersPage() {
               </h2>
               {assignedLoading ? (
                 <div className="flex items-center justify-center py-8 sm:py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-slate-600 text-sm sm:text-base">Loading shops...</span>
+                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-gray-800"></div>
+                  <span className="ml-3 text-gray-700 text-sm sm:text-base">Loading shops...</span>
                 </div>
               ) : assignedError ? (
-                <Alert variant="destructive" className="border-red-200 bg-red-50 mb-4 sm:mb-6">
-                  <AlertDescription className="text-red-800 text-sm sm:text-base">{assignedError}</AlertDescription>
+                <Alert className="border-gray-300 bg-gray-50 mb-4 sm:mb-6">
+                  <AlertDescription className="text-gray-800 text-sm sm:text-base">{assignedError}</AlertDescription>
                 </Alert>
               ) : assignedShops.length === 0 ? (
                 <div className="text-center py-8 sm:py-12 text-slate-500">
@@ -660,7 +653,7 @@ export default function UsersPage() {
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600 mb-2">
                           <span className="flex items-center gap-1">
-                            Status: <Badge className="bg-yellow-100 text-yellow-700 text-xs">{shop.status}</Badge>
+                            Status: <Badge className="bg-gray-200 text-gray-800 text-xs">{shop.status}</Badge>
                           </span>
                           <span>Visits: {shop.visitImages?.length || 0}</span>
                         </div>
@@ -671,7 +664,7 @@ export default function UsersPage() {
                         )}
                         <Button
                           size="sm"
-                          className="mt-3 sm:mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
+                          className="mt-3 sm:mt-4 w-full bg-gradient-to-r from-gray-800 to-black text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 hover:from-gray-900 hover:to-black"
                           onClick={() => (window.location.href = `/dashboard/shops/${shop.id}`)}
                         >
                           View Shop Details
@@ -683,7 +676,7 @@ export default function UsersPage() {
               )}
               <Button
                 variant="outline"
-                className="mt-4 sm:mt-6 w-full border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-2 bg-transparent"
+                className="mt-4 sm:mt-6 w-full border-gray-300 text-gray-800 text-sm sm:text-base px-3 sm:px-4 py-2 bg-transparent hover:bg-gray-100"
                 onClick={() => setAssignedUser(null)}
               >
                 Close

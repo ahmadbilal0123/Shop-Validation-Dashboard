@@ -59,6 +59,8 @@ export function DashboardSidebar() {
   })
   const [searchQuery, setSearchQuery] = useState("")
 
+  // Removed auto-collapse: sidebar stays expanded on all screen sizes
+
   // Save collapse state to localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -105,8 +107,8 @@ export function DashboardSidebar() {
   }
 
   const SidebarContent = ({ onNavigate, isMobile = false }: { onNavigate?: () => void; isMobile?: boolean }) => {
-    const shouldCollapse = isCollapsed && !isMobile
-    const sidebarWidth = shouldCollapse ? "w-16" : "w-64"
+    const shouldCollapse = false
+    const sidebarWidth = "w-64"
 
     return (
       <div
@@ -122,15 +124,16 @@ export function DashboardSidebar() {
             shouldCollapse ? "px-2" : "px-6",
           )}
         >
-          <div className="flex items-center space-x-2">
-         
-            {!shouldCollapse && <h1 className="text-xl font-bold text-gray-900 tracking-tight">ShelfVoice</h1>}
+          <div className="flex items-center w-full">
+            <div className="flex items-center space-x-2">
+              {!shouldCollapse && <h1 className="text-xl font-bold text-gray-900 tracking-tight">ShelfVoice</h1>}
+            </div>
           </div>
           
         </div>
 
         {/* Navigation */}
-        <nav className={cn("flex-1 space-y-1 py-4 overflow-y-auto", shouldCollapse ? "px-2" : "px-4")}>
+        <nav className={cn("flex-1 space-y-1 py-4 overflow-y-auto", "px-4")}>
           {filteredNavigation.map((item) => {
             if (!hasPermission(item.permission)) return null
 
@@ -144,14 +147,14 @@ export function DashboardSidebar() {
                     variant="ghost"
                     className={cn(
                       "w-full h-12 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 group border border-transparent",
-                      shouldCollapse ? "justify-center px-0" : "justify-start",
-                      hasActiveChild && "bg-blue-50 text-blue-700 border-blue-200 shadow-sm",
+                      "justify-start",
+                      hasActiveChild && "bg-gray-100 text-gray-900 border-gray-300 shadow-sm",
                     )}
                     onClick={() => !shouldCollapse && toggleDropdown(item.name)}
-                    title={shouldCollapse ? item.name : undefined}
+                    title={undefined}
                   >
                     <item.icon
-                      className={cn("h-5 w-5 transition-colors duration-200", hasActiveChild && "text-blue-600")}
+                      className={cn("h-5 w-5 transition-colors duration-200", hasActiveChild && "text-gray-900")}
                     />
                     {!shouldCollapse && (
                       <>
@@ -164,8 +167,7 @@ export function DashboardSidebar() {
                   </Button>
 
                   {/* Dropdown Items */}
-                  {(isOpen || shouldCollapse) &&
-                    !shouldCollapse &&
+                  {isOpen &&
                     item.children.map((child, index) => {
                       const isActive = pathname === child.href
                       const matchesSearch = !searchQuery || child.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -178,16 +180,14 @@ export function DashboardSidebar() {
                             variant="ghost"
                             className={cn(
                               "w-full justify-start h-10 pl-8 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all duration-200 group relative border border-transparent",
-                              isActive && "bg-blue-50 text-blue-700 border-blue-200 shadow-sm",
+                              isActive && "bg-gray-100 text-gray-900 border-gray-300 shadow-sm",
                             )}
                           >
                             {/* Simple curve indicator before icon */}
                             <span className="text-gray-400 text-sm font-mono mr-2">{isLast ? "└─" : "├─"}</span>
-                            <child.icon
-                              className={cn("mr-3 h-4 w-4 transition-colors duration-200", isActive && "text-blue-600")}
-                            />
+                            <child.icon className={cn("mr-3 h-4 w-4 transition-colors duration-200", isActive && "text-gray-900")} />
                             <span className="font-medium">{child.name}</span>
-                            {isActive && <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full shadow-sm" />}
+                            {isActive && <div className="ml-auto w-2 h-2 bg-gray-900 rounded-full shadow-sm" />}
                           </Button>
                         </Link>
                       )
@@ -207,16 +207,16 @@ export function DashboardSidebar() {
                   variant="ghost"
                   className={cn(
                     "w-full h-12 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 group border border-transparent",
-                    shouldCollapse ? "justify-center px-0" : "justify-start",
-                    isActive && "bg-blue-50 text-blue-700 border-blue-200 shadow-sm",
+                    "justify-start",
+                    isActive && "bg-gray-100 text-gray-900 border-gray-300 shadow-sm",
                   )}
-                  title={shouldCollapse ? item.name : undefined}
+                  title={undefined}
                 >
-                  <item.icon className={cn("h-5 w-5 transition-colors duration-200", isActive && "text-blue-600")} />
+                  <item.icon className={cn("h-5 w-5 transition-colors duration-200", isActive && "text-gray-900")} />
                   {!shouldCollapse && (
                     <>
                       <span className="ml-3 font-medium">{item.name}</span>
-                      {isActive && <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full shadow-sm" />}
+                      {isActive && <div className="ml-auto w-2 h-2 bg-gray-900 rounded-full shadow-sm" />}
                     </>
                   )}
                 </Button>
@@ -237,13 +237,13 @@ export function DashboardSidebar() {
         <div
           className={cn(
             "border-t border-gray-200 bg-gray-50 transition-all duration-300",
-            shouldCollapse ? "p-2" : "p-4",
+            "p-4",
           )}
         >
-          {!shouldCollapse && (
+          {(
             <div className="mb-4 p-3 rounded-lg bg-white border border-gray-200 shadow-sm">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+                <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-black rounded-full flex items-center justify-center shadow-md">
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -256,19 +256,19 @@ export function DashboardSidebar() {
 
           <Button
             variant="outline"
-            size={shouldCollapse ? "icon" : "sm"}
+            size="sm"
             onClick={() => {
               handleLogout()
               onNavigate?.()
             }}
             className={cn(
               "justify-start bg-red-50 border-red-200 text-red-600 hover:text-red-700 hover:bg-red-100 transition-all duration-200",
-              shouldCollapse ? "w-10 h-10" : "w-full",
+              "w-full",
             )}
-            title={shouldCollapse ? "Logout" : undefined}
+            title={undefined}
           >
-            <LogOut className={cn("h-4 w-4", !shouldCollapse && "mr-2")} />
-            {!shouldCollapse && "Logout"}
+            <LogOut className={cn("h-4 w-4", "mr-2")} />
+            {"Logout"}
           </Button>
         </div>
       </div>
@@ -277,19 +277,21 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile: Sheet */}
-      <div className="md:hidden">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
-            <SidebarContent onNavigate={() => setOpen(false)} isMobile={true} />
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/* Mobile: Sheet (fixed trigger, no layout width) */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            className="md:hidden fixed left-2 top-2 z-40 flex items-center justify-center h-12 w-12 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+          >
+            <Menu className="h-8 w-8 shrink-0" />
+          </Button>
+        </SheetTrigger>
+
+        <SheetContent side="left" className="p-0 w-full sm:w-80">
+          <SidebarContent onNavigate={() => setOpen(false)} isMobile={true} />
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop: Fixed Sidebar */}
       <div className="hidden md:block">

@@ -302,7 +302,7 @@ export default function LoginPage() {
               {/* Logo - Hidden on mobile since it's in the background */}
               <div className="mx-auto mb-6 lg:mb-8 relative hidden lg:block">
                 <div className="flex h-16 lg:h-20 w-16 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl ">
-                  <img src="/logo.png" alt="ShelfSense Logo" className="h-14 lg:h-20 w-14 lg:w-20 drop-shadow-md" />
+                  <img src="/logo.png" alt="ShelfSense Logo" className="h-15  w-20  drop-shadow-md" />
                 </div>
               </div>
 

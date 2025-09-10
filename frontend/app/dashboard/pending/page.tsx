@@ -129,13 +129,25 @@ export default function PendingShopsPage() {
               <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty mt-4">
                 This Are the shops that are pending for review. You can search and filter through the list to find specific shops.
               </p>
+              {/* Mobile refresh under text */}
+              <div className="mt-3 block sm:hidden">
+                <Button
+                  onClick={refreshPending}
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
             
-            {/* Refresh Button */}
+            {/* Refresh Button (desktop/tablet) */}
             <Button
               onClick={refreshPending}
               variant="outline"
-              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="hidden sm:flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
               disabled={loading}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

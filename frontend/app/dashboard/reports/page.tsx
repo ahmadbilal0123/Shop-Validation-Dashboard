@@ -202,11 +202,11 @@ const router = useRouter()
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 p-4 md:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-slate-600">Loading reports...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
+            <span className="ml-3 text-gray-700">Loading reports...</span>
           </div>
         </div>
       </div>
@@ -214,14 +214,14 @@ const router = useRouter()
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto p-6 max-w-7xl">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-600 rounded-xl shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
+      <div className="w-full p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="p-3 bg-black rounded-xl shadow-lg">
               <AlertTriangle className="h-8 w-8 text-white" />
             </div>
-            <div>
+            <div className="text-center sm:text-left">
               <h1 className="text-4xl font-bold text-slate-900">Reports</h1>
               <p className="text-slate-600 mt-1">View and analyze shop validation reports</p>
             </div>
@@ -231,7 +231,7 @@ const router = useRouter()
           <Button
             onClick={refreshReports}
             variant="outline"
-            className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+            className="flex items-center gap-2 border-gray-300 text-gray-800 hover:bg-gray-100 w-full sm:w-auto"
             disabled={loading || loadingDetails}
           >
             <RefreshCw className={`h-4 w-4 ${(loading || loadingDetails) ? 'animate-spin' : ''}`} />
@@ -255,10 +255,10 @@ const router = useRouter()
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-600 text-sm">Total Shops</p>
-                      <p className="text-3xl font-bold text-indigo-700">{totalShops}</p>
+                      <p className="text-3xl font-bold text-gray-900">{totalShops}</p>
                     </div>
-                    <div className="p-3 bg-indigo-100 rounded-lg">
-                      <AlertTriangle className="h-6 w-6 text-indigo-600" />
+                    <div className="p-3 bg-gray-100 rounded-lg">
+                      <AlertTriangle className="h-6 w-6 text-gray-800" />
                     </div>
                   </div>
                 </CardContent>
@@ -269,10 +269,10 @@ const router = useRouter()
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-600 text-sm">Visited Shops</p>
-                      <p className="text-3xl font-bold text-green-700">{visitedCount}</p>
+                      <p className="text-3xl font-bold text-gray-900">{visitedCount}</p>
                     </div>
-                    <div className="p-3 bg-green-100 rounded-lg">
-                      <Eye className="h-6 w-6 text-green-600" />
+                    <div className="p-3 bg-gray-100 rounded-lg">
+                      <Eye className="h-6 w-6 text-gray-800" />
                     </div>
                   </div>
                 </CardContent>
@@ -283,10 +283,10 @@ const router = useRouter()
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-600 text-sm">Unvisited Shops</p>
-                      <p className="text-3xl font-bold text-yellow-700">{pendingCount}</p>
+                      <p className="text-3xl font-bold text-gray-900">{pendingCount}</p>
                     </div>
-                    <div className="p-3 bg-yellow-100 rounded-lg">
-                      <RefreshCw className="h-6 w-6 text-yellow-600" />
+                    <div className="p-3 bg-gray-100 rounded-lg">
+                      <RefreshCw className="h-6 w-6 text-gray-800" />
                     </div>
                   </div>
                 </CardContent>
@@ -294,25 +294,25 @@ const router = useRouter()
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex flex-wrap gap-3 mb-6">
               <Button
                 onClick={() => setViewMode('all')}
                 variant={viewMode === 'all' ? 'default' : 'outline'}
-                className={viewMode === 'all' ? 'bg-blue-600 hover:bg-blue-700' : 'border-blue-300 text-blue-700 hover:bg-blue-50'}
+                className={viewMode === 'all' ? 'bg-black hover:bg-gray-900 text-white' : 'border-gray-300 text-gray-800 hover:bg-gray-100'}
               >
                 All Shops ({totalShops})
               </Button>
               <Button
                 onClick={() => setViewMode('visited')}
                 variant={viewMode === 'visited' ? 'default' : 'outline'}
-                className={viewMode === 'visited' ? 'bg-green-600 hover:bg-green-700' : 'border-green-300 text-green-700 hover:bg-green-50'}
+                className={viewMode === 'visited' ? 'bg-black hover:bg-gray-900 text-white' : 'border-gray-300 text-gray-800 hover:bg-gray-100'}
               >
                 Visited Shops ({visitedCount})
               </Button>
               <Button
                 onClick={() => setViewMode('unvisited')}
                 variant={viewMode === 'unvisited' ? 'default' : 'outline'}
-                className={viewMode === 'unvisited' ? 'bg-yellow-600 hover:bg-yellow-700' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'}
+                className={viewMode === 'unvisited' ? 'bg-black hover:bg-gray-900 text-white' : 'border-gray-300 text-gray-800 hover:bg-gray-100'}
               >
                 Unvisited Shops ({pendingCount})
               </Button>
@@ -322,12 +322,12 @@ const router = useRouter()
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-white rounded-t-lg border-b">
                 <CardTitle className="flex items-center gap-2 text-xl text-black">
-                  <AlertTriangle className="h-5 w-5 text-indigo-600" />
+                  <AlertTriangle className="h-5 w-5 text-gray-800" />
                   {viewMode === 'visited' ? 'Visited Shops Report' : 
                    viewMode === 'unvisited' ? 'Unvisited Shops Report' : 
                    'All Shops Report'}
                   {loadingDetails && (
-                    <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                    <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800"></div>
                   )}
                 </CardTitle>
               </CardHeader>
@@ -367,7 +367,7 @@ const router = useRouter()
                             </td>
                             <td className="p-4">
                               <div className="flex items-start gap-2">
-                                <MapPin className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                                 <span className="text-slate-600 text-sm">
                                   {shop.address || 'N/A'}
                                 </span>
@@ -380,7 +380,7 @@ const router = useRouter()
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-indigo-500" />
+                                <Phone className="h-4 w-4 text-gray-500" />
                                 <span className="text-slate-600 text-sm">
                                   {shop.phone || 'N/A'}
                                 </span>
@@ -388,20 +388,20 @@ const router = useRouter()
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-2">
-                                <Star className="h-4 w-4 text-yellow-500" />
-                                <span className="font-semibold text-yellow-700">
+                                <Star className="h-4 w-4 text-gray-500" />
+                                <span className="font-semibold text-gray-800">
                                   {shop.validationScore ? `${shop.validationScore.toFixed(1)}%` : 'N/A'}
                                 </span>
                               </div>
                             </td>
                             <td className="p-4">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
                                 {shop.visitImages?.length || 0} visits
                               </span>
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-amber-500" />
+                                <Calendar className="h-4 w-4 text-gray-500" />
                                 <span className="text-slate-600 text-sm">
                                   {shop.lastVisit ? new Date(shop.lastVisit).toLocaleDateString() : 'Never'}
                                 </span>
@@ -414,7 +414,7 @@ const router = useRouter()
                       e.stopPropagation()
                       router.push(`/dashboard/shops/${shop.id}`)
                     }}
-                    className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                    className="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Shop Details
@@ -442,15 +442,15 @@ const router = useRouter()
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Top Auditor:</span>
-                    <span className="font-bold text-indigo-700">{topAuditor}</span>
+                    <span className="font-bold text-gray-900">{topAuditor}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Average Score:</span>
-                    <span className="font-bold text-green-700">{avgValidationScore}%</span>
+                    <span className="font-bold text-gray-900">{avgValidationScore}%</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Reports Generated:</span>
-                    <span className="font-bold text-blue-700">{reportsGenerated}</span>
+                    <span className="font-bold text-gray-900">{reportsGenerated}</span>
                   </div>
                 </div>
               </CardContent>
@@ -464,13 +464,13 @@ const router = useRouter()
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Completion Rate:</span>
-                    <span className="font-bold text-green-700">
+                    <span className="font-bold text-gray-900">
                       {totalShops > 0 ? Math.round((visitedCount / totalShops) * 100) : 0}%
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
                     <div 
-                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{ 
                         width: totalShops > 0 ? `${(visitedCount / totalShops) * 100}%` : '0%' 
                       }}
