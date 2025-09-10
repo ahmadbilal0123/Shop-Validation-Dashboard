@@ -665,6 +665,8 @@ export async function registerUser(userData: {
   }
 }
 
+
+
 export async function fetchAllUsers(): Promise<UsersResponse> {
   try {
     const apiUrl = buildApiUrl("/api/users/get-all-users")

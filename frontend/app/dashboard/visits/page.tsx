@@ -24,44 +24,15 @@ export default function VisitsPage() {
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
 
-  // Load saved selections on mount
+  // Clear any persisted selections when leaving the page
   useEffect(() => {
-    const savedSelections = sessionStorage.getItem('selectedShopIds_visits')
-    const savedSelectMode = sessionStorage.getItem('selectMode_visits')
-    
-    if (savedSelections) {
-      try {
-        const parsedSelections = JSON.parse(savedSelections)
-        if (Array.isArray(parsedSelections)) {
-          setSelectedShopIds(parsedSelections)
-        }
-      } catch (error) {
-        console.error('Error parsing saved selections:', error)
-      }
-    }
-    
-    if (savedSelectMode === 'true') {
-      setSelectMode(true)
+    return () => {
+      sessionStorage.removeItem('selectedShopIds_visits')
+      sessionStorage.removeItem('selectMode_visits')
     }
   }, [])
 
-  // Save selections whenever they change
-  useEffect(() => {
-    if (selectedShopIds.length > 0) {
-      sessionStorage.setItem('selectedShopIds_visits', JSON.stringify(selectedShopIds))
-    } else {
-      sessionStorage.removeItem('selectedShopIds_visits')
-    }
-  }, [selectedShopIds])
-
-  // Save select mode whenever it changes
-  useEffect(() => {
-    if (selectMode) {
-      sessionStorage.setItem('selectMode_visits', 'true')
-    } else {
-      sessionStorage.removeItem('selectMode_visits')
-    }
-  }, [selectMode])
+  // Do not persist selection or mode across navigations
 
   // Get unique cities for filter
   const uniqueCities = Array.from(new Set(shops.map((shop) => shop.city).filter(Boolean)))

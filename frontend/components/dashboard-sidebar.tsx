@@ -282,7 +282,8 @@ export function DashboardSidebar() {
         <SheetTrigger asChild>
           <Button
             variant="ghost"
-            className="md:hidden fixed left-2 top-2 z-40 flex items-center justify-center h-12 w-12 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+            className="md:hidden fixed right-3 top-3 z-40 flex items-center justify-center h-9 w-9 rounded-xl bg-white text-black border border-black/20 hover:bg-gray-50"
+            aria-label="Open menu"
           >
             <Menu className="h-8 w-8 shrink-0" />
           </Button>

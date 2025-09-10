@@ -191,9 +191,9 @@ export default function VisitAssignPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -201,28 +201,28 @@ export default function VisitAssignPage() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 overflow-hidden">
       {/* Fixed Header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 z-40 shadow-sm py-4 sm:py-5 flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 z-40 shadow-sm py-4 sm:py-5 flex-shrink-0">
+        <div className="w-full px-4 sm:px-6">
           <div className="flex items-center justify-between mb-4 relative">
             <Button
               variant="outline"
               onClick={() => router.push("/dashboard/visits")}
-              className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 h-10 px-4"
+              className="flex items-center gap-2 border-gray-300 text-gray-800 hover:bg-gray-100 h-10 px-4"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Visits
             </Button>
-            <h1 className="text-xl sm:text-2xl font-bold text-blue-900 absolute left-1/2 transform -translate-x-1/2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 absolute left-1/2 transform -translate-x-1/2">
               Assign Shops to QC
             </h1>
             <div></div> {/* Invisible spacer for balance */}
           </div>
 
           {/* Selected Shops Display Section - Compact */}
-          <div className="bg-blue-50/80 backdrop-blur-sm rounded-xl border border-blue-200 shadow-sm p-3 sm:p-4 mb-4">
-            <h2 className="text-base sm:text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+          <div className="bg-gray-50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
               <Package className="w-4 h-4" />
               Selected Shops ({shopIds.length})
             </h2>
@@ -230,10 +230,10 @@ export default function VisitAssignPage() {
               {shopIds.map((shopId, index) => (
                 <div
                   key={shopId}
-                  className="bg-white/80 backdrop-blur-sm rounded-lg border border-blue-200 shadow-sm p-2 sm:p-3"
+                  className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm p-2 sm:p-3"
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-xs">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-800 rounded-md flex items-center justify-center text-white font-bold text-xs">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -247,11 +247,11 @@ export default function VisitAssignPage() {
 
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-green-50 border-green-200 text-green-700 font-semibold w-full sm:w-auto justify-center">
+              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-gray-100 border-gray-300 text-gray-800 font-semibold w-full sm:w-auto justify-center">
                 <Users className="w-3 h-3 mr-1" />
                 {selectedAuditorId ? 1 : 0} QC Selected
               </Badge>
-              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-blue-50 border-blue-200 text-blue-700 font-semibold w-full sm:w-auto justify-center">
+              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs bg-gray-100 border-gray-300 text-gray-800 font-semibold w-full sm:w-auto justify-center">
                 <Package className="w-3 h-3 mr-1" />
                 {shopIds.length} Shops to Assign
               </Badge>
@@ -259,7 +259,7 @@ export default function VisitAssignPage() {
             <Button
               onClick={handleAssignShops}
               disabled={assigning || !selectedAuditorId}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+              className="bg-black hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
             >
               {assigning ? (
                 <>
@@ -279,11 +279,11 @@ export default function VisitAssignPage() {
 
       <div className="flex flex-col h-full overflow-hidden">
         <div className="flex-shrink-0 px-4 sm:px-6 pt-2">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 h-[calc(100vh-140px)] flex flex-col">
+          <div className="w-full">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-lg p-4 sm:p-6 h-[calc(100vh-140px)] flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
+                  <Users className="w-4 sm:w-5 h-4 sm:h-5 text-gray-700" />
                   Select QC Users
                 </h2>
               </div>
@@ -291,20 +291,20 @@ export default function VisitAssignPage() {
               {/* Search Users + View Toggle - Compact */}
               <div className="flex gap-2 mb-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-4 h-4" />
                   <Input
                     placeholder="Search QC users..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-9"
+                    className="pl-10 border-gray-300 focus:border-gray-700 focus:ring-gray-700 h-9"
                   />
                 </div>
-                <div className="flex border border-blue-200 rounded-lg overflow-hidden">
+                <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                   <Button
                     variant={viewMode === 'list' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleViewModeChange('list')}
-                    className={`px-3 py-2 h-9 rounded-none ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-blue-600'}`}
+                    className={`px-3 py-2 h-9 rounded-none ${viewMode === 'list' ? 'bg-black text-white' : 'text-gray-800'}`}
                   >
                     <List className="w-4 h-4" />
                   </Button>
@@ -312,7 +312,7 @@ export default function VisitAssignPage() {
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleViewModeChange('grid')}
-                    className={`px-3 py-2 h-9 rounded-none border-l border-blue-200 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-blue-600'}`}
+                    className={`px-3 py-2 h-9 rounded-none border-l border-gray-300 ${viewMode === 'grid' ? 'bg-black text-white' : 'text-gray-800'}`}
                   >
                     <Grid3X3 className="w-4 h-4" />
                   </Button>
@@ -352,8 +352,8 @@ export default function VisitAssignPage() {
                         key={user.id}
                         className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
                           selectedAuditorId === user.id
-                            ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
-                            : "border-blue-100 hover:border-blue-200"
+                            ? "border-gray-400 ring-2 ring-gray-300 shadow-sm"
+                            : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() => setSelectedAuditorId(user.id)}
                       >
@@ -365,18 +365,18 @@ export default function VisitAssignPage() {
                               checked={selectedAuditorId === user.id}
                               onChange={() => setSelectedAuditorId(user.id)}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-black border-gray-400 rounded focus:ring-gray-700"
                             />
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.name}</div>
                               <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
-                              <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-2 py-0.5">
+                              <Badge variant="secondary" className="text-xs mt-1 bg-gray-200 text-gray-800 border-gray-300 px-2 py-0.5">
                                 {getRoleDisplayName(user.role)}
                               </Badge>
                             </div>
                             {selectedAuditorId === user.id && (
-                              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-green-100 rounded-full">
-                                <UserCheck className="w-3 sm:w-4 h-3 sm:h-4 text-green-600" />
+                              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-gray-800 rounded-full">
+                                <UserCheck className="w-3 sm:w-4 h-3 sm:h-4 text-white" />
                               </div>
                             )}
                           </div>
@@ -391,8 +391,8 @@ export default function VisitAssignPage() {
                         key={user.id}
                         className={`bg-white/90 backdrop-blur-sm border rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
                           selectedAuditorId === user.id
-                            ? "border-blue-300 ring-2 ring-blue-200 shadow-sm"
-                            : "border-blue-100 hover:border-blue-200"
+                            ? "border-gray-400 ring-2 ring-gray-300 shadow-sm"
+                            : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() => setSelectedAuditorId(user.id)}
                       >
@@ -404,18 +404,18 @@ export default function VisitAssignPage() {
                               checked={selectedAuditorId === user.id}
                               onChange={() => setSelectedAuditorId(user.id)}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500 mt-0.5"
+                              className="w-4 h-4 text-black border-gray-400 rounded focus:ring-gray-700 mt-0.5"
                             />
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{user.name}</div>
                               <div className="text-xs text-gray-600 mt-0.5 truncate">{user.email}</div>
-                              <Badge variant="secondary" className="text-xs mt-1 bg-blue-100 text-blue-800 border-blue-200 px-1 py-0.5">
+                              <Badge variant="secondary" className="text-xs mt-1 bg-gray-200 text-gray-800 border-gray-300 px-1 py-0.5">
                                 {getRoleDisplayName(user.role)}
                               </Badge>
                             </div>
                             {selectedAuditorId === user.id && (
-                              <div className="flex items-center justify-center w-5 h-5 bg-green-100 rounded-full flex-shrink-0">
-                                <UserCheck className="w-3 h-3 text-green-600" />
+                              <div className="flex items-center justify-center w-5 h-5 bg-gray-800 rounded-full flex-shrink-0">
+                                <UserCheck className="w-3 h-3 text-white" />
                               </div>
                             )}
                           </div>
