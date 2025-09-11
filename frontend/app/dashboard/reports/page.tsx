@@ -20,7 +20,9 @@ export default function ReportsPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingDetails, setLoadingDetails] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('all')
+  const [viewMode, setViewMode] = useState<ViewMode>('visited')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [selectedShopDetail, setSelectedShopDetail] = useState<any>(null)
   const [loadingShopDetail, setLoadingShopDetail] = useState(false)
 const router = useRouter()
@@ -227,16 +229,18 @@ const router = useRouter()
             </div>
           </div>
           
-          {/* Refresh Button */}
-          <Button
-            onClick={refreshReports}
-            variant="outline"
-            className="flex items-center gap-2 border-gray-300 text-gray-800 hover:bg-gray-100 w-full sm:w-auto"
-            disabled={loading || loadingDetails}
-          >
-            <RefreshCw className={`h-4 w-4 ${(loading || loadingDetails) ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          {/* Actions */}
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              onClick={refreshReports}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300 text-gray-800 hover:bg-gray-100 w-full sm:w-auto"
+              disabled={loading || loadingDetails}
+            >
+              <RefreshCw className={`h-4 w-4 ${(loading || loadingDetails) ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
         {/* Show shop detail view */}
         {viewMode === 'detail' && selectedShopDetail && (
@@ -321,15 +325,43 @@ const router = useRouter()
             {/* Shops Table */}
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-white rounded-t-lg border-b">
-                <CardTitle className="flex items-center gap-2 text-xl text-black">
-                  <AlertTriangle className="h-5 w-5 text-gray-800" />
-                  {viewMode === 'visited' ? 'Visited Shops Report' : 
-                   viewMode === 'unvisited' ? 'Unvisited Shops Report' : 
-                   'All Shops Report'}
-                  {loadingDetails && (
-                    <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800"></div>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-xl text-black">
+                    <AlertTriangle className="h-5 w-5 text-gray-800" />
+                    {viewMode === 'visited' ? 'Visited Shops Report' : 
+                     viewMode === 'unvisited' ? 'Unvisited Shops Report' : 
+                     'All Shops Report'}
+                    {loadingDetails && (
+                      <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800"></div>
+                    )}
+                  </CardTitle>
+                  {viewMode === 'visited' && (
+                    <div className="flex items-center gap-2">
+                      {!selectMode ? (
+                        <Button
+                          onClick={() => {
+                            setSelectMode(true)
+                            setSelectedShopIds([])
+                          }}
+                          className="bg-black hover:bg-gray-900 text-white"
+                        >
+                          Select Shops
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSelectMode(false)
+                            setSelectedShopIds([])
+                          }}
+                          className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                        >
+                          Cancel Selection
+                        </Button>
+                      )}
+                    </div>
                   )}
-                </CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 {getCurrentShops().length === 0 ? (
@@ -345,6 +377,11 @@ const router = useRouter()
                     <table className="w-full">
                       <thead className="bg-slate-50 border-b">
                         <tr>
+                          {viewMode === 'visited' && (
+                            <th className="w-10 p-4 text-slate-700">
+                              {/* empty header for checkboxes */}
+                            </th>
+                          )}
                           <th className="text-left p-4 font-semibold text-slate-700">Shop Name</th>
                           <th className="text-left p-4 font-semibold text-slate-700">Address</th>
                           <th className="text-left p-4 font-semibold text-slate-700">City</th>
@@ -356,8 +393,32 @@ const router = useRouter()
                         </tr>
                       </thead>
                       <tbody>
-                        {getCurrentShops().map((shop, index) => (
-                          <tr key={shop.id || index} className="border-b hover:bg-slate-50 transition-colors">
+                        {getCurrentShops().map((shop, index) => {
+                          const isSelected = selectedShopIds.includes(shop.id)
+                          return (
+                          <tr
+                            key={shop.id || index}
+                            className={`border-b transition-colors ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                            onClick={() => {
+                              if (!selectMode) return
+                              const id = shop.id
+                              setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+                            }}
+                          >
+                            {viewMode === 'visited' && (
+                              <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    const id = shop.id
+                                    setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+                                  }}
+                                  disabled={!selectMode}
+                                />
+                              </td>
+                            )}
                             <td className="p-4">
                               <div className="flex items-center gap-2">
                                 <div className="font-semibold text-slate-900">
@@ -412,18 +473,49 @@ const router = useRouter()
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (selectMode) return
                       router.push(`/dashboard/shops/${shop.id}`)
                     }}
-                    className="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                    className={`w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 ${selectMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={selectMode}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Shop Details
                   </Button>
                             </td>
                           </tr>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
+                    {selectMode && viewMode === 'visited' && (
+                      <div className="flex flex-wrap gap-2 items-center justify-end p-4 border-t bg-slate-50">
+                        <Button
+                          variant="outline"
+                          className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                          onClick={() => setSelectedShopIds(getCurrentShops().map(s => s.id))}
+                        >
+                          Select All Shops
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                          onClick={() => setSelectedShopIds([])}
+                        >
+                          Deselect All Shops
+                        </Button>
+                        <Button
+                          className="bg-black hover:bg-gray-900 text-white"
+                          onClick={() => {
+                            const ids = selectedShopIds.join(',')
+                            if (!ids) return
+                            window.location.href = `/dashboard/managers/assign?shopIds=${encodeURIComponent(ids)}`
+                          }}
+                          disabled={selectedShopIds.length === 0}
+                        >
+                          Assign Shops
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

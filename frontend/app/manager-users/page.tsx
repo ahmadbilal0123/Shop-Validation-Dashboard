@@ -11,6 +11,7 @@ import {
   type Shop,
 } from "@/lib/api"
 import { getSession } from "@/lib/auth"
+import { useAuthContext } from "@/components/auth-provider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +37,7 @@ import { useRouter } from "next/navigation"
 
 export default function UsersPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuthContext()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [form, setForm] = useState({ name: "", username: "", password: "", role: "saleperson" })
@@ -56,7 +58,16 @@ export default function UsersPage() {
   const editFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    loadUsers()
+    // Only load users when authentication is ready and user is authenticated
+    if (!authLoading && user) {
+      loadUsers()
+    }
+  }, [authLoading, user])
+
+  useEffect(() => {
+    // Set up event listeners and intervals only when user is authenticated
+    if (!user) return
+
     const handleFocus = () => loadUsers()
     const interval = setInterval(() => {
       if (users.length > 0) loadUserShopCounts(users)
@@ -66,7 +77,7 @@ export default function UsersPage() {
       window.removeEventListener("focus", handleFocus)
       clearInterval(interval)
     }
-  }, [])
+  }, [user, users])
 
   const loadUsers = async () => {
     setLoading(true)
@@ -184,6 +195,29 @@ export default function UsersPage() {
       setAssignedError("Network error occurred")
     }
     setAssignedLoading(false)
+  }
+
+  // Show loading while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to access this page.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
