@@ -445,9 +445,11 @@ export default function UsersPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {filteredUsers.map((user) => (
+              {filteredUsers.map((user) => {
+                const uid = (user as any).id || (user as any)._id || user.username
+                return (
                 <Card
-                  key={user.id}
+                  key={uid}
                   className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <CardHeader className="pb-3 p-4 sm:p-6">
@@ -505,7 +507,8 @@ export default function UsersPage() {
                     </Button>
                   </CardContent>
                 </Card>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -534,8 +537,8 @@ export default function UsersPage() {
                 </div>
               ) : (
                 <div className="grid gap-3 sm:gap-4">
-                  {assignedShops.map((shop) => (
-                    <Card key={shop.id} className="border shadow hover:shadow-lg transition-all">
+                  {assignedShops.map((shop, idx) => (
+                    <Card key={(shop as any).id || (shop as any)._id || idx} className="border shadow hover:shadow-lg transition-all">
                       <CardHeader className="p-3 sm:p-4">
                         <CardTitle className="text-sm sm:text-lg font-bold text-blue-700 truncate">
                           {shop.name}

@@ -49,7 +49,7 @@ export function ManagerSidebar() {
       <nav className="flex-1 p-4 space-y-1">
         <NavLink href="/manager" icon={LayoutDashboard}>Dashboard</NavLink>
         <NavLink href="/manager-users" icon={Users}>Add Salesperson</NavLink>
-        <NavLink href="" icon={Store}>Shop Details</NavLink>
+        {/* <NavLink href="" icon={Store}>Shop Details</NavLink> */}
         <NavLink href="" icon={BarChart3}>Reports</NavLink>
       </nav>
 

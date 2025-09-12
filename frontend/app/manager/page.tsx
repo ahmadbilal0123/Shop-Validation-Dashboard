@@ -228,7 +228,11 @@ export default function ManagerDashboard() {
 
                       <Button
                         size="sm"
-                        onClick={() => router.push(`/dashboard/shops/${shop.id || shop._id}`)}
+                        onClick={() => {
+                          const sid = (shop as any)._id || (shop as any).id || (shop as any).shop_id
+                          if (!sid) return
+                          router.push(`/manager/shops/${sid}`)
+                        }}
                         className="w-full mt-4 sm:mt-6 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 bg-black hover:bg-gray-900"
                       >
                         <Eye className="h-4 w-4 mr-2" />
