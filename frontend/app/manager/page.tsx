@@ -71,10 +71,14 @@ export default function ManagerDashboard() {
     if (!query.trim()) return items
     const q = query.toLowerCase().trim()
     return items.filter((shop) => {
-      const name = (shop as any).name?.toLowerCase?.() || ""
-      const address = (shop as any).address?.toLowerCase?.() || ""
-      const city = (shop as any).city?.toLowerCase?.() || ""
-      const state = (shop as any).state?.toLowerCase?.() || ""
+      const name = ((shop as any).shop_name || (shop as any).name || (shop as any).shopName)
+        ?.toLowerCase?.() || ""
+      const address = ((shop as any).shop_address || (shop as any).address)
+        ?.toLowerCase?.() || ""
+      const city = ((shop as any).shop_city || (shop as any).city)
+        ?.toLowerCase?.() || ""
+      const state = ((shop as any).shop_state || (shop as any).state)
+        ?.toLowerCase?.() || ""
       const location = (shop as any).location?.toLowerCase?.() || ""
       return name.includes(q) || address.includes(q) || city.includes(q) || state.includes(q) || location.includes(q)
     })
@@ -176,27 +180,27 @@ export default function ManagerDashboard() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1 pr-4">
                         <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-800 transition-colors">
-                          {(shop as any).name || (shop as any).shopName || (shop as any).businessName || (shop as any).storeName || (shop as any).title || ((shop.id || shop._id) as string) || "Unnamed Shop"}
+                          {(shop as any).shop_name || (shop as any).name || (shop as any).shopName || (shop as any).businessName || (shop as any).storeName || (shop as any).title || ((shop.id || shop._id) as string) || "Unnamed Shop"}
                         </CardTitle>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0 p-4 sm:p-6 space-y-4">
                     <div className="space-y-3">
-                      {(shop.address || shop.city || shop.state || shop.zipCode || (shop as any).location) && (
+                      {((shop as any).shop_address || shop.address || (shop as any).shop_city || shop.city || (shop as any).shop_state || shop.state || (shop as any).zip_code || shop.zipCode || (shop as any).location) && (
                         <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                           <MapPin className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                           <div className="text-sm text-slate-700 space-y-1">
-                            {shop.address && <p className="font-semibold">{shop.address}</p>}
-                            {(shop.city || shop.state) && (
+                            {((shop as any).shop_address || shop.address) && <p className="font-semibold">{(shop as any).shop_address || shop.address}</p>}
+                            {(((shop as any).shop_city || shop.city) || ((shop as any).shop_state || shop.state)) && (
                               <p className="text-slate-600 uppercase tracking-wide">
-                                {shop.city && shop.state
-                                  ? `${shop.city}, ${shop.state}`
-                                  : shop.city || shop.state}
+                                {((shop as any).shop_city || shop.city) && ((shop as any).shop_state || shop.state)
+                                  ? `${(shop as any).shop_city || shop.city}, ${(shop as any).shop_state || shop.state}`
+                                  : ((shop as any).shop_city || shop.city || (shop as any).shop_state || shop.state)}
                               </p>
                             )}
-                            {shop.zipCode && <p className="text-slate-500 uppercase tracking-wide">{shop.zipCode}</p>}
-                            {!shop.address && !(shop.city || shop.state || shop.zipCode) && (shop as any).location && (
+                            {(((shop as any).zip_code) || shop.zipCode) && <p className="text-slate-500 uppercase tracking-wide">{(shop as any).zip_code || shop.zipCode}</p>}
+                            {!((shop as any).shop_address || shop.address) && !(((shop as any).shop_city || shop.city) || ((shop as any).shop_state || shop.state) || ((shop as any).zip_code || shop.zipCode)) && (shop as any).location && (
                               <p className="text-slate-600">{(shop as any).location}</p>
                             )}
                           </div>
