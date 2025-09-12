@@ -1,150 +1,102 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  LayoutDashboard,
-  Store,
-  Users,
-  BarChart3,
-  RefreshCw,
-  Eye,
-  MapPin,
-  Calendar,
-  User,
-  LogOut,
-  Menu,
-} from "lucide-react"
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
+import { Store, RefreshCw, Eye, MapPin, Calendar } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth" // ✅ assumes you have a useAuth hook
+import { useEffect, useState } from "react"
+import { getSession } from "@/lib/auth"
+import { Input } from "@/components/ui/input"
+import { ManagerSidebar } from "@/components/manager-sidebar"
 
 // ✅ Define the Shop type
-interface Shop {
-  id: string
-  name: string
-  address: string
-  location: string
-  addedDate: string
-  visits: number
+interface ShopApiItem {
+  id?: string
+  _id?: string
+  name?: string
+  address?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  createdAt?: string
+  lastVisit?: string
+  visitImages?: Array<any>
 }
 
 export default function ManagerDashboard() {
   const router = useRouter()
   const { user, logout } = useAuth() // ✅ get user + logout function from auth
 
-  // Example structure of user: { name: "John Doe", role: "Admin" }
-  const shops: Shop[] = [] // This will be populated from API
-  const totalShops: number = 0 // This will come from API
+  const [shops, setShops] = useState<ShopApiItem[]>([])
+  const [allShops, setAllShops] = useState<ShopApiItem[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = useState<string>("")
+  const [showVisitedOnly, setShowVisitedOnly] = useState<boolean>(false)
+
+  const totalShops: number = shops.length
   const selectedShops: number = 0 // This will be managed by state
 
-  const handleLogout = () => {
-    logout() // clear auth/session
-    router.push("/login") // redirect to login
+  const loadShops = async () => {
+    setLoading(true)
+    try {
+      const session = getSession()
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      })
+      if (!response.ok) throw new Error(`Failed: ${response.status}`)
+      const data = await response.json()
+      const list: ShopApiItem[] = (data && (data.data || data.shops)) || []
+      setAllShops(Array.isArray(list) ? list : [])
+      setShops(Array.isArray(list) ? list : [])
+    } catch (e) {
+      setAllShops([])
+      setShops([])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const SidebarBody = () => (
-    <div className="w-64 bg-gray-900 text-white flex flex-col h-full">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
-              <Store className="w-5 h-5" />
-            </div>
-            <span className="text-xl font-semibold">ShelfVoice</span>
-          </div>
-        </div>
+  useEffect(() => {
+    loadShops()
+  }, [])
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4">
-  <div className="space-y-2">
-    <Button
-      variant="ghost"
-      className="w-full justify-start text-white hover:bg-gray-800 bg-gray-800"
-    >
-      <LayoutDashboard className="w-4 h-4 mr-3" />
-      Dashboard
-    </Button>
+  const filterShopsBySearch = (items: ShopApiItem[], query: string) => {
+    if (!query.trim()) return items
+    const q = query.toLowerCase().trim()
+    return items.filter((shop) => {
+      const name = (shop as any).name?.toLowerCase?.() || ""
+      const address = (shop as any).address?.toLowerCase?.() || ""
+      const city = (shop as any).city?.toLowerCase?.() || ""
+      const state = (shop as any).state?.toLowerCase?.() || ""
+      const location = (shop as any).location?.toLowerCase?.() || ""
+      return name.includes(q) || address.includes(q) || city.includes(q) || state.includes(q) || location.includes(q)
+    })
+  }
 
-    <Button
-      variant="ghost"
-      className="w-full justify-start text-white hover:bg-gray-800"
-      onClick={() => router.push("/manager-users")} // <-- THIS IS THE ONLY CHANGE!
-    >
-      <Users className="w-4 h-4 mr-3" />
-      Add Salesperson
-    </Button>
-    <Button
-      variant="ghost"
-      className="w-full justify-start text-white hover:bg-gray-800"
-    >
-      <Store className="w-4 h-4 mr-3" />
-      Shop Details
-    </Button>
-  
-    <Button
-      variant="ghost"
-      className="w-full justify-start text-white hover:bg-gray-800"
-    >
-      <BarChart3 className="w-4 h-4 mr-3" />
-      Reports
-    </Button>
-  </div>
-</nav>
+  useEffect(() => {
+    const visited = allShops.filter((s) => Array.isArray(s.visitImages) && s.visitImages!.length > 0)
+    const base = showVisitedOnly ? visited : allShops
+    setShops(filterShopsBySearch(base, searchQuery))
+  }, [allShops, showVisitedOnly, searchQuery])
 
-        {/* User Profile */}
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="text-sm font-medium">
-                {user?.name || "Guest User"}
-              </div>
-              <div className="text-xs text-gray-300">
-                {user?.role || "No Role"}
-              </div>
-            </div>
-          </div>
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            className="w-full justify-start text-red-500 hover:bg-red-600 hover:text-white"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-    </div>
-  )
+  const handleLogout = () => {
+    logout()
+    router.push("/login")
+  }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
-      {/* Mobile Hamburger + Drawer */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            className="md:hidden fixed right-3 top-3 z-40 flex items-center justify-center h-10 w-10 rounded-xl bg-white text-black border border-black/20 hover:bg-gray-50"
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-full sm:w-72">
-          <SidebarBody />
-        </SheetContent>
-      </Sheet>
-
-      {/* Sidebar (desktop only) */}
-      <div className="hidden md:flex">
-        <SidebarBody />
-      </div>
+    <div className="flex h-screen bg-gray-50">
+      <ManagerSidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-auto">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between">
@@ -162,13 +114,45 @@ export default function ManagerDashboard() {
                 className="bg-gray-200 text-gray-800 px-4 py-2"
               >
                 <Store className="w-4 h-4 mr-2" />
-                {totalShops} Total Shops
+                {shops.length} Shops
               </Badge>
 
-              <Button variant="outline" size="sm" className="border-gray-300 text-gray-800 hover:bg-gray-100">
+              <Button variant="outline" size="sm" className="border-gray-300 text-gray-800 hover:bg-gray-100" onClick={loadShops} disabled={loading}>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+                {loading ? "Refreshing..." : "Refresh"}
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="p-4 sm:p-6 pt-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 mb-4">
+            <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={showVisitedOnly ? "default" : "outline"}
+                  className={showVisitedOnly ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-300 text-green-700 hover:bg-green-50"}
+                  onClick={() => setShowVisitedOnly(true)}
+                >
+                  Visited Shops
+                </Button>
+                <Button
+                  variant={!showVisitedOnly ? "default" : "outline"}
+                  className={!showVisitedOnly ? "bg-black hover:bg-black text-white" : "border-blue-300 text-blue-700 hover:bg-blue-50"}
+                  onClick={() => setShowVisitedOnly(false)}
+                >
+                  All Shops
+                </Button>
+              </div>
+              <div className="relative w-full md:w-80">
+                <Input
+                  placeholder="Search shops..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-3 pr-3 border-blue-200 focus:ring-black w-full"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -179,42 +163,71 @@ export default function ManagerDashboard() {
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <Store className="w-12 h-12 mb-4 text-gray-300" />
               <h3 className="text-lg font-medium mb-2">No shops found</h3>
-              <p className="text-sm">Connect your API to load shop data</p>
+              <p className="text-sm">{loading ? "Loading shops..." : "Connect your API to load shop data"}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {shops.map((shop) => (
-                <Card key={shop.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="space-y-4">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                        {shop.name}
-                      </h3>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-gray-700">
-                          <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                          <span>{shop.address}</span>
+                <Card
+                  key={(shop.id || shop._id) as string}
+                  className="group relative bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200"
+                >
+                  <CardHeader className="pb-4 bg-gradient-to-r from-blue-50/80 to-slate-50/80">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 pr-4">
+                        <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-800 transition-colors">
+                          {(shop as any).name || (shop as any).shopName || (shop as any).businessName || (shop as any).storeName || (shop as any).title || ((shop.id || shop._id) as string) || "Unnamed Shop"}
+                        </CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0 p-4 sm:p-6 space-y-4">
+                    <div className="space-y-3">
+                      {(shop.address || shop.city || shop.state || shop.zipCode || (shop as any).location) && (
+                        <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                          <MapPin className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <div className="text-sm text-slate-700 space-y-1">
+                            {shop.address && <p className="font-semibold">{shop.address}</p>}
+                            {(shop.city || shop.state) && (
+                              <p className="text-slate-600 uppercase tracking-wide">
+                                {shop.city && shop.state
+                                  ? `${shop.city}, ${shop.state}`
+                                  : shop.city || shop.state}
+                              </p>
+                            )}
+                            {shop.zipCode && <p className="text-slate-500 uppercase tracking-wide">{shop.zipCode}</p>}
+                            {!shop.address && !(shop.city || shop.state || shop.zipCode) && (shop as any).location && (
+                              <p className="text-slate-600">{(shop as any).location}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {shop.location}
+                      )}
+
+                      {shop.createdAt && (
+                        <div className="flex items-center text-gray-600">
+                          <Calendar className="w-4 h-4 mr-3 text-amber-500 flex-shrink-0" />
+                          <span className="text-sm">Added {new Date(shop.createdAt).toLocaleDateString()}</span>
                         </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                        <div className="text-sm text-slate-600">
+                          <span className="font-semibold">Visits:</span>{" "}
+                          <span className="text-black font-bold">{shop.visitImages?.length || 0}</span>
+                        </div>
+                        {shop.lastVisit && (
+                          <div className="text-sm text-blue-600 font-semibold">
+                            Last: {new Date(shop.lastVisit).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-700">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-600" />
-                        <span>Added {shop.addedDate}</span>
-                      </div>
-
-                      <div className="text-sm">
-                        <span className="text-gray-700">Visits: </span>
-                        <span className="font-semibold text-gray-900">
-                          {shop.visits}
-                        </span>
-                      </div>
-
-                      <Button className="w-full bg-black hover:bg-gray-900">
-                        <Eye className="w-4 h-4 mr-2" />
+                      <Button
+                        size="sm"
+                        onClick={() => router.push(`/dashboard/shops/${shop.id || shop._id}`)}
+                        className="w-full mt-4 sm:mt-6 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 bg-black hover:bg-gray-900"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
                         View Shop Details
                       </Button>
                     </div>

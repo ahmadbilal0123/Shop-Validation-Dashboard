@@ -348,16 +348,43 @@ const router = useRouter()
                           Select Shops
                         </Button>
                       ) : (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSelectMode(false)
-                            setSelectedShopIds([])
-                          }}
-                          className="border-gray-300 text-gray-800 hover:bg-gray-100"
-                        >
-                          Cancel Selection
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setSelectMode(false)
+                              setSelectedShopIds([])
+                            }}
+                            className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                          >
+                            Cancel Selection
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                            onClick={() => setSelectedShopIds(getCurrentShops().map(s => s.id))}
+                          >
+                            Select All Shops
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                            onClick={() => setSelectedShopIds([])}
+                          >
+                            Deselect All Shops
+                          </Button>
+                          <Button
+                            className="bg-black hover:bg-gray-900 text-white"
+                            onClick={() => {
+                              const ids = selectedShopIds.join(',')
+                              if (!ids) return
+                              window.location.href = `/dashboard/managers/assign?shopIds=${encodeURIComponent(ids)}`
+                            }}
+                            disabled={selectedShopIds.length === 0}
+                          >
+                            Assign Shops
+                          </Button>
+                        </>
                       )}
                     </div>
                   )}
@@ -377,7 +404,7 @@ const router = useRouter()
                     <table className="w-full">
                       <thead className="bg-slate-50 border-b">
                         <tr>
-                          {viewMode === 'visited' && (
+                          {selectMode && viewMode === 'visited' && (
                             <th className="w-10 p-4 text-slate-700">
                               {/* empty header for checkboxes */}
                             </th>
@@ -405,7 +432,7 @@ const router = useRouter()
                               setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
                             }}
                           >
-                            {viewMode === 'visited' && (
+                            {selectMode && viewMode === 'visited' && (
                               <td className="p-4" onClick={(e) => e.stopPropagation()}>
                                 <input
                                   type="checkbox"
@@ -487,35 +514,7 @@ const router = useRouter()
                         )})}
                       </tbody>
                     </table>
-                    {selectMode && viewMode === 'visited' && (
-                      <div className="flex flex-wrap gap-2 items-center justify-end p-4 border-t bg-slate-50">
-                        <Button
-                          variant="outline"
-                          className="border-gray-300 text-gray-800 hover:bg-gray-100"
-                          onClick={() => setSelectedShopIds(getCurrentShops().map(s => s.id))}
-                        >
-                          Select All Shops
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-gray-300 text-gray-800 hover:bg-gray-100"
-                          onClick={() => setSelectedShopIds([])}
-                        >
-                          Deselect All Shops
-                        </Button>
-                        <Button
-                          className="bg-black hover:bg-gray-900 text-white"
-                          onClick={() => {
-                            const ids = selectedShopIds.join(',')
-                            if (!ids) return
-                            window.location.href = `/dashboard/managers/assign?shopIds=${encodeURIComponent(ids)}`
-                          }}
-                          disabled={selectedShopIds.length === 0}
-                        >
-                          Assign Shops
-                        </Button>
-                      </div>
-                    )}
+                    {false}
                   </div>
                 )}
               </CardContent>

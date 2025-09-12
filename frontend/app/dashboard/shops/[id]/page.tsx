@@ -612,14 +612,14 @@ export default function ShopDetailsPage() {
                   </h3>
 
                   {getLatestImages().length > 1 && (
-                    <Button
-                      onClick={() => setShowPreviousImages(!showPreviousImages)}
-                      variant={showPreviousImages ? "default" : "outline"}
-                      className="rounded-lg border-gray-300 text-gray-800 shadow-sm hover:bg-gray-100"
-                    >
-                      <History className="w-4 h-4 mr-2" />
-                      {showPreviousImages ? "Hide Previous" : "Show Previous"}
-                    </Button>
+                  <Button
+                  onClick={() => setShowPreviousImages(!showPreviousImages)}
+                  className="bg-white text-black rounded-lg border border-gray-300 shadow-sm hover:bg-gray-100"
+                >
+                  <History className="w-4 h-4 mr-2 text-black" />
+                  {showPreviousImages ? "Hide Previous" : "Show Previous"}
+                </Button>
+                
                   )}
                 </div>
 

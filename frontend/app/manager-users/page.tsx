@@ -4,7 +4,6 @@ import type React from "react"
 import { useEffect, useState, useRef } from "react"
 import {
   registerUser,
-  fetchAllUsers,
   updateUser,
   type User,
   fetchShops,
@@ -34,6 +33,7 @@ import {
   ArrowLeft,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { ManagerSidebar } from "@/components/manager-sidebar"
 
 export default function UsersPage() {
   const router = useRouter()
@@ -81,12 +81,26 @@ export default function UsersPage() {
 
   const loadUsers = async () => {
     setLoading(true)
-    const res = await fetchAllUsers()
-    if (res.success) {
-      setUsers(res.users)
-      await loadUserShopCounts(res.users)
-    } else {
-      setError(res.error || "Failed to load users")
+    setError(null)
+    try {
+      const session = getSession()
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/get-salepersons`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      })
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`)
+      }
+      const data = await response.json()
+      const list = (data && (data.data || data.users)) || []
+      setUsers(list)
+      await loadUserShopCounts(list)
+    } catch (e: any) {
+      setError(e?.message || "Failed to load users")
     }
     setLoading(false)
   }
@@ -221,8 +235,10 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
-      <div className="w-full p-4 sm:p-6 space-y-8">
+    <div className="flex h-screen bg-gray-50">
+      <ManagerSidebar />
+      <main className="flex-1 overflow-auto">
+      <div className="p-4 sm:p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-8">
           <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 text-center">User Management</h1>
@@ -566,6 +582,7 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+      </main>
     </div>
   )
 }
