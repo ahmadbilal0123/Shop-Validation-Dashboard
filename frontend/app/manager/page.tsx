@@ -108,9 +108,9 @@ export default function ManagerDashboard() {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Manager Dashboard
               </h1>
-              <p className="text-gray-600">
+              {/* <p className="text-gray-600">
                 Efficiently manage and assign shops to auditors or all the users
-              </p>
+              </p> */}
             </div>
             <div className="flex items-center gap-4">
               <Badge
