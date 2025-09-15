@@ -222,7 +222,7 @@ export default function LoginPage() {
   return (
     <>
       <style jsx>{floatingAnimations}</style>
-      <div className="min-h-screen w-full flex items-center justify-center lg:grid lg:grid-cols-2">
+      <div className="h-screen w-full flex items-center justify-center lg:grid lg:grid-cols-2">
         {/* Left Half - Blue & White Brand Experience (Desktop/Tablet only) */}
         <div className="hidden lg:flex flex-col justify-center w-full h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950">
           {/* Subtle Background Elements */}
@@ -271,7 +271,7 @@ export default function LoginPage() {
         </div>
 
         {/* Responsive Login Card Section - All devices */}
-        <div className="flex items-center justify-center w-full min-h-screen p-4 sm:p-6 lg:p-16 relative">
+        <div className="flex items-center justify-center w-full h-screen p-4 sm:p-6 lg:p-0 relative">
           {/* Mobile/Tablet Background - Blue theme for all non-desktop screens */}
           <div className="absolute lg:hidden inset-0 w-full h-full bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950 z-0">
             <div className="absolute inset-0 bg-black/20"></div>
