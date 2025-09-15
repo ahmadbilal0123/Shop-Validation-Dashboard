@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth" // ✅ assumes you have a useAuth hook
 import { useEffect, useState } from "react"
 import { getSession } from "@/lib/auth"
+import { fetchAssignedShopsForAuditor, type AssignedShopsResponse } from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { ManagerSidebar } from "@/components/manager-sidebar"
 
@@ -41,20 +42,18 @@ export default function ManagerDashboard() {
   const loadShops = async () => {
     setLoading(true)
     try {
-      const session = getSession()
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
-      if (!response.ok) throw new Error(`Failed: ${response.status}`)
-      const data = await response.json()
-      const list: ShopApiItem[] = (data && (data.data || data.shops)) || []
-      setAllShops(Array.isArray(list) ? list : [])
-      setShops(Array.isArray(list) ? list : [])
+      const currentUserId = user?.id || getSession()?.user?.id
+      if (!currentUserId) throw new Error("No user id found for assigned shops fetch")
+
+      const res: AssignedShopsResponse = await fetchAssignedShopsForAuditor(currentUserId)
+      if (res.success) {
+        const list: ShopApiItem[] = res.shops as any
+        setAllShops(Array.isArray(list) ? list : [])
+        setShops(Array.isArray(list) ? list : [])
+      } else {
+        setAllShops([])
+        setShops([])
+      }
     } catch (e) {
       setAllShops([])
       setShops([])

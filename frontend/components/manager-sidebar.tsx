@@ -47,10 +47,11 @@ export function ManagerSidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
-        <NavLink href="/manager" icon={LayoutDashboard}>Dashboard</NavLink>
+        <NavLink href="" icon={BarChart3}>Reports</NavLink>
+        <NavLink href="/manager" icon={LayoutDashboard}>Shops</NavLink>
         <NavLink href="/manager-users" icon={Users}>Add Salesperson</NavLink>
         {/* <NavLink href="" icon={Store}>Shop Details</NavLink> */}
-        <NavLink href="" icon={BarChart3}>Reports</NavLink>
+      
       </nav>
 
       <div className="p-4 border-t border-gray-200">

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft, Users, Search, UserCheck, Package, Grid3X3, List } from "lucide-react"
-import { fetchAllUsers } from "@/lib/api"
+import { fetchAllUsers, assignShopsToUser } from "@/lib/api"
 
 interface ManagerUser {
   id: string
@@ -68,9 +68,13 @@ export default function AssignShopsToManagersPage() {
     if (!selectedUserId) return
     setAssigning(true)
     try {
-      // Placeholder until API is ready
-      alert(`Assigning ${shopIds.length} shops to manager ${selectedUserId}. (API pending)`) 
-      router.push("/dashboard/shops")
+      const result = await assignShopsToUser(selectedUserId, shopIds, "manager")
+      if (result.success) {
+        alert(result.message || "Shops assigned successfully")
+        router.push("/dashboard/shops")
+      } else {
+        alert(result.error || "Failed to assign shops")
+      }
     } finally {
       setAssigning(false)
     }
