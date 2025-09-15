@@ -104,7 +104,8 @@ const router = useRouter()
     }
   }
 
-  // Helper: disable selection for shops already assigned to a manager
+  // Helpers: only block if visited AND assigned to a manager
+  const isVisited = (s: any): boolean => Array.isArray((s as any)?.visitImages) && ((s as any)?.visitImages?.length || 0) > 0
   const isAssignedToManager = (s: any): boolean => {
     const assignedQcId = (s as any)?.assignedQc
     if (!assignedQcId) return false
@@ -372,7 +373,7 @@ const router = useRouter()
                             className="border-gray-300 text-gray-800 hover:bg-gray-100"
                             onClick={() => setSelectedShopIds(
                               getCurrentShops()
-                                .filter((s: any) => !isAssignedToManager(s))
+                                .filter((s: any) => !(isVisited(s) && isAssignedToManager(s)))
                                 .map((s) => s.id)
                             )}
                           >
@@ -434,7 +435,7 @@ const router = useRouter()
                       <tbody>
                         {getCurrentShops().map((shop, index) => {
                           const isSelected = selectedShopIds.includes(shop.id)
-                          const assigned = isAssignedToManager(shop)
+                          const assigned = isVisited(shop) && isAssignedToManager(shop)
                           return (
                           <tr
                             key={shop.id || index}

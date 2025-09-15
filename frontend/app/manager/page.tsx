@@ -172,8 +172,8 @@ export default function ManagerDashboard() {
                       onClick={() => {
                         const ids = selectedShopIds.join(",")
                         if (!ids) return
-                        // Navigate to salesperson assignment page
-                        router.push(`/dashboard/salespersons/assign?shopIds=${encodeURIComponent(ids)}`)
+                        // Navigate to salesperson assignment page (moved out of dashboard)
+                        router.push(`/salespersons/assign?shopIds=${encodeURIComponent(ids)}`)
                       }}
                     >
                       Assign Shops
