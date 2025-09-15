@@ -104,6 +104,14 @@ const router = useRouter()
     }
   }
 
+  // Helper: disable selection for shops already assigned to a manager
+  const isAssignedToManager = (s: any): boolean => {
+    const assignedQcId = (s as any)?.assignedQc
+    if (!assignedQcId) return false
+    const assignedUser = users.find((u) => u.id === assignedQcId)
+    return assignedUser?.role === "manager"
+  }
+
   const renderShopDetailTable = () => {
     if (!selectedShopDetail) return null
 
@@ -362,7 +370,11 @@ const router = useRouter()
                           <Button
                             variant="outline"
                             className="border-gray-300 text-gray-800 hover:bg-gray-100"
-                            onClick={() => setSelectedShopIds(getCurrentShops().map(s => s.id))}
+                            onClick={() => setSelectedShopIds(
+                              getCurrentShops()
+                                .filter((s: any) => !isAssignedToManager(s))
+                                .map((s) => s.id)
+                            )}
                           >
                             Select All Shops
                           </Button>
@@ -422,12 +434,14 @@ const router = useRouter()
                       <tbody>
                         {getCurrentShops().map((shop, index) => {
                           const isSelected = selectedShopIds.includes(shop.id)
+                          const assigned = isAssignedToManager(shop)
                           return (
                           <tr
                             key={shop.id || index}
-                            className={`border-b transition-colors ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                            className={`border-b transition-colors ${selectMode ? (assigned ? 'cursor-not-allowed' : 'cursor-pointer') : ''} ${isSelected ? 'bg-blue-50' : assigned ? 'bg-amber-50/60' : 'hover:bg-slate-50'}`}
                             onClick={() => {
                               if (!selectMode) return
+                              if (assigned) return
                               const id = shop.id
                               setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
                             }}
@@ -439,10 +453,11 @@ const router = useRouter()
                                   className="h-4 w-4"
                                   checked={isSelected}
                                   onChange={() => {
+                                    if (assigned) return
                                     const id = shop.id
                                     setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
                                   }}
-                                  disabled={!selectMode}
+                                  disabled={!selectMode || assigned}
                                 />
                               </td>
                             )}
@@ -451,6 +466,11 @@ const router = useRouter()
                                 <div className="font-semibold text-slate-900">
                                   {shop.name || 'N/A'}
                                 </div>
+                                {assigned && (
+                                  <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 border border-amber-200">
+                                    Assigned to Manager
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="p-4">

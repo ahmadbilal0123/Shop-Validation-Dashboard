@@ -35,6 +35,8 @@ export default function ManagerDashboard() {
   const [loading, setLoading] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [showVisitedOnly, setShowVisitedOnly] = useState<boolean>(false)
+  const [selectMode, setSelectMode] = useState<boolean>(false)
+  const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
 
   const totalShops: number = shops.length
   const selectedShops: number = 0 // This will be managed by state
@@ -147,6 +149,58 @@ export default function ManagerDashboard() {
                 >
                   All Shops
                 </Button>
+              {shops.length > 0 && (
+                selectMode ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setSelectedShopIds(shops.map((s: any) => (s._id || s.id || s.shop_id) as string).filter(Boolean))}
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setSelectedShopIds([])}
+                    >
+                      Deselect All
+                    </Button>
+                    <Button
+                      className="bg-black hover:bg-gray-900 text-white"
+                      disabled={selectedShopIds.length === 0}
+                      onClick={() => {
+                        const ids = selectedShopIds.join(",")
+                        if (!ids) return
+                        // Navigate to salesperson assignment page
+                        router.push(`/dashboard/salespersons/assign?shopIds=${encodeURIComponent(ids)}`)
+                      }}
+                    >
+                      Assign Shops
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-gray-300 text-gray-800 hover:bg-gray-100"
+                      onClick={() => {
+                        setSelectMode(false)
+                        setSelectedShopIds([])
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    className="bg-black hover:bg-gray-900 text-white"
+                    onClick={() => {
+                      setSelectMode(true)
+                      setSelectedShopIds([])
+                    }}
+                  >
+                    Select Shops
+                  </Button>
+                )
+              )}
               </div>
               <div className="relative w-full md:w-80">
                 <Input
@@ -170,10 +224,24 @@ export default function ManagerDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {shops.map((shop) => (
+              {shops.map((shop) => {
+                const sid = ((shop as any)._id || (shop as any).id || (shop as any).shop_id) as string
+                const isSelected = selectedShopIds.includes(sid)
+                return (
                 <Card
                   key={(shop.id || shop._id) as string}
-                  className="group relative bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200"
+                  onClick={() => {
+                    if (!selectMode) return
+                    if (!sid) return
+                    setSelectedShopIds((prev) => prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid])
+                  }}
+                  className={`group relative bg-white/90 backdrop-blur-sm border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                    selectMode
+                      ? isSelected
+                        ? "border-gray-400 ring-2 ring-gray-300"
+                        : "border-blue-100 hover:border-blue-200"
+                      : "border-blue-100 hover:border-blue-200"
+                  } ${selectMode ? "cursor-pointer" : ""}`}
                 >
                   <CardHeader className="pb-4 bg-gradient-to-r from-blue-50/80 to-slate-50/80">
                     <div className="flex items-start justify-between">
@@ -182,6 +250,19 @@ export default function ManagerDashboard() {
                           {(shop as any).shop_name || (shop as any).name || (shop as any).shopName || (shop as any).businessName || (shop as any).storeName || (shop as any).title || ((shop.id || shop._id) as string) || "Unnamed Shop"}
                         </CardTitle>
                       </div>
+                      {selectMode && (
+                        <div className="pl-2">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={isSelected}
+                            onChange={() => {
+                              if (!sid) return
+                              setSelectedShopIds((prev) => prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid])
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0 p-4 sm:p-6 space-y-4">
@@ -240,7 +321,7 @@ export default function ManagerDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
           )}
         </div>
