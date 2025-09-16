@@ -129,8 +129,8 @@ export default function UsersPage() {
                 const data = await response.json()
                 totalCount = data.count || 0
               }
-            } else {
-              // For other roles (including QC), fetch from general shops API and filter
+            } else if (user.role === "manager" || user.role === "salesperson" || user.role === "saleperson") {
+              // For manager and salesperson, count shops assigned by manager (assignedQc)
               const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
                 method: "GET",
                 headers: {
@@ -143,11 +143,21 @@ export default function UsersPage() {
               if (response.ok) {
                 const data = await response.json()
                 const shops = data.data || []
-
-                // Count shops assigned to this user (either as auditor or QC)
-                totalCount = shops.filter(
-                  (shop: any) => shop.assignedTo === user.id || shop.assignedQc === user.id,
-                ).length
+                totalCount = shops.filter((shop: any) => shop.assignedQc === user.id).length
+              }
+            } else {
+              // For other roles, show none by default
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session?.token}`,
+                  "ngrok-skip-browser-warning": "true",
+                },
+              })
+              if (response.ok) {
+                // Do not count any shops for other roles to avoid confusion
+                totalCount = 0
               }
             }
 
@@ -273,14 +283,16 @@ export default function UsersPage() {
         } else {
           setAssignedError(res.error || "Failed to load assigned shops")
         }
-      } else {
-        // For other roles (including QC), fetch and filter
+      } else if (user.role === "manager" || user.role === "salesperson" || user.role === "saleperson") {
+        // For manager and salesperson, show shops assigned by manager (assignedQc)
         const res = await fetchShops()
         if (res.success) {
-          setAssignedShops(res.shops.filter((shop) => shop.assignedTo === user.id || shop.assignedQc === user.id))
+          setAssignedShops(res.shops.filter((shop) => (shop as any).assignedQc === user.id))
         } else {
           setAssignedError(res.error || "Failed to load assigned shops")
         }
+      } else {
+        setAssignedShops([])
       }
     } catch (e) {
       setAssignedError("Network error occurred")

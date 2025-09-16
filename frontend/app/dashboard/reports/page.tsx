@@ -350,7 +350,10 @@ const router = useRouter()
                         <Button
                           onClick={() => {
                             setSelectMode(true)
-                            setSelectedShopIds([])
+                            const autoSelected = getCurrentShops()
+                              .filter((s: any) => isVisited(s) && !isAssignedToManager(s))
+                              .map((s) => s.id)
+                            setSelectedShopIds(autoSelected)
                           }}
                           className="bg-black hover:bg-gray-900 text-white"
                         >
@@ -373,7 +376,7 @@ const router = useRouter()
                             className="border-gray-300 text-gray-800 hover:bg-gray-100"
                             onClick={() => setSelectedShopIds(
                               getCurrentShops()
-                                .filter((s: any) => !(isVisited(s) && isAssignedToManager(s)))
+                                .filter((s: any) => isVisited(s) && !isAssignedToManager(s))
                                 .map((s) => s.id)
                             )}
                           >
