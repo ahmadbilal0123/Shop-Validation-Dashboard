@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, AlertTriangle } from "lucide-react"
+import {  Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { buildApiUrl, getApiBaseUrl } from "@/lib/utils"
 
 // Custom CSS for animations
@@ -71,26 +71,18 @@ export default function LoginPage() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const router = useRouter()
 
-  // Images for background
+  // Array of random shop images from Unsplash (specifically retail/shop interiors)
   const shopImages = [
-    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=2126&q=80",
-    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1596122962004-640ac7b8e5e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2040&q=80",
-    "https://images.unsplash.com/photo-1607082349566-187342175e2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1567521464027-f31bd2dcb0ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1572635196184-84e35138cf62?ixlib=rb-4.0.3&auto=format&fit=crop&w=2080&q=80",
-    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Clothing store interior
+    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=2126&q=80", // Grocery store aisle
+    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Fashion boutique
+    "https://images.unsplash.com/photo-1596122962004-640ac7b8e5e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Bookstore interior
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2040&q=80", // Modern shop with shelves
+    "https://images.unsplash.com/photo-1607082349566-187342175e2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Pharmacy interior
+    "https://images.unsplash.com/photo-1567521464027-f31bd2dcb0ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Department store
+    "https://images.unsplash.com/photo-1572635196184-84e35138cf62?ixlib=rb-4.0.3&auto=format&fit=crop&w=2080&q=80", // Shopping mall store
+    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Tech store interior
   ]
-
-  // Remove extra space on the entire page (for Next.js, set html/body/#__next to h-full in global.css)
-  useEffect(() => {
-    document.documentElement.style.height = "100%";
-    document.body.style.height = "100%";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-  }, []);
 
   // Check if API is configured
   useEffect(() => {
@@ -104,11 +96,13 @@ export default function LoginPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true)
+
       setTimeout(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % shopImages.length)
         setIsTransitioning(false)
-      }, 500)
-    }, 4000)
+      }, 500) // Half second for transition effect
+    }, 4000) // Change image every 4 seconds
+
     return () => clearInterval(interval)
   }, [shopImages.length])
 
@@ -131,13 +125,21 @@ export default function LoginPage() {
 
   const createLocalSession = (user: any, token: string) => {
     const expiresAt = new Date()
-    expiresAt.setHours(expiresAt.getHours() + 24)
-    const sessionData = { user, token, expiresAt: expiresAt.toISOString() }
+    expiresAt.setHours(expiresAt.getHours() + 24) // 24 hour session
+
+    const sessionData = {
+      user,
+      token,
+      expiresAt: expiresAt.toISOString(),
+    }
     localStorage.setItem("session", JSON.stringify(sessionData))
+    // Set session cookie for middleware
     document.cookie = `session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=86400; SameSite=Lax`
+
     return new Promise((resolve) => {
       setTimeout(() => {
         const storedSession = localStorage.getItem("session")
+        console.log("[v0] Session verification:", storedSession ? "Success" : "Failed")
         resolve(true)
       }, 100)
     })
@@ -146,8 +148,10 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isLoading) return
+
     setIsLoading(true)
     setError("")
+
     try {
       const baseUrl = getApiBaseUrl()
       if (!baseUrl) {
@@ -155,7 +159,10 @@ export default function LoginPage() {
         setIsLoading(false)
         return
       }
+
       const apiUrl = buildApiUrl("/api/users/login")
+      console.log("Calling login endpoint:", apiUrl)
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -164,8 +171,13 @@ export default function LoginPage() {
         },
         body: JSON.stringify({ username, password }),
       })
+
       const data = await response.json()
+      console.log("Login response status:", response.status)
+      console.log("Login response data:", data)
+
       if (response.ok && data) {
+        console.log("Login successful, creating session...")
         const user = {
           id: data.id || data.user_id || data.userId || data._id,
           email: data.email || data.username || "",
@@ -178,22 +190,29 @@ export default function LoginPage() {
           permissions: data.permissions || getDefaultPermissions(data.role || "regional"),
           createdBy: data.created_by || data.createdBy,
         }
+
         await createLocalSession(user, data.token)
+
         let redirectPath = "/dashboard"
         if (user.role === "auditor") {
           redirectPath = "/auditor-dashboard"
         } else if (user.role === "manager") {
-          redirectPath = "/manager"
-        } else if (user.role === "supervisor") {
-          redirectPath = "/supervisor"
-        } else if (user.role === "executive") {
+          redirectPath = "/manager" // Manager dashboard is at root path
+        }else if (user.role === "supervisor") {
+          redirectPath = "/supervisor" // Supervisor dashboard is at root path
+        }else if (user.role === "executive") {
           redirectPath = "/executive"
         }
+
+        console.log("[v0] Session created successfully, redirecting to " + redirectPath)
+
         window.location.href = redirectPath
       } else {
+        console.log("Login failed, setting error message.")
         setError(data.message || data.error || "Invalid credentials")
       }
     } catch (err) {
+      console.error("Login error:", err)
       setError("Network error. Please check your connection and try again.")
     } finally {
       setIsLoading(false)
@@ -203,14 +222,20 @@ export default function LoginPage() {
   return (
     <>
       <style jsx>{floatingAnimations}</style>
-      <div className="h-screen w-full flex items-stretch justify-stretch lg:grid lg:grid-cols-2 m-0 p-0">
-        {/* Left Half - Brand/Images */}
-        <div className="hidden lg:flex flex-col justify-center w-full h-full relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950">
+      <div className="h-screen w-full flex items-center justify-center lg:grid lg:grid-cols-2">
+        {/* Left Half - Blue & White Brand Experience (Desktop/Tablet only) */}
+        <div className="hidden lg:flex flex-col justify-center w-full h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950">
+          {/* Subtle Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
+            {/* Minimal floating elements */}
             <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-float"></div>
             <div className="absolute bottom-1/3 left-1/4 w-24 h-24 bg-blue-400/10 rounded-full blur-2xl animate-float-delayed"></div>
+
+            {/* Clean grid pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:80px_80px]"></div>
           </div>
+
+          {/* Shop Background Image with Smooth Animated Transitions */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <img
               key={currentImageIndex}
@@ -220,14 +245,20 @@ export default function LoginPage() {
                 isTransitioning ? "opacity-0 transform scale-110 blur-sm" : "opacity-50 transform scale-100 blur-none"
               }`}
             />
+            {/* Reduced opacity overlay for better image visibility */}
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 via-blue-900/50 to-blue-950/60"></div>
+
+            {/* Animated overlay pattern with reduced opacity */}
             <div
               className={`absolute inset-0 bg-gradient-to-r from-blue-600/10 via-transparent to-blue-800/10 transition-opacity duration-1000 ${
                 isTransitioning ? "opacity-100" : "opacity-0"
               }`}
             ></div>
           </div>
+
+          {/* Centered Content Layout */}
           <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-8 xl:px-16">
+            {/* Centered Brand Section */}
             <div className="flex flex-col items-center">
               <div>
                 <h1 className="text-6xl xl:text-7xl font-bold text-white mb-4 tracking-tight">ShelfVoice</h1>
@@ -240,8 +271,8 @@ export default function LoginPage() {
         </div>
 
         {/* Responsive Login Card Section - All devices */}
-        <div className="flex items-center justify-center w-full h-full p-4 sm:p-6 lg:p-0 relative">
-          {/* Mobile/Tablet Background */}
+        <div className="flex items-center justify-center w-full min-h-screen p-4 sm:p-6 lg:p-0 relative">
+          {/* Mobile/Tablet Background - Blue theme for all non-desktop screens */}
           <div className="absolute lg:hidden inset-0 w-full h-full bg-gradient-to-br from-slate-900 via-blue-900 to-blue-950 z-0">
             <div className="absolute inset-0 bg-black/20"></div>
             <div className="absolute top-0 left-0 w-full h-full opacity-30">
@@ -249,6 +280,8 @@ export default function LoginPage() {
               <div className="absolute bottom-24 right-12 w-32 sm:w-40 h-32 sm:h-40 bg-blue-500/20 rounded-full blur-2xl animate-float-delayed"></div>
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 sm:w-48 h-40 sm:h-48 bg-blue-600/15 rounded-full blur-2xl animate-float-slow"></div>
             </div>
+
+            {/* Mobile Brand Header */}
             <div className="absolute top-18 left-1/2 transform -translate-x-1/2 z-10 text-center">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <div className="w-10 h-10  flex items-center justify-center shadow-lg">
@@ -259,14 +292,20 @@ export default function LoginPage() {
               <p className="text-blue-200 text-sm font-sm">Powered by Gen-T AI Solutions</p>
             </div>
           </div>
+
           <Card className="w-full max-w-sm sm:max-w-md lg:max-w-lg shadow-2xl rounded-2xl lg:rounded-3xl relative z-10 border-0 bg-white/95 sm:bg-white/98 lg:bg-white backdrop-blur-xl overflow-hidden">
+            {/* Responsive Card Header */}
             <CardHeader className="text-center pt-8 sm:pt-10 lg:pt-12 pb-6 lg:pb-8 relative px-6 sm:px-8 lg:px-12">
+              {/* Desktop-only top accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hidden lg:block"></div>
+
+              {/* Logo - Hidden on mobile since it's in the background */}
               <div className="mx-auto mb-6 lg:mb-8 relative hidden lg:block">
                 <div className="flex h-16 lg:h-20 w-16 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl ">
                   <img src="/logo.png" alt="ShelfSense Logo" className="h-15  w-20  drop-shadow-md" />
                 </div>
               </div>
+
               <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2 lg:mb-3 tracking-tight">
                 Welcome Back
               </CardTitle>
@@ -274,8 +313,10 @@ export default function LoginPage() {
                 Sign in to access your ShelfVoice dashboard
               </CardDescription>
             </CardHeader>
+
             <CardContent className="px-6 sm:px-8 lg:px-12 pb-8 lg:pb-12">
               <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8">
+                {/* Responsive Email Field */}
                 <div className="space-y-2 lg:space-y-3">
                   <Label htmlFor="username" className="text-sm lg:text-base font-bold text-slate-700 tracking-wide">
                     Username
@@ -293,11 +334,14 @@ export default function LoginPage() {
                     <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-focus-within:from-blue-500/10 group-focus-within:via-blue-500/10 group-focus-within:to-blue-500/10 transition-all duration-300 pointer-events-none"></div>
                   </div>
                 </div>
+
+                {/* Responsive Password Field */}
                 <div className="space-y-2 lg:space-y-3">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password" className="text-sm lg:text-base font-bold text-slate-700 tracking-wide">
                       Password
                     </Label>
+                    
                   </div>
                   <div className="relative group">
                     <Input
@@ -325,6 +369,8 @@ export default function LoginPage() {
                     <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-focus-within:from-blue-500/10 group-focus-within:via-blue-500/10 group-focus-within:to-blue-500/10 transition-all duration-300 pointer-events-none"></div>
                   </div>
                 </div>
+
+                {/* Responsive Error Alert */}
                 {error && (
                   <Alert
                     variant="destructive"
@@ -336,6 +382,8 @@ export default function LoginPage() {
                     </AlertDescription>
                   </Alert>
                 )}
+
+                {/* Blue-themed Sign In Button */}
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 text-white px-4 lg:px-6 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-bold text-base lg:text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden group"
@@ -351,6 +399,8 @@ export default function LoginPage() {
                     <span className="relative z-10 font-bold tracking-wide">Sign In to Dashboard</span>
                   )}
                 </Button>
+
+               
               </form>
             </CardContent>
           </Card>
