@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { fetchShopById, assignShopsToUser } from "@/lib/api"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation" // <-- Remove useSearchParams import
 import { getSession } from "@/lib/auth"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +21,6 @@ interface Salesperson {
 
 export default function AssignShopsToSalespersonsPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [salespersons, setSalespersons] = useState<Salesperson[]>([])
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,9 +33,16 @@ export default function AssignShopsToSalespersonsPage() {
     }
     return "list"
   })
-
-  const shopIds = searchParams.get("shopIds")?.split(",").filter(Boolean) || []
+  const [shopIds, setShopIds] = useState<string[]>([])
   const [shopNames, setShopNames] = useState<{ [id: string]: string }>({})
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const ids = params.get("shopIds")?.split(",").filter(Boolean) || []
+      setShopIds(ids)
+    }
+  }, [])
 
   useEffect(() => {
     async function loadShopNames() {
@@ -63,9 +69,7 @@ export default function AssignShopsToSalespersonsPage() {
     async function loadSalespersons() {
       setLoading(true)
       try {
-        const session = typeof getSession === "function" && getSession.constructor.name === "AsyncFunction"
-          ? await getSession()
-          : getSession()
+        const session = getSession() // <-- Remove 'await'
         const token = session?.token
 
         if (!token) {
