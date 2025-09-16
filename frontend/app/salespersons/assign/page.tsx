@@ -30,13 +30,18 @@ export default function AssignShopsToSalespersonsPage() {
   const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
     if (typeof window !== "undefined") {
       const savedMode = localStorage.getItem("salespersonViewMode")
-      return savedMode === "grid" || savedMode === "list" ? (savedMode as "list" | "grid") : "list"
+      return savedMode === "grid" || savedMode === "list" ? savedMode : "list"
     }
     return "list"
   })
 
   const shopIds = searchParams.get("shopIds")?.split(",").filter(Boolean) || []
   const [shopNames, setShopNames] = useState<{ [id: string]: string }>({})
+
+  // Popup states
+  const [assignError, setAssignError] = useState<string | null>(null)
+  const [alreadyAssigned, setAlreadyAssigned] = useState<string[]>([])
+  const [assignSuccess, setAssignSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadShopNames() {
@@ -63,11 +68,12 @@ export default function AssignShopsToSalespersonsPage() {
     async function loadSalespersons() {
       setLoading(true)
       try {
-        const session = await getSession()
+        const session = getSession()
+
         const token = session?.token
 
         if (!token) {
-          alert("No authentication token found. Please log in.")
+          setAssignError("No authentication token found. Please log in.")
           router.push("/login")
           return
         }
@@ -84,7 +90,8 @@ export default function AssignShopsToSalespersonsPage() {
         let arr: Salesperson[] = Array.isArray(usersData.data) ? usersData.data : []
         setSalespersons(arr)
       } catch (error) {
-        setSalespersons([])
+        console.error("Failed to load salespersons:", error);
+        setSalespersons([]);
       } finally {
         setLoading(false)
       }
@@ -94,8 +101,12 @@ export default function AssignShopsToSalespersonsPage() {
   }, [])
 
   const handleAssignShops = async () => {
+    setAssignError(null)
+    setAssignSuccess(null)
+    setAlreadyAssigned([])
+
     if (!selectedUserId) {
-      alert("Please select a salesperson before assigning shops.")
+      setAssignError("Please select a salesperson before assigning shops.")
       return
     }
 
@@ -105,13 +116,20 @@ export default function AssignShopsToSalespersonsPage() {
       const role = selectedUser?.role || "saleperson"
       const result = await assignShopsToUser(selectedUserId, shopIds, role)
       if (result.success) {
-        alert(result.message || "Shops assigned successfully!")
-        router.push("/manager")
+        setAssignSuccess(result.message || "Shops assigned successfully!")
+        setTimeout(() => {
+          setAssignSuccess(null)
+          router.push("/manager")
+        }, 1500)
       } else {
-        alert(result.error || "Failed to assign shops.")
+        setAssignError(result.error || "Failed to assign shops.")
+        if (result.alreadyAssigned && Array.isArray(result.alreadyAssigned)) {
+          setAlreadyAssigned(result.alreadyAssigned)
+        }
       }
     } catch (error) {
-      alert("Error assigning shops. Please try again.")
+      console.error("Error assigning shops:", error);
+      setAssignError("Error assigning shops. Please try again.")
     } finally {
       setAssigning(false)
     }
@@ -138,6 +156,42 @@ export default function AssignShopsToSalespersonsPage() {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Popups for error and success */}
+      {assignError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded shadow z-50">
+          <span>{assignError}</span>
+          {alreadyAssigned.length > 0 && (
+            <div className="mt-2">
+              <strong>Already assigned shop IDs:</strong>
+              <ul className="list-disc list-inside text-xs">
+                {alreadyAssigned.map(id => (
+                  <li key={id}>{shopNames[id] || id}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <button
+            className="ml-4 text-red-700 font-bold"
+            onClick={() => {
+              setAssignError(null)
+              setAlreadyAssigned([])
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {assignSuccess && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded shadow z-50">
+          <span>{assignSuccess}</span>
+          <button
+            className="ml-4 text-green-700 font-bold"
+            onClick={() => setAssignSuccess(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <ManagerSidebar />
       <div className="flex-1 overflow-auto">
         <main className="overflow-auto">
