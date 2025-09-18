@@ -31,8 +31,7 @@ export interface Shop {
   auditorId?: string
   assignedTo?: string
   assignedQc?: string
-
-  // ✅ New fields
+  assignedManagerId?: string        // <-- ADDED THIS LINE
   visit?: boolean
   visitImages?: VisitImage[]
 }
@@ -80,6 +79,7 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     auditorId: shop.auditorId || shop.auditor_id || auditorId,
     assignedTo: shop.assignedTo,
     assignedQc: shop.assignedQc,
+    assignedManagerId: shop.assignedManagerId, // <-- ADDED THIS LINE
     visit: shop.visit ?? false,
     visitImages: Array.isArray(shop.visitImages)
       ? shop.visitImages.map((img: any) => {
@@ -124,6 +124,7 @@ function transformShopData(shop: any, auditorId?: string): Shop {
       : [],
   }
 }
+
 
 function buildQueryParams(params?: {
   status?: string

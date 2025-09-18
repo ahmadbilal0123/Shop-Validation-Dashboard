@@ -3,20 +3,29 @@
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 import { AlertTriangle, RefreshCw, Eye, MapPin, Phone, Calendar, Star, ArrowLeft } from "lucide-react"
 import { fetchShops, fetchVisitedShops, fetchAllUsers, fetchShopById, type Shop, type User } from "@/lib/api"
 
-interface DetailedShop extends Shop {
-  detailedData?: any
+interface MappedShop {
+  id: string
+  name: string
+  address: string
+  city: string
+  phone: string
+  validationScore?: number
+  visitImages?: any[]
+  lastVisit?: string
+  assignedManagerId?: string
+  [key: string]: any
 }
 
 type ViewMode = 'all' | 'visited' | 'unvisited' | 'detail'
 
 export default function ReportsPage() {
-  const [shops, setShops] = useState<Shop[]>([])
-  const [visitedShops, setVisitedShops] = useState<DetailedShop[]>([])
+  const [shops, setShops] = useState<MappedShop[]>([])
+  const [visitedShops, setVisitedShops] = useState<MappedShop[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingDetails, setLoadingDetails] = useState(false)
@@ -25,10 +34,26 @@ export default function ReportsPage() {
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [selectedShopDetail, setSelectedShopDetail] = useState<any>(null)
   const [loadingShopDetail, setLoadingShopDetail] = useState(false)
-const router = useRouter()
+  const router = useRouter()
+
   useEffect(() => {
     loadData()
   }, [])
+
+  function mapShop(s: any): MappedShop {
+    return {
+      ...s,
+      id: s._id || s.id,
+      name: s.shop_name ?? s.name ?? "",
+      address: s.shop_address ?? s.address ?? "",
+      city: s.city_village ?? s.city ?? "",
+      phone: s.mobile ?? s.phone ?? "",
+      validationScore: s.validationScore,
+      visitImages: s.visitImages,
+      lastVisit: s.visitedAt ?? s.lastVisit,
+      assignedManagerId: s.assignedManagerId
+    }
+  }
 
   async function loadData() {
     setLoading(true)
@@ -38,12 +63,15 @@ const router = useRouter()
         fetchVisitedShops(),
         fetchAllUsers()
       ])
-      
-      setShops(shopsRes.shops || [])
-      const visitedShopsData = visitedRes.shops || []
-      setVisitedShops(visitedShopsData)
+
+      // For your main and visited shops, always use mapped objects!
+      const mappedShops = (shopsRes.shops || shopsRes || []).map(mapShop)
+      setShops(mappedShops)
+
+      const mappedVisitedShops = (visitedRes.shops || visitedRes || []).map(mapShop)
+      setVisitedShops(mappedVisitedShops)
+
       setUsers(usersRes.users || [])
-      
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -70,12 +98,10 @@ const router = useRouter()
     }
   }
 
-  // Refresh function
   const refreshReports = async () => {
     await loadData()
   }
 
-  // Calculate summary
   const totalShops = shops.length
   const visitedCount = visitedShops.length
   const pendingCount = totalShops - visitedCount
@@ -87,11 +113,10 @@ const router = useRouter()
       )
     : 0
 
-  // Get unvisited shops
+  // Unvisited shops: id logic is always safe now
   const visitedShopIds = new Set(visitedShops.map(shop => shop.id))
   const unvisitedShops = shops.filter(shop => !visitedShopIds.has(shop.id))
 
-  // Get current shops to display
   const getCurrentShops = () => {
     switch (viewMode) {
       case 'visited':
@@ -104,14 +129,11 @@ const router = useRouter()
     }
   }
 
-  // Helpers: only block if visited AND assigned to a manager
-  const isVisited = (s: any): boolean => Array.isArray((s as any)?.visitImages) && ((s as any)?.visitImages?.length || 0) > 0
-  const isAssignedToManager = (s: any): boolean => {
-    const assignedQcId = (s as any)?.assignedQc
-    if (!assignedQcId) return false
-    const assignedUser = users.find((u) => u.id === assignedQcId)
-    return assignedUser?.role === "manager"
-  }
+  // Only block if assignedManagerId is set and non-empty
+  const isVisited = (s: MappedShop): boolean =>
+    Array.isArray(s.visitImages) && (s.visitImages.length || 0) > 0
+  const isAssignedToManager = (s: MappedShop): boolean =>
+    !!(s.assignedManagerId && String(s.assignedManagerId).trim() !== "");
 
   const renderShopDetailTable = () => {
     if (!selectedShopDetail) return null
@@ -126,7 +148,6 @@ const router = useRouter()
         return JSON.stringify(value, null, 2)
       }
       if (typeof value === 'string' && value.includes('T') && value.includes(':')) {
-        // Likely a date string
         try {
           return new Date(value).toLocaleString()
         } catch {
@@ -138,19 +159,18 @@ const router = useRouter()
 
     const getAllProperties = (obj: any, prefix = ''): Array<{ key: string, value: any }> => {
       const properties: Array<{ key: string, value: any }> = []
-      
+
       Object.keys(obj).forEach(key => {
         const value = obj[key]
         const fullKey = prefix ? `${prefix}.${key}` : key
-        
+
         if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-          // Recursively handle nested objects
           properties.push(...getAllProperties(value, fullKey))
         } else {
           properties.push({ key: fullKey, value })
         }
       })
-      
+
       return properties
     }
 
@@ -176,35 +196,34 @@ const router = useRouter()
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-          <table className="w-full border border-slate-300 border-collapse">
-  <thead className="bg-slate-50">
-    <tr>
-      <th className="text-left p-4 font-semibold text-slate-700 w-1/3 border border-slate-300">Property</th>
-      <th className="text-left p-4 font-semibold text-slate-700 w-2/3 border border-slate-300">Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    {allProperties.map((property, index) => (
-      <tr key={index} className="hover:bg-slate-50 transition-colors">
-        <td className="p-4 font-medium text-slate-700 capitalize border border-slate-300">
-          {property.key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/\./g, ' → ')}
-        </td>
-        <td className="p-4 text-slate-600 border border-slate-300">
-          <div className="max-w-md break-words">
-            {typeof property.value === 'object' && property.value !== null ? (
-              <pre className="text-xs bg-slate-100 p-2 rounded overflow-auto max-h-32 border border-slate-200">
-                {JSON.stringify(property.value, null, 2)}
-              </pre>
-            ) : (
-              renderValue(property.value)
-            )}
-          </div>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-
+            <table className="w-full border border-slate-300 border-collapse">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left p-4 font-semibold text-slate-700 w-1/3 border border-slate-300">Property</th>
+                  <th className="text-left p-4 font-semibold text-slate-700 w-2/3 border border-slate-300">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allProperties.map((property, index) => (
+                  <tr key={index} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4 font-medium text-slate-700 capitalize border border-slate-300">
+                      {property.key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/\./g, ' → ')}
+                    </td>
+                    <td className="p-4 text-slate-600 border border-slate-300">
+                      <div className="max-w-md break-words">
+                        {typeof property.value === 'object' && property.value !== null ? (
+                          <pre className="text-xs bg-slate-100 p-2 rounded overflow-auto max-h-32 border border-slate-200">
+                            {JSON.stringify(property.value, null, 2)}
+                          </pre>
+                        ) : (
+                          renderValue(property.value)
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
@@ -237,8 +256,6 @@ const router = useRouter()
               <p className="text-slate-600 mt-1">View and analyze shop validation reports</p>
             </div>
           </div>
-          
-          {/* Actions */}
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={refreshReports}
@@ -251,17 +268,13 @@ const router = useRouter()
             </Button>
           </div>
         </div>
-        {/* Show shop detail view */}
         {viewMode === 'detail' && selectedShopDetail && (
           <div>
             {renderShopDetailTable()}
           </div>
         )}
-
-        {/* Show main reports view */}
         {viewMode !== 'detail' && (
           <>
-            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-6">
@@ -276,7 +289,6 @@ const router = useRouter()
                   </div>
                 </CardContent>
               </Card>
-
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -290,7 +302,6 @@ const router = useRouter()
                   </div>
                 </CardContent>
               </Card>
-
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -305,8 +316,6 @@ const router = useRouter()
                 </CardContent>
               </Card>
             </div>
-
-            {/* Filter Buttons */}
             <div className="flex flex-wrap gap-3 mb-6">
               <Button
                 onClick={() => setViewMode('all')}
@@ -330,8 +339,6 @@ const router = useRouter()
                 Unvisited Shops ({pendingCount})
               </Button>
             </div>
-
-            {/* Shops Table */}
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-white rounded-t-lg border-b">
                 <div className="flex items-center justify-between">
@@ -351,8 +358,8 @@ const router = useRouter()
                           onClick={() => {
                             setSelectMode(true)
                             const autoSelected = getCurrentShops()
-                              .filter((s: any) => isVisited(s) && !isAssignedToManager(s))
-                              .map((s) => s.id)
+                              .filter((shop: MappedShop) => isVisited(shop) && !isAssignedToManager(shop))
+                              .map((shop: MappedShop) => shop.id)
                             setSelectedShopIds(autoSelected)
                           }}
                           className="bg-black hover:bg-gray-900 text-white"
@@ -376,8 +383,8 @@ const router = useRouter()
                             className="border-gray-300 text-gray-800 hover:bg-gray-100"
                             onClick={() => setSelectedShopIds(
                               getCurrentShops()
-                                .filter((s: any) => isVisited(s) && !isAssignedToManager(s))
-                                .map((s) => s.id)
+                                .filter((shop: MappedShop) => isVisited(shop) && !isAssignedToManager(shop))
+                                .map((shop: MappedShop) => shop.id)
                             )}
                           >
                             Select All Shops
@@ -422,7 +429,6 @@ const router = useRouter()
                         <tr>
                           {selectMode && viewMode === 'visited' && (
                             <th className="w-10 p-4 text-slate-700">
-                              {/* empty header for checkboxes */}
                             </th>
                           )}
                           <th className="text-left p-4 font-semibold text-slate-700">Shop Name</th>
@@ -438,7 +444,7 @@ const router = useRouter()
                       <tbody>
                         {getCurrentShops().map((shop, index) => {
                           const isSelected = selectedShopIds.includes(shop.id)
-                          const assigned = isVisited(shop) && isAssignedToManager(shop)
+                          const assigned = isAssignedToManager(shop)
                           return (
                           <tr
                             key={shop.id || index}
@@ -461,7 +467,7 @@ const router = useRouter()
                                     const id = shop.id
                                     setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
                                   }}
-                                  disabled={!selectMode || assigned}
+                                  disabled={assigned}
                                 />
                               </td>
                             )}
@@ -502,7 +508,7 @@ const router = useRouter()
                               <div className="flex items-center gap-2">
                                 <Star className="h-4 w-4 text-gray-500" />
                                 <span className="font-semibold text-gray-800">
-                                  {shop.validationScore ? `${shop.validationScore.toFixed(1)}%` : 'N/A'}
+                                  {shop.validationScore !== undefined ? `${shop.validationScore.toFixed(1)}%` : 'N/A'}
                                 </span>
                               </div>
                             </td>
@@ -521,32 +527,29 @@ const router = useRouter()
                             </td>
                             <td className="p-4">
                                 <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (selectMode) return
-                      router.push(`/dashboard/shops/${shop.id}`)
-                    }}
-                    className={`w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 ${selectMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={selectMode}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Shop Details
-                  </Button>
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (selectMode) return
+                                    router.push(`/dashboard/shops/${shop.id}`)
+                                  }}
+                                  className={`w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 ${selectMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  disabled={selectMode}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Shop Details
+                                </Button>
                             </td>
                           </tr>
                         )})}
                       </tbody>
                     </table>
-                    {false}
                   </div>
                 )}
               </CardContent>
             </Card>
           </>
         )}
-
-        {/* Performance Summary - Only show in main view */}
         {viewMode !== 'detail' && (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
@@ -570,7 +573,6 @@ const router = useRouter()
                 </div>
               </CardContent>
             </Card>
-
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-white rounded-t-lg border-b">
                 <CardTitle className="text-lg text-slate-800">Validation Progress</CardTitle>
