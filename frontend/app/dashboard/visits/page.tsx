@@ -239,7 +239,7 @@ const handleAssignShopsClick = async () => {
           </Card> */}
         </div>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg sticky top-0 z-10">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               {/* Left section - Search field */}

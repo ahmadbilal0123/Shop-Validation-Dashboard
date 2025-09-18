@@ -233,7 +233,7 @@ export default function ShopsPage() {
 
       {/* Actions */}
       <div className="container mx-auto px-4 sm:px-6 py-6">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-6 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-6 mb-8 sticky top-0 z-10">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 w-full">
               {/* Visited toggle */}
