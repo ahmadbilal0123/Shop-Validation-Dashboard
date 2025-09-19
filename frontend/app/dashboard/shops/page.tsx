@@ -285,6 +285,13 @@ export default function ShopsPage() {
             </div>
             {/* Buttons */}
             <div className="flex gap-2">
+                <Button
+                onClick={() => router.push("/dashboard/shops/create")}
+                variant="default"
+                className="bg-black text-white"
+              >
+                Create New Shop
+              </Button>
               <Button
                 onClick={toggleSelectMode}
                 variant={selectMode ? "outline" : "default"}

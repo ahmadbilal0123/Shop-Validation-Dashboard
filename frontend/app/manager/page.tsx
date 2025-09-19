@@ -131,7 +131,7 @@ export default function ManagerDashboard() {
         </div>
 
         {/* Actions */}
-        <div className="p-4 sm:p-6 pt-4">
+        <div className="p-4 sm:p-6 pt-4 sticky top-0 z-10">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-lg p-4 sm:p-6 mb-4">
             <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
               <div className="flex items-center gap-2">
