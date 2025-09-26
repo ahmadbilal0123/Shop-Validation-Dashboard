@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { fetchShops, type Shop, type ShopsResponse } from "@/lib/api"
+import { fetchShops, type Shop, type ShopsResponse, updateShopsRadius } from "@/lib/api"
 import { fetchUnassignedShops } from "@/lib/api"
 import { useRouter } from "next/navigation"
 
@@ -85,6 +85,43 @@ export default function ShopsPage() {
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
 
+  // --- RADIUS BUTTON STATE ---
+  const [radiusLoading, setRadiusLoading] = useState(false)
+  const [radiusEnabled, setRadiusEnabled] = useState<boolean | null>(null)
+
+  // Check if all selected shops have radius enabled
+  useEffect(() => {
+    if (selectedShopIds.length === 0) {
+      setRadiusEnabled(null)
+      return
+    }
+    // The shop object must have a boolean field (like 'thirtyMeterRadius'). Adjust if your field is named differently.
+    const selectedShops = shops.filter(shop => selectedShopIds.includes(shop.id))
+    if (selectedShops.length === 0) {
+      setRadiusEnabled(null)
+      return
+    }
+    const allEnabled = selectedShops.every(shop => !!shop.thirtyMeterRadius)
+    setRadiusEnabled(allEnabled)
+  }, [selectedShopIds, shops])
+
+  const handleRadiusToggle = async () => {
+    if (selectedShopIds.length === 0) {
+      alert("Please select at least one shop.")
+      return
+    }
+    setRadiusLoading(true)
+    // Always send shopIds as an array
+    const shopIdsToSend = selectedShopIds
+    const res = await updateShopsRadius(shopIdsToSend, !(radiusEnabled ?? false))
+    setRadiusLoading(false)
+    if (res.success) {
+      await loadShops(selectMode)
+    } else {
+      alert(res.error || "Failed to update radius")
+    }
+  }
+
   const toggleShopSelection = (shopId: string) => {
     setSelectedShopIds((prev) =>
       prev.includes(shopId) ? prev.filter((id) => id !== shopId) : [...prev, shopId]
@@ -102,7 +139,7 @@ export default function ShopsPage() {
   const toggleSelectMode = () => {
     setSelectMode((prev) => !prev)
     if (selectMode) {
-      setSelectedShopIds([]) // Clear selections when canceling
+      setSelectedShopIds([])
     }
   }
 
@@ -172,7 +209,6 @@ export default function ShopsPage() {
     }
   }
 
-  // Apply filters and paginate
   useEffect(() => {
     let filteredShops = filterShopsBySearch(allShops, searchQuery)
     filteredShops = applyDropdownFilter(filteredShops)
@@ -185,7 +221,6 @@ export default function ShopsPage() {
     loadShops(selectMode)
   }, [statusFilter, cityFilter, selectMode])
 
-  // Reset page to 1 when filters/search change
   useEffect(() => {
     setPage(1)
   }, [searchQuery, recentFilter, selectMode])
@@ -303,8 +338,25 @@ export default function ShopsPage() {
               </form>
             </div>
             {/* Buttons */}
-            <div className="flex gap-2">
-                <Button
+            <div className="flex gap-2 items-center">
+              <Button
+                onClick={handleRadiusToggle}
+                disabled={radiusLoading || selectedShopIds.length === 0}
+                className={
+                  (radiusEnabled
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                  ) +
+                  " text-white flex items-center gap-2"
+                }
+              >
+                {radiusLoading
+                  ? "Updating..."
+                  : radiusEnabled
+                  ? "Disable Radius"
+                  : "Enable Radius"}
+              </Button>
+              <Button
                 onClick={() => router.push("/dashboard/shops/create")}
                 variant="default"
                 className="bg-black text-white flex items-center gap-2"
@@ -346,6 +398,7 @@ export default function ShopsPage() {
             </div>
           </div>
         </div>
+        {/* ...rest of your component... */}
 
         {/* Main Content Area - Loading State Check */}
         {loading ? (

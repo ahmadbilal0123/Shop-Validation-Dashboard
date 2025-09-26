@@ -31,9 +31,11 @@ export interface Shop {
   auditorId?: string
   assignedTo?: string
   assignedQc?: string
-  assignedManagerId?: string        // <-- ADDED THIS LINE
+  assignedManagerId?: string
   visit?: boolean
   visitImages?: VisitImage[]
+  /** Add this field: */
+  thirtyMeterRadius?: boolean
 }
 
 export interface ShopsResponse {
@@ -999,5 +1001,41 @@ export async function fetchAIDetectionResults(shopId: string): Promise<AIDetecti
   } catch (error) {
     console.error("Error fetching AI detection results:", error)
     return { success: false, error: error instanceof Error ? error.message : "Network error" }
+  }
+}
+
+export async function updateShopsRadius(
+  shopIds: string[], // always array
+  thirtyMeterRadius: boolean
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const session = getSession()
+    if (!session?.token) {
+      return { success: false, error: "No authentication token found" }
+    }
+
+    const url = buildApiUrl("/api/shops/enable-radius")
+    const body: any = {
+      shopIds, // always array
+      thirtyMeterRadius,
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: JSON.stringify(body),
+    })
+
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || "Failed to update radius" }
+    }
+    return { success: true, message: data.message || "Radius updated" }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }

@@ -49,10 +49,9 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [showPassword, setShowPassword] = useState(false)
   const [showEditPassword, setShowEditPassword] = useState(false)
-  const [formKey, setFormKey] = useState(0) // Add key to force form re-render
+  const [formKey, setFormKey] = useState(0)
   const [userShopCounts, setUserShopCounts] = useState<{ [userId: string]: number }>({})
 
-  // New state for assigned shops detail
   const [assignedUser, setAssignedUser] = useState<User | null>(null)
   const [assignedShops, setAssignedShops] = useState<Shop[]>([])
   const [assignedLoading, setAssignedLoading] = useState(false)
@@ -60,44 +59,22 @@ export default function UsersPage() {
 
   const editFormRef = useRef<HTMLDivElement>(null)
 
+  // Only load users ONCE on mount. No auto-refresh or focus reload!
   useEffect(() => {
     loadUsers()
-
-    // Listen for focus events to refresh data when returning to the page
-    const handleFocus = () => {
-      loadUsers() // Refresh users and shop counts when page gets focus
-    }
-
-    // Auto-refresh shop counts every 30 seconds
-    const interval = setInterval(() => {
-      if (users.length > 0) {
-        loadUserShopCounts(users)
-      }
-    }, 30000)
-
-    window.addEventListener("focus", handleFocus)
-
-    return () => {
-      window.removeEventListener("focus", handleFocus)
-      clearInterval(interval)
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadUsers = async () => {
-    console.log("🔄 USERS: loadUsers called, setting loading to TRUE")
     setLoading(true)
-    console.log("🔄 USERS: loading state should now be TRUE")
     const res = await fetchAllUsers()
     if (res.success) {
       setUsers(res.users)
-      // Load shop counts for each user
       await loadUserShopCounts(res.users)
     } else {
       setError(res.error || "Failed to load users")
     }
-    console.log("🔄 USERS: Setting loading to FALSE")
     setLoading(false)
-    console.log("🔄 USERS: loadUsers complete, loading should now be FALSE")
   }
 
   const loadUserShopCounts = async (usersList: User[]) => {
@@ -105,13 +82,10 @@ export default function UsersPage() {
       const counts: { [userId: string]: number } = {}
       const session = getSession()
 
-      // Fetch shop count for each user using the correct API endpoint
       await Promise.all(
         usersList.map(async (user) => {
           try {
             let totalCount = 0
-
-            // For auditors, use the specific API endpoint
             if (user.role === "auditor") {
               const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/get-assigned-shops-for-auditor/${user.id}`,
@@ -124,13 +98,11 @@ export default function UsersPage() {
                   },
                 },
               )
-
               if (response.ok) {
                 const data = await response.json()
                 totalCount = data.count || 0
               }
             } else if (user.role === "manager" || user.role === "salesperson" || user.role === "saleperson") {
-              // For manager and salesperson, count shops assigned by manager (assignedQc)
               const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
                 method: "GET",
                 headers: {
@@ -139,14 +111,12 @@ export default function UsersPage() {
                   "ngrok-skip-browser-warning": "true",
                 },
               })
-
               if (response.ok) {
                 const data = await response.json()
                 const shops = data.data || []
                 totalCount = shops.filter((shop: any) => shop.assignedQc === user.id).length
               }
             } else {
-              // For other roles, show none by default
               const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shops/get-shops`, {
                 method: "GET",
                 headers: {
@@ -156,11 +126,9 @@ export default function UsersPage() {
                 },
               })
               if (response.ok) {
-                // Do not count any shops for other roles to avoid confusion
                 totalCount = 0
               }
             }
-
             counts[user.id] = totalCount
           } catch (error) {
             console.error(`Error fetching shop count for user ${user.id}:`, error)
@@ -168,7 +136,6 @@ export default function UsersPage() {
           }
         }),
       )
-
       setUserShopCounts(counts)
     } catch (error) {
       console.error("Error loading user shop counts:", error)
@@ -183,14 +150,11 @@ export default function UsersPage() {
 
     const res = await registerUser(form)
     if (res.success) {
-      // Clear form completely - this should clear all fields
       setForm({ name: "", username: "", password: "", role: "user" })
       setSuccess("🎉 User registered successfully!")
-      setShowPassword(false) // Reset password visibility
-      setFormKey((prev) => prev + 1) // Force form re-render with new key
+      setShowPassword(false)
+      setFormKey((prev) => prev + 1)
       await loadUsers()
-
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(null)
       }, 3000)
@@ -212,10 +176,8 @@ export default function UsersPage() {
     if (res.success) {
       setSuccess("✅ User updated successfully!")
       setEditForm(null)
-      setShowEditPassword(false) // Reset edit password visibility
+      setShowEditPassword(false)
       await loadUsers()
-
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(null)
       }, 3000)
@@ -232,7 +194,6 @@ export default function UsersPage() {
   }, [editForm])
 
   const getRoleColor = (role: string) => {
-    // Monochrome scheme: use neutral gray for all roles
     const grayBadge = "bg-gray-100 text-gray-800 border-gray-200"
     return grayBadge
   }
@@ -244,7 +205,7 @@ export default function UsersPage() {
       supervisor: Shield,
       executive: UserIcon,
       auditor: Eye,
-      qc: Eye, // You can change qc icon if needed
+      qc: Eye,
       user: UserIcon,
     }
     const Icon = icons[role as keyof typeof icons] || UserIcon
@@ -264,12 +225,10 @@ export default function UsersPage() {
     return roleNames[role as keyof typeof roleNames] || role
   }
 
-  // Filter users based on role
   const filteredUsers = users.filter((user) => {
     return roleFilter === "all" || user.role === roleFilter
   })
 
-  // Handler for clicking on user card to show assigned shops
   const handleUserCardClick = async (user: User) => {
     setAssignedUser(user)
     setAssignedShops([])
@@ -284,7 +243,6 @@ export default function UsersPage() {
           setAssignedError(res.error || "Failed to load assigned shops")
         }
       } else if (user.role === "manager" || user.role === "salesperson" || user.role === "saleperson") {
-        // For manager and salesperson, show shops assigned by manager (assignedQc)
         const res = await fetchShops()
         if (res.success) {
           setAssignedShops(res.shops.filter((shop) => (shop as any).assignedQc === user.id))
@@ -300,14 +258,10 @@ export default function UsersPage() {
     setAssignedLoading(false)
   }
 
-  // Debug: Log loading state changes
-  console.log("🎯 USERS RENDER: loading =", loading)
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
       <div className="w-full p-4 sm:p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-8">
-        
           <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 text-center">User Management</h1>
             <p className="text-sm sm:text-base text-slate-600 mt-1 text-center">Manage user accounts and permissions</p>
@@ -399,7 +353,7 @@ export default function UsersPage() {
                     <SelectItem value="supervisor">Supervisor</SelectItem>
                     <SelectItem value="executive">Executive</SelectItem>
                     <SelectItem value="auditor">Auditor</SelectItem>
-                    <SelectItem value="qc">QC</SelectItem> {/* qc role */}
+                    <SelectItem value="qc">QC</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -416,7 +370,6 @@ export default function UsersPage() {
           </CardContent>
         </Card>
 
-        {/* Edit form */}
         {editForm && (
           <Card ref={editFormRef} className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-white rounded-t-lg border-b">
@@ -478,7 +431,7 @@ export default function UsersPage() {
                       <SelectItem value="supervisor">Supervisor</SelectItem>
                       <SelectItem value="executive">Executive</SelectItem>
                       <SelectItem value="auditor">Auditor</SelectItem>
-                      <SelectItem value="qc">QC</SelectItem> {/* qc role */}
+                      <SelectItem value="qc">QC</SelectItem>
                       <SelectItem value="user">User</SelectItem>
                     </SelectContent>
                   </Select>
@@ -583,8 +536,6 @@ export default function UsersPage() {
                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                       <span className="truncate">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>
-
-                    {/* Assigned Shops Count */}
                     <div
                       className="relative flex items-center gap-2 text-xs sm:text-sm text-gray-800 mb-3 sm:mb-4 bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer group"
                       onClick={() => handleUserCardClick(user)}
@@ -597,14 +548,12 @@ export default function UsersPage() {
                         <div className="flex items-center justify-center w-5 h-5 text-gray-800 font-bold text-xs group-hover:bg-gray-300 group-hover:scale-125 transition-all duration-200">
                           ⓘ
                         </div>
-                        {/* Tooltip */}
                         <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                           Click to see assigned shops
                           <div className="absolute top-full right-2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-800"></div>
                         </div>
                       </div>
                     </div>
-
                     <Button
                       size="sm"
                       onClick={(e) => {
@@ -623,12 +572,9 @@ export default function UsersPage() {
           )}
         </div>
 
-        {/* Assigned Shops Drawer/Modal */}
         {assignedUser && (
           <div className="fixed inset-0 z-50 flex">
-            {/* Overlay */}
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setAssignedUser(null)} />
-            {/* Drawer */}
             <div className="relative ml-auto w-full max-w-xs sm:max-w-sm md:max-w-lg bg-white rounded-l-xl shadow-2xl p-4 sm:p-6 lg:p-8 overflow-y-auto">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">
                 Shops Assigned to {assignedUser.name}
