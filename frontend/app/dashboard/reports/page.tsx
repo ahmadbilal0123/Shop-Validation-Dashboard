@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 
-import { AlertTriangle, RefreshCw, Eye, MapPin, Phone, Calendar, Star, ArrowLeft, Brain, CheckCircle, XCircle, Navigation, MapPin as MapPinIcon } from "lucide-react"
+import { AlertTriangle, RefreshCw, Eye, MapPin, Phone, Calendar, Star, ArrowLeft, Brain, CheckCircle, XCircle, Navigation } from "lucide-react"
 import { fetchShops, fetchVisitedShops, fetchAllUsers, fetchShopById, fetchAIDetectionResults, type Shop, type User, type AIDetectionResponse } from "@/lib/api"
 
 interface MappedShop {
@@ -37,6 +37,9 @@ interface MappedShop {
 
 type ViewMode = 'all' | 'visited' | 'unvisited' | 'detail'
 
+// --- PAGINATION SETTINGS ---
+const PAGE_SIZE = 50
+
 export default function ReportsPage() {
   const [shops, setShops] = useState<MappedShop[]>([])
   const [visitedShops, setVisitedShops] = useState<MappedShop[]>([])
@@ -52,9 +55,18 @@ export default function ReportsPage() {
   const [loadingAI, setLoadingAI] = useState<Set<string>>(new Set())
   const router = useRouter()
 
+  // --- PAGINATION STATE ---
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = PAGE_SIZE
+
   useEffect(() => {
     loadData()
   }, [])
+
+  // Reset pagination to page 1 when viewMode changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [viewMode])
 
   function mapShop(s: any): MappedShop {
     return {
@@ -72,7 +84,6 @@ export default function ReportsPage() {
     }
   }
 
-  // Function to load AI detection data for a shop
   const loadAIDetectionData = async (shopId: string) => {
     if (aiDetectionData.has(shopId) || loadingAI.has(shopId)) return
     
@@ -81,8 +92,6 @@ export default function ReportsPage() {
       const result = await fetchAIDetectionResults(shopId)
       if (result.success) {
         setAiDetectionData(prev => new Map(prev).set(shopId, result))
-        
-        // Update the shop data with AI detection summary
         setShops(prev => prev.map(shop => 
           shop.id === shopId 
             ? { ...shop, aiDetectionSummary: result.summary }
@@ -113,14 +122,10 @@ export default function ReportsPage() {
         fetchVisitedShops(),
         fetchAllUsers()
       ])
-
-      // For your main and visited shops, always use mapped objects!
       const mappedShops = (shopsRes.shops || shopsRes || []).map(mapShop)
       setShops(mappedShops)
-
       const mappedVisitedShops = (visitedRes.shops || visitedRes || []).map(mapShop)
       setVisitedShops(mappedVisitedShops)
-
       setUsers(usersRes.users || [])
     } catch (error) {
       console.error('Error loading data:', error)
@@ -136,7 +141,6 @@ export default function ReportsPage() {
         fetchShopById(shopId),
         fetchAIDetectionResults(shopId)
       ])
-      
       if (shopResult.success) {
         setSelectedShopDetail({
           ...shopResult.data,
@@ -170,7 +174,6 @@ export default function ReportsPage() {
       )
     : 0
 
-  // Unvisited shops: id logic is always safe now
   const visitedShopIds = new Set(visitedShops.map(shop => shop.id))
   const unvisitedShops = shops.filter(shop => !visitedShopIds.has(shop.id))
 
@@ -186,7 +189,11 @@ export default function ReportsPage() {
     }
   }
 
-  // Only block if assignedManagerId is set and non-empty
+  // --- PAGINATION LOGIC ---
+  const currentShops = getCurrentShops()
+  const totalPages = Math.ceil(currentShops.length / pageSize)
+  const paginatedShops = currentShops.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
   const isVisited = (s: MappedShop): boolean =>
     Array.isArray(s.visitImages) && (s.visitImages.length || 0) > 0
   const isAssignedToManager = (s: MappedShop): boolean =>
@@ -216,23 +223,19 @@ export default function ReportsPage() {
 
     const getAllProperties = (obj: any, prefix = ''): Array<{ key: string, value: any }> => {
       const properties: Array<{ key: string, value: any }> = []
-
       Object.keys(obj).forEach(key => {
         const value = obj[key]
         const fullKey = prefix ? `${prefix}.${key}` : key
-
         if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
           properties.push(...getAllProperties(value, fullKey))
         } else {
           properties.push({ key: fullKey, value })
         }
       })
-
       return properties
     }
 
     const allProperties = getAllProperties(selectedShopDetail)
-
     return (
       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="bg-white rounded-t-lg border-b">
@@ -503,7 +506,7 @@ export default function ReportsPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                {getCurrentShops().length === 0 ? (
+                {currentShops.length === 0 ? (
                   <div className="p-8 text-center text-slate-600">
                     <AlertTriangle className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                     <p className="text-lg font-semibold mb-2">
@@ -512,189 +515,214 @@ export default function ReportsPage() {
                     <p>No shops found for the selected filter.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-slate-50 border-b">
-                        <tr>
-                          {selectMode && viewMode === 'visited' && (
-                            <th className="w-10 p-4 text-slate-700">
-                            </th>
-                          )}
-                          <th className="text-left p-4 font-semibold text-slate-700">Shop Name</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">Address</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">City</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">Phone</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">Validation Score</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">AI Detection</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">GPS Validation</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">Visits</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">Last Visit</th>
-                          <th className="text-left p-4 font-semibold text-slate-700">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getCurrentShops().map((shop, index) => {
-                          const isSelected = selectedShopIds.includes(shop.id)
-                          const assigned = isAssignedToManager(shop)
-                          return (
-                          <tr
-                            key={shop.id || index}
-                            className={`border-b transition-colors ${selectMode ? (assigned ? 'cursor-not-allowed' : 'cursor-pointer') : ''} ${isSelected ? 'bg-blue-50' : assigned ? 'bg-amber-50/60' : 'hover:bg-slate-50'}`}
-                            onClick={() => {
-                              if (!selectMode) return
-                              if (assigned) return
-                              const id = shop.id
-                              setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-                            }}
-                          >
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-slate-50 border-b">
+                          <tr>
                             {selectMode && viewMode === 'visited' && (
-                              <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4"
-                                  checked={isSelected}
-                                  onChange={() => {
-                                    if (assigned) return
-                                    const id = shop.id
-                                    setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-                                  }}
-                                  disabled={assigned}
-                                />
-                              </td>
+                              <th className="w-10 p-4 text-slate-700">
+                              </th>
                             )}
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <div className="font-semibold text-slate-900">
-                                  {shop.name || 'N/A'}
-                                </div>
-                                {assigned && (
-                                  <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 border border-amber-200">
-                                    Assigned to Manager
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-start gap-2">
-                                <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                                <span className="text-slate-600 text-sm">
-                                  {shop.address || 'N/A'}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <span className="text-slate-600">
-                                {shop.city || 'N/A'}
-                              </span>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-gray-500" />
-                                <span className="text-slate-600 text-sm">
-                                  {shop.phone || 'N/A'}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <Star className="h-4 w-4 text-gray-500" />
-                                <span className="font-semibold text-gray-800">
-                                  {shop.validationScore !== undefined ? `${shop.validationScore.toFixed(1)}%` : 'N/A'}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                {loadingAI.has(shop.id) ? (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                ) : shop.aiDetectionSummary ? (
-                                  <div className="flex items-center gap-1">
-                                    {shop.aiDetectionSummary.totalLaysDetected > 0 ? (
-                                      <CheckCircle className="h-4 w-4 text-green-600" />
-                                    ) : (
-                                      <XCircle className="h-4 w-4 text-red-600" />
-                                    )}
-                                    <span className="text-sm font-medium">
-                                      {shop.aiDetectionSummary.totalLaysDetected} Lay's
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      ({Math.round(shop.aiDetectionSummary.averageConfidence * 100)}%)
-                                    </span>
+                            <th className="text-left p-4 font-semibold text-slate-700">Shop Name</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">Address</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">City</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">Phone</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">Validation Score</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">AI Detection</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">GPS Validation</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">Visits</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">Last Visit</th>
+                            <th className="text-left p-4 font-semibold text-slate-700">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedShops.map((shop, index) => {
+                            const isSelected = selectedShopIds.includes(shop.id)
+                            const assigned = isAssignedToManager(shop)
+                            return (
+                            <tr
+                              key={shop.id || index}
+                              className={`border-b transition-colors ${selectMode ? (assigned ? 'cursor-not-allowed' : 'cursor-pointer') : ''} ${isSelected ? 'bg-blue-50' : assigned ? 'bg-amber-50/60' : 'hover:bg-slate-50'}`}
+                              onClick={() => {
+                                if (!selectMode) return
+                                if (assigned) return
+                                const id = shop.id
+                                setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+                              }}
+                            >
+                              {selectMode && viewMode === 'visited' && (
+                                <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                                  <input
+                                    type="checkbox"
+                                    className="h-4 w-4"
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      if (assigned) return
+                                      const id = shop.id
+                                      setSelectedShopIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+                                    }}
+                                    disabled={assigned}
+                                  />
+                                </td>
+                              )}
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="font-semibold text-slate-900">
+                                    {shop.name || 'N/A'}
                                   </div>
-                                ) : shop.visitImages?.length > 0 ? (
+                                  {assigned && (
+                                    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 border border-amber-200">
+                                      Assigned to Manager
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                                  <span className="text-slate-600 text-sm">
+                                    {shop.address || 'N/A'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <span className="text-slate-600">
+                                  {shop.city || 'N/A'}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-gray-500" />
+                                  <span className="text-slate-600 text-sm">
+                                    {shop.phone || 'N/A'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <Star className="h-4 w-4 text-gray-500" />
+                                  <span className="font-semibold text-gray-800">
+                                    {shop.validationScore !== undefined ? `${shop.validationScore.toFixed(1)}%` : 'N/A'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  {loadingAI.has(shop.id) ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                  ) : shop.aiDetectionSummary ? (
+                                    <div className="flex items-center gap-1">
+                                      {shop.aiDetectionSummary.totalLaysDetected > 0 ? (
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                      ) : (
+                                        <XCircle className="h-4 w-4 text-red-600" />
+                                      )}
+                                      <span className="text-sm font-medium">
+                                        {shop.aiDetectionSummary.totalLaysDetected} Lay's
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        ({Math.round(shop.aiDetectionSummary.averageConfidence * 100)}%)
+                                      </span>
+                                    </div>
+                                  ) : shop.visitImages?.length > 0 ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        loadAIDetectionData(shop.id)
+                                      }}
+                                      className="text-xs px-2 py-1 h-6"
+                                    >
+                                      <Brain className="h-3 w-3 mr-1" />
+                                      Load AI
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">No visits</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  {shop.gpsValidationSummary ? (
+                                    <div className="flex items-center gap-1">
+                                      {shop.gpsValidationSummary.validVisits > 0 ? (
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                      ) : shop.gpsValidationSummary.invalidVisits > 0 ? (
+                                        <XCircle className="h-4 w-4 text-red-600" />
+                                      ) : (
+                                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                                      )}
+                                      <span className="text-sm font-medium">
+                                        {shop.gpsValidationSummary.validVisits} Valid
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        ({Math.round(shop.gpsValidationSummary.validationRate)}%)
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">No GPS data</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                                  {shop.visitImages?.length || 0} visits
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4 text-gray-500" />
+                                  <span className="text-slate-600 text-sm">
+                                    {shop.lastVisit ? new Date(shop.lastVisit).toLocaleDateString() : 'Never'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-4">
                                   <Button
                                     size="sm"
-                                    variant="outline"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      loadAIDetectionData(shop.id)
+                                      if (selectMode) return
+                                      router.push(`/dashboard/shops/${shop.id}`)
                                     }}
-                                    className="text-xs px-2 py-1 h-6"
+                                    className={`w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 ${selectMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={selectMode}
                                   >
-                                    <Brain className="h-3 w-3 mr-1" />
-                                    Load AI
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Shop Details
                                   </Button>
-                                ) : (
-                                  <span className="text-xs text-gray-400">No visits</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                {shop.gpsValidationSummary ? (
-                                  <div className="flex items-center gap-1">
-                                    {shop.gpsValidationSummary.validVisits > 0 ? (
-                                      <CheckCircle className="h-4 w-4 text-green-600" />
-                                    ) : shop.gpsValidationSummary.invalidVisits > 0 ? (
-                                      <XCircle className="h-4 w-4 text-red-600" />
-                                    ) : (
-                                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                                    )}
-                                    <span className="text-sm font-medium">
-                                      {shop.gpsValidationSummary.validVisits} Valid
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      ({Math.round(shop.gpsValidationSummary.validationRate)}%)
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-400">No GPS data</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
-                                {shop.visitImages?.length || 0} visits
-                              </span>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-gray-500" />
-                                <span className="text-slate-600 text-sm">
-                                  {shop.lastVisit ? new Date(shop.lastVisit).toLocaleDateString() : 'Never'}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (selectMode) return
-                                    router.push(`/dashboard/shops/${shop.id}`)
-                                  }}
-                                  className={`w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-900 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 ${selectMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                  disabled={selectMode}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Shop Details
-                                </Button>
-                            </td>
-                          </tr>
-                        )})}
-                      </tbody>
-                    </table>
-                  </div>
+                              </td>
+                            </tr>
+                          )})}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* --- PAGINATION CONTROLS --- */}
+                    <div className="flex justify-center items-center gap-2 py-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1"
+                      >
+                        Prev
+                      </Button>
+                 
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1"
+                      >
+                        Next
+                      </Button>
+                      <span className="ml-4 text-sm text-gray-500">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
