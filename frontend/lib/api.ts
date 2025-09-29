@@ -1015,13 +1015,14 @@ export async function updateShopsRadius(
     }
 
     const url = buildApiUrl("/api/shops/enable-radius")
-    const body: any = {
-      shopIds, // always array
-      thirtyMeterRadius,
+    // Always send shopIds as array, thirtyMeterRadius as boolean
+    const body = {
+      shopIds, // array of strings
+      thirtyMeterRadius // boolean
     }
 
     const response = await fetch(url, {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.token}`,
@@ -1034,6 +1035,7 @@ export async function updateShopsRadius(
     if (!response.ok) {
       return { success: false, error: data.message || data.error || "Failed to update radius" }
     }
+    // Pass through the response (including any booleans in data if your backend sends them)
     return { success: true, message: data.message || "Radius updated" }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }

@@ -31,6 +31,7 @@ import {
   UserCheck,
   Sparkles,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react"
 
 const sortByCreated = (a: Shop, b: Shop) =>
@@ -84,18 +85,16 @@ export default function ShopsPage() {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
   const [assignLoading] = useState(false)
-
-  // --- RADIUS BUTTON STATE ---
+  const [shopRadiusLoading, setShopRadiusLoading] = useState<{[shopId:string]: boolean}>({})
   const [radiusLoading, setRadiusLoading] = useState(false)
   const [radiusEnabled, setRadiusEnabled] = useState<boolean | null>(null)
 
-  // Check if all selected shops have radius enabled
+  // For bulk enable/disable (select mode)
   useEffect(() => {
-    if (selectedShopIds.length === 0) {
+    if (!selectMode || selectedShopIds.length === 0) {
       setRadiusEnabled(null)
       return
     }
-    // The shop object must have a boolean field (like 'thirtyMeterRadius'). Adjust if your field is named differently.
     const selectedShops = shops.filter(shop => selectedShopIds.includes(shop.id))
     if (selectedShops.length === 0) {
       setRadiusEnabled(null)
@@ -103,18 +102,31 @@ export default function ShopsPage() {
     }
     const allEnabled = selectedShops.every(shop => !!shop.thirtyMeterRadius)
     setRadiusEnabled(allEnabled)
-  }, [selectedShopIds, shops])
+  }, [selectedShopIds, shops, selectMode])
 
+  // Bulk enable/disable when in select mode
   const handleRadiusToggle = async () => {
     if (selectedShopIds.length === 0) {
       alert("Please select at least one shop.")
       return
     }
     setRadiusLoading(true)
-    // Always send shopIds as an array
     const shopIdsToSend = selectedShopIds
     const res = await updateShopsRadius(shopIdsToSend, !(radiusEnabled ?? false))
     setRadiusLoading(false)
+    if (res.success) {
+      await loadShops(selectMode)
+      setSelectedShopIds([])
+    } else {
+      alert(res.error || "Failed to update radius")
+    }
+  }
+
+  // Single shop toggle (always send as array)
+  const handleSingleRadiusToggle = async (shop: Shop) => {
+    setShopRadiusLoading(prev => ({...prev, [shop.id]: true}))
+    const res = await updateShopsRadius([shop.id], !shop.thirtyMeterRadius)
+    setShopRadiusLoading(prev => ({...prev, [shop.id]: false}))
     if (res.success) {
       await loadShops(selectMode)
     } else {
@@ -338,24 +350,7 @@ export default function ShopsPage() {
               </form>
             </div>
             {/* Buttons */}
-            <div className="flex gap-2 items-center">
-              <Button
-                onClick={handleRadiusToggle}
-                disabled={radiusLoading || selectedShopIds.length === 0}
-                className={
-                  (radiusEnabled
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
-                  ) +
-                  " text-white flex items-center gap-2"
-                }
-              >
-                {radiusLoading
-                  ? "Updating..."
-                  : radiusEnabled
-                  ? "Disable Radius"
-                  : "Enable Radius"}
-              </Button>
+            <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
               <Button
                 onClick={() => router.push("/dashboard/shops/create")}
                 variant="default"
@@ -375,6 +370,26 @@ export default function ShopsPage() {
               >
                 {selectMode ? "Cancel Selection" : "Select Shops"}
               </Button>
+              {/* Bulk enable/disable button, only in selectMode and with at least one selected */}
+              {selectMode && selectedShopIds.length > 0 && (
+                <Button
+                  onClick={handleRadiusToggle}
+                  disabled={radiusLoading}
+                  className={
+                    (radiusEnabled
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-green-600 hover:bg-green-700"
+                    ) +
+                    " text-white flex items-center gap-2"
+                  }
+                >
+                  {radiusLoading
+                    ? "Updating..."
+                    : radiusEnabled
+                    ? "Disable Radius"
+                    : "Enable Radius"}
+                </Button>
+              )}
               {selectMode && (
                 <>
                   <Button
@@ -400,7 +415,7 @@ export default function ShopsPage() {
         </div>
         {/* ...rest of your component... */}
 
-        {/* Main Content Area - Loading State Check */}
+        {/* Main Content Area */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -456,8 +471,46 @@ export default function ShopsPage() {
                   } ${selectMode ? "cursor-pointer" : ""}`}
                   onClick={selectMode ? () => toggleShopSelection(shop.id) : undefined}
                 >
+                  {/* Show badge if radius is disabled */}
+                  {shop.thirtyMeterRadius === false && (
+                    <div className="absolute top-13 left-3 z-20">
+                      <span className="inline-flex items-center rounded bg-red-100 text-red-700 px-2 py-1 text-xs font-semibold gap-1 shadow border border-red-200">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        Radius Disabled
+                      </span>
+                    </div>
+                  )}
+                  {/* Toggle switch for radius ON/OFF */}
+                  <div className="absolute top-13 right-3 z-20 flex items-center gap-1">
+                    <span className="text-xs font-bold text-slate-700 mr-1">Radius:</span>
+                    <button
+                      type="button"
+                      aria-label={shop.thirtyMeterRadius ? "Turn radius off" : "Turn radius on"}
+                      disabled={!!shopRadiusLoading[shop.id]}
+                      onClick={e => {
+                        e.stopPropagation()
+                        handleSingleRadiusToggle(shop)
+                      }}
+                      className={`relative inline-flex h-6 w-12 items-center rounded-full transition
+                        ${shop.thirtyMeterRadius ? "bg-green-500" : "bg-gray-300"}
+                        ${shopRadiusLoading[shop.id] ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
+                      `}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition
+                          ${shop.thirtyMeterRadius ? "translate-x-6" : "translate-x-1"}
+                        `}
+                      />
+                      <span className={`absolute left-1.5 text-xs font-semibold ${!shop.thirtyMeterRadius ? "text-white" : "text-gray-500"}`}>
+                        Off
+                      </span>
+                      <span className={`absolute right-1.5 text-xs font-semibold ${shop.thirtyMeterRadius ? "text-white" : "text-gray-500"}`}>
+                        On
+                      </span>
+                    </button>
+                  </div>
                   {selectMode && (
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-4 right-5 z-10">
                       <input
                         type="checkbox"
                         checked={selectedShopIds.includes(shop.id)}
