@@ -752,32 +752,33 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="bg-white rounded-t-lg border-b">
-                <CardTitle className="text-lg text-slate-800">Validation Progress</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Completion Rate:</span>
-                    <span className="font-bold text-gray-900">
-                      {totalShops > 0 ? Math.round((visitedCount / totalShops) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: totalShops > 0 ? `${(visitedCount / totalShops) * 100}%` : '0%' 
-                      }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>{visitedCount} completed</span>
-                    <span>{pendingCount} pending</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+  <CardHeader className="bg-white rounded-t-lg border-b">
+    <CardTitle className="text-lg text-slate-800">Validation Progress</CardTitle>
+  </CardHeader>
+  <CardContent className="p-6">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <span className="text-slate-600">Completion Rate:</span>
+        <span className="font-bold text-gray-900">
+          {totalShops > 0 ? Math.round((visitedCount / totalShops) * 100) : 0}%
+        </span>
+      </div>
+      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex min-w-[40px]">
+        <div
+          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+          style={{
+            width: totalShops > 0 ? `${(visitedCount / totalShops) * 100}%` : '0%',
+            minWidth: visitedCount > 0 ? '0.5rem' : '0',
+          }}
+        ></div>
+      </div>
+      <div className="flex justify-between text-sm text-slate-600">
+        <span>{visitedCount} completed</span>
+        <span>{pendingCount} pending</span>
+      </div>
+    </div>
+  </CardContent>
+</Card>
           </div>
         )}
       </div>
