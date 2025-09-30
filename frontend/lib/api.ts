@@ -34,14 +34,17 @@ export interface Shop {
   assignedManagerId?: string
   visit?: boolean
   visitImages?: VisitImage[]
-  /** Add this field: */
   thirtyMeterRadius?: boolean
 }
 
+// Add pagination fields to response interface
 export interface ShopsResponse {
   success: boolean
   shops: Shop[]
   total: number
+  page?: number
+  limit?: number
+  totalPages?: number
   error?: string
 }
 
@@ -54,7 +57,6 @@ export interface AssignedShopsResponse {
 }
 
 function transformShopData(shop: any, auditorId?: string): Shop {
-  // Your mapped/normalized fields
   const mapped = {
     id: shop._id || shop.id,
     name: shop.name || shop.shop_name || "Unnamed Shop",
@@ -126,39 +128,36 @@ function transformShopData(shop: any, auditorId?: string): Shop {
         })
       : [],
   };
-
-  // Merge mapped fields + backend fields (backend fields win if duplicate)
   return { ...mapped, ...shop };
 }
-
 
 function buildQueryParams(params?: {
   status?: string
   city?: string
   search?: string
-  unassigned?: string // ✅ allow unassigned
+  unassigned?: string
+  page?: number
+  limit?: number
 }): string {
   if (!params) return ""
   const queryParams = new URLSearchParams()
-
   if (params.status && params.status !== "all") queryParams.append("status", params.status)
   if (params.city) queryParams.append("city", params.city)
   if (params.search) queryParams.append("search", params.search)
-  if (params.unassigned) queryParams.append("unassigned", params.unassigned) // ✅ added
-
+  if (params.unassigned) queryParams.append("unassigned", params.unassigned)
+  if (params.page) queryParams.append("page", params.page.toString())
+  if (params.limit) queryParams.append("limit", params.limit.toString())
   return queryParams.toString()
 }
 
 function buildAuthHeaders(): HeadersInit {
   const session = getSession()
   const token = session?.token
-
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     Accept: "application/json",
     "ngrok-skip-browser-warning": "true",
   }
-
   if (token) {
     headers.Authorization = `Bearer ${token}`
   } else {
@@ -186,6 +185,7 @@ function buildError(message: string): ShopsResponse {
   return { success: false, shops: [], total: 0, error: message }
 }
 
+// PAGINATED SHOPS API!
 export async function fetchShops(params?: {
   status?: string
   city?: string
@@ -197,25 +197,25 @@ export async function fetchShops(params?: {
     const queryParams = buildQueryParams(params)
     const apiUrl = buildApiUrl("/api/shops/get-shops")
     const urlWithParams = queryParams ? `${apiUrl}?${queryParams}` : apiUrl
-    console.log("apiURL:", urlWithParams)
-
     const headers = buildAuthHeaders()
     const response = await fetch(urlWithParams, { method: "GET", headers })
-
     const errorCheck = await validateResponse(response)
     if (errorCheck) return errorCheck
-
     const data = await response.json()
-
     if (response.status === 401) {
       return buildError("Unauthorized. Please log in again.")
     }
-
     if (response.ok && data) {
       const shops = mapShops(data.data || [])
-      return { success: true, shops, total: data.count || shops.length }
+      return {
+        success: true,
+        shops,
+        total: data.count || data.total || shops.length,
+        page: data.page || data.pagination?.page || 1,
+        limit: data.limit || data.pagination?.limit,
+        totalPages: data.totalPages || data.pagination?.totalPages,
+      }
     }
-
     return buildError(data.message || data.error || "Failed to fetch shops")
   } catch (error) {
     return buildError(error instanceof Error ? error.message : "Network error")

@@ -34,14 +34,8 @@ import {
   AlertCircle,
 } from "lucide-react"
 
-const sortByCreated = (a: Shop, b: Shop) =>
-  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-
-const sortByAssigned = (a: Shop, b: Shop) =>
-  new Date(b.assignedAt || 0).getTime() - new Date(a.assignedAt || 0).getTime()
-
 const RECENT_LIMIT = 10
-const SHOPS_PER_PAGE = 50
+const SHOPS_PER_PAGE = 10
 
 const FILTERS = [
   {
@@ -73,10 +67,9 @@ const FILTERS = [
 export default function ShopsPage() {
   const router = useRouter()
   const [shops, setShops] = useState<Shop[]>([])
-  const [allShops, setAllShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: SHOPS_PER_PAGE })
   const [statusFilter] = useState<string | undefined>("all")
   const [cityFilter] = useState<string | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState<string>("")
@@ -88,6 +81,8 @@ export default function ShopsPage() {
   const [shopRadiusLoading, setShopRadiusLoading] = useState<{[shopId:string]: boolean}>({})
   const [radiusLoading, setRadiusLoading] = useState(false)
   const [radiusEnabled, setRadiusEnabled] = useState<boolean | null>(null)
+  const [areaFilter, setAreaFilter] = useState<string>("")
+  const [areaOptions, setAreaOptions] = useState<string[]>([])
 
   // For bulk enable/disable (select mode)
   useEffect(() => {
@@ -115,7 +110,7 @@ export default function ShopsPage() {
     const res = await updateShopsRadius(shopIdsToSend, !(radiusEnabled ?? false))
     setRadiusLoading(false)
     if (res.success) {
-      await loadShops(selectMode)
+      await loadShops(selectMode, pagination.page)
       setSelectedShopIds([])
     } else {
       alert(res.error || "Failed to update radius")
@@ -128,7 +123,7 @@ export default function ShopsPage() {
     const res = await updateShopsRadius([shop.id], !shop.thirtyMeterRadius)
     setShopRadiusLoading(prev => ({...prev, [shop.id]: false}))
     if (res.success) {
-      await loadShops(selectMode)
+      await loadShops(selectMode, pagination.page)
     } else {
       alert(res.error || "Failed to update radius")
     }
@@ -155,62 +150,41 @@ export default function ShopsPage() {
     }
   }
 
-  const filterShopsBySearch = (shops: Shop[], query: string) => {
-    if (!query.trim()) return shops
-    const searchTerm = query.toLowerCase().trim()
-    return shops.filter((shop) => {
-      const name = shop.name?.toLowerCase() || ""
-      const address = shop.address?.toLowerCase() || ""
-      const city = shop.city?.toLowerCase() || ""
-      const state = shop.state?.toLowerCase() || ""
-      const phone = shop.phone?.toLowerCase() || ""
-      return (
-        name.includes(searchTerm) ||
-        address.includes(searchTerm) ||
-        city.includes(searchTerm) ||
-        state.includes(searchTerm) ||
-        phone.includes(searchTerm)
-      )
-    })
-  }
+  // Area dropdown options (from current page results)
+  useEffect(() => {
+    setAreaOptions(Array.from(new Set(shops.map(shop => shop.city).filter(Boolean))))
+  }, [shops])
 
-  function applyDropdownFilter(shops: Shop[]) {
-    switch(recentFilter) {
-      case "recentAdded":
-        return [...shops].sort(sortByCreated).slice(0, RECENT_LIMIT)
-      case "recentAssigned":
-        return [...shops]
-          .filter((s) => !!s.assignedAt)
-          .sort(sortByAssigned)
-          .slice(0, RECENT_LIMIT)
-      case "visited":
-        return shops.filter((shop) => Array.isArray(shop.visitImages) && shop.visitImages.length > 0)
-      default:
-        return shops
-    }
-  }
-
-  const loadShops = async (selecting: boolean = false) => {
+  // Backend pagination-aware loader
+  const loadShops = async (selecting = false, pageNum = 1) => {
     setLoading(true)
     setError(null)
     try {
       let response: ShopsResponse
-
       if (selecting) {
         response = await fetchUnassignedShops({
           city: cityFilter,
-          page,
+          search: searchQuery,
+          page: pageNum,
+          limit: SHOPS_PER_PAGE,
         })
       } else {
         response = await fetchShops({
           status: statusFilter,
           city: cityFilter,
-          page,
+          search: searchQuery,
+          page: pageNum,
+          limit: SHOPS_PER_PAGE,
         })
       }
-
       if (response.success) {
-        setAllShops(response.shops)
+        setShops(response.shops)
+        setPagination({
+          page: response.page || 1,
+          totalPages: response.totalPages || 1,
+          total: response.total || response.shops.length,
+          limit: response.limit || SHOPS_PER_PAGE,
+        })
       } else {
         setError(response.error || "Failed to load shops.")
       }
@@ -221,24 +195,15 @@ export default function ShopsPage() {
     }
   }
 
+  // Load shops on filter/page/search changes
   useEffect(() => {
-    let filteredShops = filterShopsBySearch(allShops, searchQuery)
-    filteredShops = applyDropdownFilter(filteredShops)
-    const startIdx = (page - 1) * SHOPS_PER_PAGE
-    const endIdx = startIdx + SHOPS_PER_PAGE
-    setShops(filteredShops.slice(startIdx, endIdx))
-  }, [searchQuery, allShops, recentFilter, page])
+    loadShops(selectMode, 1)
+  }, [statusFilter, cityFilter, selectMode, searchQuery, areaFilter, recentFilter])
 
-  useEffect(() => {
-    loadShops(selectMode)
-  }, [statusFilter, cityFilter, selectMode])
-
-  useEffect(() => {
-    setPage(1)
-  }, [searchQuery, recentFilter, selectMode])
-
-  const totalFiltered = applyDropdownFilter(filterShopsBySearch(allShops, searchQuery)).length
-  const totalPages = Math.ceil(totalFiltered / SHOPS_PER_PAGE)
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return
+    loadShops(selectMode, newPage)
+  }
 
   const handleAssignShopsClick = async () => {
     if (selectedShopIds.length === 0) {
@@ -251,6 +216,7 @@ export default function ShopsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    // Search is already handled by useEffect
   }
 
   const handleClearSearch = () => {
@@ -273,14 +239,14 @@ export default function ShopsPage() {
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-xl border border-blue-200">
               <Package className="w-5 h-5 text-black" />
-              <span className="font-semibold text-black">{totalFiltered} Total Shops</span>
+              <span className="font-semibold text-black">{pagination.total} Total Shops</span>
             </div>
             <div className="flex items-center gap-2 bg-indigo-100 px-4 py-2 rounded-xl border border-indigo-200">
               <Users className="w-5 h-5 text-black" />
               <span className="font-semibold text-black">{selectedShopIds.length} Selected</span>
             </div>
             <Button
-              onClick={() => loadShops(selectMode)}
+              onClick={() => loadShops(selectMode, pagination.page)}
               variant="outline"
               className="flex items-center gap-2 border-blue-200 text-black hover:bg-blue-50"
               disabled={loading}
@@ -325,29 +291,40 @@ export default function ShopsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
-              {/* Search */}
-              <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
-                <Input
-                  placeholder="Search shops..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 border-blue-200 focus:ring-black w-full"
-                />
-                {searchQuery && (
-                  <Button
-                    type="button"
-                    onClick={handleClearSearch}
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
-                  >
-                    ×
-                  </Button>
-                )}
-              </form>
+          <div className="flex flex-col sm:flex-row gap-4 w-full items-center">
+            {/* Search */}
+            <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
+              <Input
+                placeholder="Search shops..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10 border-blue-200 focus:ring-black w-full"
+              />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  onClick={handleClearSearch}
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                >
+                  ×
+                </Button>
+              )}
+            </form>
+            {/* Area Dropdown */}
+            <div>
+              <select
+                value={areaFilter}
+                onChange={e => setAreaFilter(e.target.value)}
+                className="border border-blue-200 rounded px-3 py-2 text-black bg-white focus:outline-none"
+              >
+                <option value="">All Areas</option>
+                {areaOptions.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
             </div>
             {/* Buttons */}
             <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
@@ -426,7 +403,7 @@ export default function ShopsPage() {
             <CardContent className="py-8 text-center">
               <p className="text-red-600 font-semibold">{error}</p>
               <Button 
-                onClick={() => loadShops(selectMode)} 
+                onClick={() => loadShops(selectMode, pagination.page)} 
                 className="mt-4 bg-red-600 hover:bg-red-700"
               >
                 Try Again
@@ -600,21 +577,21 @@ export default function ShopsPage() {
               ))}
             </div>
             {/* Pagination controls */}
-            {totalPages > 1 && (
+            {pagination.totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <Button
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={pagination.page === 1}
+                  onClick={() => handlePageChange(pagination.page - 1)}
                   variant="outline"
                 >
                   Previous
                 </Button>
                 <span className="px-4">
-                  Page {page} of {totalPages}
+                  Page {pagination.page} of {pagination.totalPages}
                 </span>
                 <Button
-                  disabled={page === totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={pagination.page === pagination.totalPages}
+                  onClick={() => handlePageChange(pagination.page + 1)}
                   variant="outline"
                 >
                   Next
