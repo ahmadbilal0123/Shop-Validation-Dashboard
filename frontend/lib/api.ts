@@ -879,47 +879,48 @@ export async function saveAIDetectionResults(shopId: string, aiDetectionResults:
   }
 }
 
-export async function fetchPendingAndVisitedShops(): Promise<ShopsResponse> {
+export async function fetchPendingAndVisitedShops(userId: string): Promise<ShopsResponse> {
   try {
-    // Only send 'visit=true' in the query string
-    const params = new URLSearchParams()
-    params.append("visit", "false")
+    // Put visit and userId in the query string
+    const params = new URLSearchParams();
+    params.append("visit", "false");
+    params.append("userId", userId);
 
-    const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops")
-    const urlWithParams = `${apiUrl}?${params}`
+    const apiUrl = buildApiUrl("/api/shops/get-pending-and-visted-shops");
+    const urlWithParams = `${apiUrl}?${params.toString()}`;
 
-    const headers = buildAuthHeaders()
-    const response = await fetch(urlWithParams, { method: "GET", headers })
+    const headers = buildAuthHeaders();
+    const response = await fetch(urlWithParams, { method: "GET", headers });
 
-    const errorCheck = await validateResponse(response)
-    if (errorCheck) return errorCheck
+    const errorCheck = await validateResponse(response);
+    if (errorCheck) return errorCheck;
 
-    const data = await response.json()
+    const data = await response.json();
 
     if (response.status === 401) {
-      return buildError("Unauthorized. Please log in again.")
+      return buildError("Unauthorized. Please log in again.");
     }
 
     if (response.ok && data) {
-      let shopsArray: any[] = []
+      let shopsArray: any[] = [];
 
       if (Array.isArray(data)) {
-        shopsArray = data
+        shopsArray = data;
       } else if (Array.isArray(data.data)) {
-        shopsArray = data.data
+        shopsArray = data.data;
       } else if (Array.isArray(data.shops)) {
-        shopsArray = data.shops
+        shopsArray = data.shops;
       } else {
-        shopsArray = []
+        shopsArray = [];
       }
 
-      const shops = mapShops(shopsArray)
-      return { success: true, shops, total: data.count || data.total || shops.length }
+      const shops = mapShops(shopsArray);
+      return { success: true, shops, total: data.count || data.total || shops.length };
     }
 
-    return buildError(data.message || data.error || "Failed to fetch shops")
+    return buildError(data.message || data.error || "Failed to fetch shops");
   } catch (error) {
-    return buildError(error instanceof Error ? error.message : "Network error")
+    return buildError(error instanceof Error ? error.message : "Network error");
   }
 }
 

@@ -1,14 +1,17 @@
+// Place this in your /app/dashboard/pending/page.tsx or similar
+
 "use client"
 
 import { useState, useEffect } from "react"
+import { fetchPendingAndVisitedShops, Shop } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { getSession } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Search, Eye, Store, TrendingUp, RefreshCw } from "lucide-react"
-import { fetchPendingAndVisitedShops, type Shop } from "@/lib/api"
-import { useRouter } from "next/navigation"
+import { MapPin, Calendar, Search, Eye, Store, RefreshCw } from "lucide-react"
 
 export default function PendingShopsPage() {
   const router = useRouter()
@@ -16,21 +19,16 @@ export default function PendingShopsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("all")
 
-  // Get unique cities for filter
   const uniqueCities = Array.from(new Set(shops.map((shop) => shop.city).filter(Boolean)))
-
-  // Filter shops based on search and filters
   const filteredShops = shops
     .filter((shop) => {
       const matchesSearch =
         shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         shop.address.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === "all" || shop.status === statusFilter
       const matchesCity = cityFilter === "all" || shop.city === cityFilter
-      return matchesSearch && matchesStatus && matchesCity
+      return matchesSearch && matchesCity
     })
     .sort((a, b) => {
       const dateA = new Date(a.updatedAt || a.createdAt).getTime()
@@ -38,19 +36,23 @@ export default function PendingShopsPage() {
       return dateB - dateA
     })
 
-  // Calculate stats
-  const totalVisits = shops.reduce((sum, shop) => sum + (shop.visitImages?.length || 0), 0)
-
   useEffect(() => {
     loadPendingShops()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadPendingShops = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetchPendingAndVisitedShops()
-
+      const session = getSession()
+      const userId = session?.user?.id
+      if (!userId) {
+        setError("User ID not found. Please log in again.")
+        setLoading(false)
+        return
+      }
+      const response = await fetchPendingAndVisitedShops(userId)
       if (response.success) {
         setShops(response.shops)
       } else {
@@ -64,7 +66,6 @@ export default function PendingShopsPage() {
     }
   }
 
-  // Refresh function - exactly like other pages
   const refreshPending = async () => {
     await loadPendingShops()
   }
@@ -119,17 +120,12 @@ export default function PendingShopsPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
       <div className="w-full p-4 md:p-6 space-y-8">
         <div className="text-center space-y-4 py-8">
-          {/* <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-full mb-4">
-            <Store className="h-5 w-5 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">ShelfVoice</span>
-          </div> */}
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <h1 className="text-4xl md:text-5xl font-bold text-slate-900 text-balance">Pending Shops</h1>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto text-pretty mt-4">
-                This Are the shops that are pending for review. You can search and filter through the list to find specific shops.
+                These are the shops that are pending for review. You can search and filter through the list to find specific shops.
               </p>
-              {/* Mobile refresh under text */}
               <div className="mt-3 block sm:hidden">
                 <Button
                   onClick={refreshPending}
@@ -142,8 +138,6 @@ export default function PendingShopsPage() {
                 </Button>
               </div>
             </div>
-            
-            {/* Refresh Button (desktop/tablet) */}
             <Button
               onClick={refreshPending}
               variant="outline"
@@ -171,44 +165,11 @@ export default function PendingShopsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Visits</p>
-                  <p className="text-3xl font-bold text-slate-900">{totalVisits}</p>
-                  <p className="text-xs text-slate-500">Visit records</p>
-                </div>
-                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                  <Eye className="h-6 w-6 text-emerald-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Avg per Shop</p>
-                  <p className="text-3xl font-bold text-slate-900">
-                    {shops.length > 0 ? (totalVisits / shops.length).toFixed(1) : "0"}
-                  </p>
-                  <p className="text-xs text-slate-500">Visits per shop</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card> */}
         </div>
 
         <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              {/* Left section - Search field */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
@@ -218,8 +179,6 @@ export default function PendingShopsPage() {
                   className="pl-10 border-slate-200 bg-white/50 focus:bg-white transition-colors"
                 />
               </div>
-
-              {/* Right section - Filter */}
               <div className="flex flex-wrap gap-2 sm:gap-3 items-center justify-end w-full lg:w-auto">
                 <Select value={cityFilter} onValueChange={setCityFilter}>
                   <SelectTrigger className="w-48 border-slate-200 bg-white/50">
@@ -247,7 +206,7 @@ export default function PendingShopsPage() {
               </div>
               <h3 className="text-xl font-semibold text-slate-700 mb-3">No shops found</h3>
               <p className="text-slate-500 max-w-md mx-auto">
-                {searchTerm || statusFilter !== "all" || cityFilter !== "all"
+                {searchTerm || cityFilter !== "all"
                   ? "Try adjusting your search terms or filters to find what you're looking for."
                   : "No pending shops at the moment."}
               </p>
@@ -274,7 +233,6 @@ export default function PendingShopsPage() {
                     </div>
                   </div>
                 </CardHeader>
-
                 <CardContent className="pt-0 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">City</span>
@@ -282,14 +240,6 @@ export default function PendingShopsPage() {
                       {shop.city || "Unknown"}
                     </Badge>
                   </div>
-
-                  {/* <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Status</span>
-                    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
-                      {shop.status}
-                    </Badge>
-                  </div> */}
-
                   {shop.lastVisit && (
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                       <span className="text-sm text-slate-500 flex items-center gap-1">
@@ -299,7 +249,6 @@ export default function PendingShopsPage() {
                       <span className="text-sm font-medium text-slate-700">{formatDate(shop.lastVisit)}</span>
                     </div>
                   )}
-
                   <Button
                     size="sm"
                     onClick={(e) => {
