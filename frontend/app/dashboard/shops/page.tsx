@@ -84,6 +84,18 @@ export default function ShopsPage() {
   const [areaFilter, setAreaFilter] = useState<string>("")
   const [areaOptions, setAreaOptions] = useState<string[]>([])
 
+  // Helper: case-insensitive name/address matcher
+  const matchesSearch = (shop: Shop) => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return true
+    const name = (shop.name || "").toLowerCase()
+    const address = (shop.address || "").toLowerCase()
+    return name.includes(q) || address.includes(q)
+  }
+
+  // derived list: shops visible after search (filters by name OR address)
+  const displayedShops = shops.filter(matchesSearch)
+
   // For bulk enable/disable (select mode)
   useEffect(() => {
     if (!selectMode || selectedShopIds.length === 0) {
@@ -136,10 +148,15 @@ export default function ShopsPage() {
   }
 
   const handleSelectAll = () => {
-    if (selectedShopIds.length === shops.length) {
-      setSelectedShopIds([])
+    // Select/Deselect only the currently displayed shops (matching name/address search)
+    const visibleIds = displayedShops.map(s => s.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedShopIds.includes(id))
+    if (allSelected) {
+      // remove visible ids from selection
+      setSelectedShopIds(prev => prev.filter(id => !visibleIds.includes(id)))
     } else {
-      setSelectedShopIds(shops.map((shop) => shop.id))
+      // add visible ids to selection (preserve previously selected across pages)
+      setSelectedShopIds(prev => Array.from(new Set([...prev, ...visibleIds])))
     }
   }
 
@@ -160,6 +177,11 @@ export default function ShopsPage() {
     setLoading(true)
     setError(null)
     try {
+      // If the "Recent Added" filter is active we want newest shops first (createdAt descending).
+      // We pass a sort param to the API to request sorting by createdAt desc.
+      // (fetchShops / fetchUnassignedShops accept optional sort/order fields)
+      const sortParam = recentFilter === "recentAdded" ? "createdAt:desc" : undefined
+
       let response: ShopsResponse
       if (selecting) {
         response = await fetchUnassignedShops({
@@ -167,6 +189,7 @@ export default function ShopsPage() {
           search: searchQuery,
           page: pageNum,
           limit: SHOPS_PER_PAGE,
+          sort: sortParam,
         })
       } else {
         response = await fetchShops({
@@ -175,6 +198,7 @@ export default function ShopsPage() {
           search: searchQuery,
           page: pageNum,
           limit: SHOPS_PER_PAGE,
+          sort: sortParam,
         })
       }
       if (response.success) {
@@ -216,7 +240,7 @@ export default function ShopsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // Search is already handled by useEffect
+    // Search is already handled by useEffect (and displayedShops will filter by name/address)
   }
 
   const handleClearSearch = () => {
@@ -296,7 +320,7 @@ export default function ShopsPage() {
             <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
               <Input
-                placeholder="Search shops..."
+                placeholder="Search shops by name or address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10 border-blue-200 focus:ring-black w-full"
@@ -374,7 +398,7 @@ export default function ShopsPage() {
                     variant="outline"
                     className="border-indigo-300 text-black hover:bg-indigo-50"
                   >
-                    {selectedShopIds.length === shops.length ? "Deselect All" : "Select All"}
+                    {displayedShops.length > 0 && displayedShops.every(s => selectedShopIds.includes(s.id)) ? "Deselect All" : "Select All"}
                   </Button>
                   <Button
                     onClick={handleAssignShopsClick}
@@ -410,7 +434,7 @@ export default function ShopsPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : shops.length === 0 ? (
+        ) : displayedShops.length === 0 ? (
           <Card className="bg-white/80 backdrop-blur-sm border-blue-100 shadow-lg">
             <CardContent className="py-12 text-center">
               <Package className="h-16 w-16 text-slate-300 mx-auto mb-4" />
@@ -419,7 +443,7 @@ export default function ShopsPage() {
               </h3>
               <p className="text-slate-500">
                 {searchQuery 
-                  ? `No shops match your search for "${searchQuery}". Try adjusting your search terms.`
+                  ? `No shops match your search for "${searchQuery}". Try searching by shop name or address.`
                   : selectMode 
                     ? "No unassigned shops available for selection."
                     : "No shops have been added yet."
@@ -440,7 +464,7 @@ export default function ShopsPage() {
           <>
             {/* Shops Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {shops.map((shop) => (
+              {displayedShops.map((shop) => (
                 <Card
                   key={shop.id}
                   className={`group relative bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 ${

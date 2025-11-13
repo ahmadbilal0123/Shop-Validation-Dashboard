@@ -1,3 +1,4 @@
+// updated: removed client-side sort inversion so requested sort is forwarded to the backend unchanged
 import { buildApiUrl } from "./utils"
 import { getSession } from "./auth"
 
@@ -76,6 +77,7 @@ function transformShopData(shop: any, auditorId?: string): Shop {
     lastVisit: shop.lastVisit || shop.last_visit,
     visitCount: shop.visitCount || shop.visit_count || 0,
     validationScore: shop.validationScore || shop.validation_score,
+    // Prefer backend timestamps. If backend didn't provide createdAt, leave it as ISO string fallback.
     createdAt: shop.createdAt || shop.created_at || new Date().toISOString(),
     updatedAt: shop.updatedAt || shop.updated_at || new Date().toISOString(),
     ptc_urbanity: shop.ptc_urbanity || "",
@@ -131,6 +133,13 @@ function transformShopData(shop: any, auditorId?: string): Shop {
   return { ...mapped, ...shop };
 }
 
+/**
+ * buildQueryParams
+ * - Accepts filters (status, city, search, unassigned, page, limit)
+ * - Accepts optional sort and order parameters and forwards them to the backend AS-IS.
+ * IMPORTANT: Removed client-side inversion so when caller requests createdAt:desc (newest first),
+ * the backend will receive createdAt:desc and should return newest-first.
+ */
 function buildQueryParams(params?: {
   status?: string
   city?: string
@@ -138,12 +147,24 @@ function buildQueryParams(params?: {
   unassigned?: string
   page?: number
   limit?: number
+  // optional sort inputs
+  sort?: string
+  order?: string
 }): string {
   if (!params) return ""
   const queryParams = new URLSearchParams()
   if (params.status && params.status !== "all") queryParams.append("status", params.status)
   if (params.city) queryParams.append("city", params.city)
   if (params.search) queryParams.append("search", params.search)
+
+  // Forward sort/order to backend unchanged.
+  if (params.sort) {
+    queryParams.append("sort", params.sort)
+  }
+  if (params.order) {
+    queryParams.append("order", params.order)
+  }
+
   if (params.unassigned) queryParams.append("unassigned", params.unassigned)
   if (params.page) queryParams.append("page", params.page.toString())
   if (params.limit) queryParams.append("limit", params.limit.toString())
@@ -192,6 +213,9 @@ export async function fetchShops(params?: {
   search?: string
   page?: number
   limit?: number
+  // optional sort inputs forwarded to buildQueryParams
+  sort?: string
+  order?: string
 }): Promise<ShopsResponse> {
   try {
     const queryParams = buildQueryParams(params)
@@ -206,7 +230,7 @@ export async function fetchShops(params?: {
       return buildError("Unauthorized. Please log in again.")
     }
     if (response.ok && data) {
-      const shops = mapShops(data.data || [])
+      const shops = mapShops(data.data || data.shops || [])
       return {
         success: true,
         shops,
@@ -222,20 +246,23 @@ export async function fetchShops(params?: {
   }
 }
 
-// ✅ Fetch Unassigned Shops (always sends unassigned=true as string)
+// Fetch Unassigned Shops (always sends unassigned=true as string) - returns pagination fields
 export async function fetchUnassignedShops(params?: {
   status?: string
   city?: string
   search?: string
   page?: number
   limit?: number
+  sort?: string
+  order?: string
 }): Promise<ShopsResponse> {
   try {
-    // 👇 Force the params into a flexible object before adding `unassigned`
-    const queryParams = buildQueryParams({
+    // Force unassigned=true to request unassigned shops from backend
+    const mergedParams: Record<string, any> = {
       ...(params as Record<string, any>),
-      unassigned: "false", // always send as string
-    })
+      unassigned: "true", // request unassigned shops
+    }
+    const queryParams = buildQueryParams(mergedParams)
 
     const apiUrl = buildApiUrl("/api/shops/get-shops")
     const urlWithParams = queryParams ? `${apiUrl}?${queryParams}` : apiUrl
@@ -254,8 +281,28 @@ export async function fetchUnassignedShops(params?: {
     }
 
     if (response.ok && data) {
-      const shops = mapShops(data.data || [])
-      return { success: true, shops, total: data.count || shops.length }
+      const shops = mapShops(data.data || data.shops || [])
+      const total = data.count ?? data.total ?? shops.length
+      const page = data.page ?? data.pagination?.page ?? (params?.page ?? 1)
+      const limit = data.limit ?? data.pagination?.limit ?? params?.limit
+      let totalPages = data.totalPages ?? data.pagination?.totalPages
+
+      if (!totalPages) {
+        if (limit && limit > 0) {
+          totalPages = Math.max(1, Math.ceil(total / limit))
+        } else {
+          totalPages = 1
+        }
+      }
+
+      return {
+        success: true,
+        shops,
+        total,
+        page,
+        limit,
+        totalPages,
+      }
     }
 
     return buildError(data.message || data.error || "Failed to fetch unassigned shops")
@@ -275,7 +322,7 @@ export async function fetchAssignedShopsForAuditor(
   },
 ): Promise<AssignedShopsResponse> {
   try {
-    const queryParams = buildQueryParams(params)
+    const queryParams = buildQueryParams(params as any)
     const apiUrl = buildApiUrl(`/api/users/get-assigned-shops-for-auditor/${auditorId}`)
     const urlWithParams = queryParams ? `${apiUrl}?${queryParams}` : apiUrl
     console.log("Auditor API URL:", urlWithParams)
@@ -516,7 +563,7 @@ export async function fetchVisitedShops(params?: {
   limit?: number
 }): Promise<ShopsResponse> {
   try {
-    const queryParams = buildQueryParams(params)
+    const queryParams = buildQueryParams(params as any)
     const apiUrl = buildApiUrl("/api/shops/get-visited-shops")
     const urlWithParams = queryParams ? `${apiUrl}?${queryParams}` : apiUrl
     console.log("Visited shops API URL:", urlWithParams)
@@ -561,8 +608,7 @@ export async function fetchVisitedShops(params?: {
   }
 }
 
-// ========================= USERS API ========================= //
-
+// rest of file unchanged...
 export interface User {
   id: string
   name: string
@@ -601,6 +647,8 @@ function transformUserData(user: any): User {
     createdAt: user.createdAt || new Date().toISOString(),
   }
 }
+
+// ...remaining functions unchanged (fetchUsers, registerUser, etc.)
 
 export async function fetchUsers(): Promise<UsersResponse> {
   try {
