@@ -187,6 +187,7 @@ export default function ShopsPage() {
         response = await fetchUnassignedShops({
           city: cityFilter,
           search: searchQuery,
+          shop_name: searchQuery, // send search as shop_name to backend
           page: pageNum,
           limit: SHOPS_PER_PAGE,
           sort: sortParam,
@@ -196,6 +197,7 @@ export default function ShopsPage() {
           status: statusFilter,
           city: cityFilter,
           search: searchQuery,
+          shop_name: searchQuery, // send search as shop_name to backend
           page: pageNum,
           limit: SHOPS_PER_PAGE,
           sort: sortParam,
@@ -219,10 +221,10 @@ export default function ShopsPage() {
     }
   }
 
-  // Load shops on filter/page/search changes
+  // Load shops on filter/page/area/recent changes (no longer auto-calls on every keystroke)
   useEffect(() => {
     loadShops(selectMode, 1)
-  }, [statusFilter, cityFilter, selectMode, searchQuery, areaFilter, recentFilter])
+  }, [statusFilter, cityFilter, selectMode, areaFilter, recentFilter])
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > pagination.totalPages) return
@@ -240,7 +242,8 @@ export default function ShopsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // Search is already handled by useEffect (and displayedShops will filter by name/address)
+    // Trigger API search on submit (also keeps client-side filtering for instant UX)
+    loadShops(selectMode, 1)
   }
 
   const handleClearSearch = () => {
@@ -323,6 +326,9 @@ export default function ShopsPage() {
                 placeholder="Search shops by name or address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                // Call API when user clicks/focuses the search input
+                onFocus={() => loadShops(selectMode, 1)}
+                onClick={() => loadShops(selectMode, 1)}
                 className="pl-10 pr-10 border-blue-200 focus:ring-black w-full"
               />
               {searchQuery && (

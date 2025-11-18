@@ -150,12 +150,16 @@ function buildQueryParams(params?: {
   // optional sort inputs
   sort?: string
   order?: string
+  shop_name?: string
 }): string {
   if (!params) return ""
   const queryParams = new URLSearchParams()
   if (params.status && params.status !== "all") queryParams.append("status", params.status)
   if (params.city) queryParams.append("city", params.city)
   if (params.search) queryParams.append("search", params.search)
+
+  // include shop_name if provided
+  if (params.shop_name) queryParams.append("shop_name", params.shop_name)
 
   // Forward sort/order to backend unchanged.
   if (params.sort) {
@@ -216,6 +220,7 @@ export async function fetchShops(params?: {
   // optional sort inputs forwarded to buildQueryParams
   sort?: string
   order?: string
+  shop_name?: string
 }): Promise<ShopsResponse> {
   try {
     const queryParams = buildQueryParams(params)
@@ -255,6 +260,7 @@ export async function fetchUnassignedShops(params?: {
   limit?: number
   sort?: string
   order?: string
+  shop_name?: string
 }): Promise<ShopsResponse> {
   try {
     // Force unassigned=true to request unassigned shops from backend
@@ -561,6 +567,7 @@ export async function fetchVisitedShops(params?: {
   search?: string
   page?: number
   limit?: number
+  shop_name?: string
 }): Promise<ShopsResponse> {
   try {
     const queryParams = buildQueryParams(params as any)
