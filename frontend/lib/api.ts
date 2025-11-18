@@ -156,7 +156,8 @@ function buildQueryParams(params?: {
   const queryParams = new URLSearchParams()
   if (params.status && params.status !== "all") queryParams.append("status", params.status)
   if (params.city) queryParams.append("city", params.city)
-  if (params.search) queryParams.append("search", params.search)
+  // NOTE: do NOT forward the client-side "search" value to the backend (avoids sending encoded search in the query string)
+  // if (params.search) queryParams.append("search", params.search)
 
   // include shop_name if provided
   if (params.shop_name) queryParams.append("shop_name", params.shop_name)
@@ -172,7 +173,9 @@ function buildQueryParams(params?: {
   if (params.unassigned) queryParams.append("unassigned", params.unassigned)
   if (params.page) queryParams.append("page", params.page.toString())
   if (params.limit) queryParams.append("limit", params.limit.toString())
-  return queryParams.toString()
+
+  // URLSearchParams encodes spaces as '+'. Replace '+' with '%20' so the backend receives encoded spaces instead of plus signs.
+  return queryParams.toString().replace(/\+/g, "%20")
 }
 
 function buildAuthHeaders(): HeadersInit {
