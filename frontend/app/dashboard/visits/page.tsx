@@ -54,8 +54,24 @@ export default function VisitsPage() {
       return dateB - dateA
     })
     
-  // Calculate stats
-  const totalVisits = shops.reduce((sum, shop) => sum + (shop.visitImages?.length || 0), 0)
+  // Calculate stats - count visits even if no images but visits flag is true
+  const totalVisits = shops.reduce((sum, shop) => {
+    const imageCount = shop.visitImages?.length || 0
+    // If shop has images, count them; otherwise if visits flag exists, count as 1
+    return sum + (imageCount > 0 ? imageCount : (shop.visits ? 1 : 0))
+  }, 0)
+  
+  const foundShops = shops.filter((shop) => {
+    const hasImages = (shop.visitImages?.length || 0) > 0
+    // Found if has images OR if visits flag is true
+    return hasImages || shop.visits
+  })
+  
+  const notFoundShops = shops.filter((shop) => {
+    const hasImages = (shop.visitImages?.length || 0) > 0
+    // Not found only if no images AND no visits flag
+    return !hasImages && !shop.visits
+  })
 
   useEffect(() => {
     loadVisitedShops()
@@ -190,7 +206,7 @@ const handleAssignShopsClick = async () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -221,22 +237,35 @@ const handleAssignShopsClick = async () => {
             </CardContent>
           </Card>
 
-          {/* <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Avg per Shop</p>
-                  <p className="text-3xl font-bold text-slate-900">
-                    {shops.length > 0 ? (totalVisits / shops.length).toFixed(1) : "0"}
-                  </p>
-                  <p className="text-xs text-slate-500">Visits per shop</p>
+                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Found Shops</p>
+                  <p className="text-3xl font-bold text-slate-900">{foundShops.length}</p>
+                  <p className="text-xs text-slate-500">Shops with visits</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center transition-colors">
+                  <Store className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
-          </Card> */}
+          </Card>
+
+          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Not Found</p>
+                  <p className="text-3xl font-bold text-slate-900">{notFoundShops.length}</p>
+                  <p className="text-xs text-slate-500">0 visits recorded</p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center transition-colors">
+                  <Eye className="h-6 w-6 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg sticky top-0 z-10">
@@ -388,7 +417,11 @@ const handleAssignShopsClick = async () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-500">Total Visits</span>
                       <Badge className="bg-gray-200 text-gray-800 hover:bg-gray-300">
-                        {shop.visitImages?.length || 0} visits
+                        {(() => {
+                          const imageCount = shop.visitImages?.length || 0
+                          // If shop has images, show image count; otherwise if visit flag is true, show 1
+                          return (imageCount > 0 ? imageCount : (shop.visit ? 1 : 0)) + " visits"
+                        })()}
                       </Badge>
                     </div>
 
